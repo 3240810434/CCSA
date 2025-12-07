@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    tools:context=".login.LoginActivity">
+
+    <!-- 顶部App名称 -->
+    <TextView
+        android:id="@+id/tv_app_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="小区便民服务"
+        android:textSize="24sp"
+        android:textColor="#333333"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="80dp"/>
+
+    <!-- 角色选择标题 -->
+    <TextView
+        android:id="@+id/tv_role_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="请选择您的角色"
+        android:textSize="16sp"
+        android:textColor="#666666"
+        app:layout_constraintTop_toBottomOf="@id/tv_app_name"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="60dp"/>
+
+    <!-- 角色选择选项卡 -->
+    <RadioGroup
+        android:id="@+id/rg_role"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_role_title"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="30dp"> <!-- 改用android前缀的marginTop -->
+
+        <RadioButton
+            android:id="@+id/rb_resident"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="居民"
+            android:textSize="16sp"
+            android:button="@null"
+            android:gravity="center"
+            android:background="@drawable/role_radio_button_selector"
+            android:checked="true"/>
+
+        <RadioButton
+            android:id="@+id/rb_admin"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="物业管理员"
+            android:textSize="16sp"
+            android:button="@null"
+            android:gravity="center"
+            android:background="@drawable/role_radio_button_selector"/>
+
+        <RadioButton
+            android:id="@+id/rb_merchant"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="专业商家"
+            android:textSize="16sp"
+            android:button="@null"
+            android:gravity="center"
+            android:background="@drawable/role_radio_button_selector"/>
+    </RadioGroup>
+
+    <!-- 登录按钮 -->
+    <Button
+        android:id="@+id/btn_login"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:text="登录"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"
+        android:background="@color/gray_light"
+        android:layout_marginLeft="40dp"
+        android:layout_marginRight="40dp"
+        android:layout_marginTop="60dp"
+    app:layout_constraintTop_toBottomOf="@id/rg_role"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

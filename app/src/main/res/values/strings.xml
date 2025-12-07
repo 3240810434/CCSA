@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">CCSA</string>
+    <string name="delete">删除</string>
+    <string name="select_appeal_type">选择申诉类型</string>
+    <string name="select_building">选择楼栋</string>
+    <string name="select_room_type">选择房屋类型</string>
+    <string name="payment_period">缴费周期</string>
+    <string name="paid_status">已缴费</string>
+    <string name="amount_format">应缴金额：%.2f元</string>
+    <string name="payment_method_wechat">微信支付</string>
+    <string name="payment_time_format">支付时间：%s</string>
+    <string name="receipt_number_format">收据编号：%s</string>
+
+    <!-- 新增字符串（确保命名无空格，与引用一致） -->
+    <string name="building_label">楼栋：</string>
+    <string name="payment_status_label">缴费状态：</string>
+    <string name="month_label">月份：</string>
+    <string name="date_hint">yyyy-MM</string>
+    <string name="confirm">确认</string>
+    <string name="cancel">取消</string>
+</resources>

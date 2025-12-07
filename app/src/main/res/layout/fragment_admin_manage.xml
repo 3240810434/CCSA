@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginBottom="24dp">
+
+        <!-- 第一个盒子：淡绿色按钮区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3"
+            android:layout_marginBottom="24dp"
+            android:padding="12dp"
+            android:background="@drawable/box_bg">
+
+            <Button
+                android:id="@+id/btn_set_fee_standard"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:text="设置物业费标准"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/green_rounded_btn"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btn_publish_fee"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:text="相关费用公示"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/green_rounded_btn"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btn_fee_statistics"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:text="查看缴费统计"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/green_rounded_btn"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+
+        <!-- 第二个盒子：淡蓝色按钮区域 -->
+        <androidx.gridlayout.widget.GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:columnCount="3"
+            app:rowCount="2"
+            app:useDefaultMargins="true"
+            android:layout_marginBottom="24dp"
+            android:padding="12dp"
+            android:background="@drawable/box_bg">
+
+            <Button
+                android:id="@+id/btn_publish_notice"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:text="发布通知"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/blue_rounded_btn"
+                android:textColor="@android:color/white"
+                app:layout_columnWeight="1"
+                app:layout_rowWeight="1"
+                android:layout_margin="6dp"/>
+
+            <Button
+                android:id="@+id/btn_initiate_vote"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:text="发起小区投票"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/blue_rounded_btn"
+                android:textColor="@android:color/white"
+                app:layout_columnWeight="1"
+                app:layout_rowWeight="1"
+                android:layout_margin="6dp"/>
+
+            <Button
+                android:id="@+id/btn_resident_list"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:text="居民列表"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/blue_rounded_btn"
+                android:textColor="@android:color/white"
+                app:layout_columnWeight="1"
+                app:layout_rowWeight="1"
+                android:layout_margin="6dp"/>
+
+            <Button
+                android:id="@+id/btn_merchant_list"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:text="商家列表"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/blue_rounded_btn"
+                android:textColor="@android:color/white"
+                app:layout_columnWeight="1"
+                app:layout_rowWeight="1"
+                android:layout_margin="6dp"/>
+
+            <Button
+                android:id="@+id/btn_payment_appeal"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:text="缴费异常申诉"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/blue_rounded_btn"
+                android:textColor="@android:color/white"
+                app:layout_columnWeight="1"
+                app:layout_rowWeight="1"
+                android:layout_margin="6dp"/>
+
+            <Button
+                android:id="@+id/btn_merchant_audit"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:text="商家审核"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/blue_rounded_btn"
+                android:textColor="@android:color/white"
+                app:layout_columnWeight="1"
+                app:layout_rowWeight="1"
+                android:layout_margin="6dp"/>
+        </androidx.gridlayout.widget.GridLayout>
+
+        <!-- 第三个盒子：淡黄色按钮区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="3"
+            android:padding="12dp"
+            android:background="@drawable/box_bg">
+
+            <Button
+                android:id="@+id/btn_resident_repair"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:text="居民报修"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/yellow_rounded_btn"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btn_life_dynamics"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:text="生活动态"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/yellow_rounded_btn"
+                android:textColor="@android:color/white"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btn_neighbor_help"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:text="邻里互助"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:background="@drawable/yellow_rounded_btn"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

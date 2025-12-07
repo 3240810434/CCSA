@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_house_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="悦景小区   x栋    xxx"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/tv_property_service_fee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="物业服务费每平方米每月费用："
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_maintenance_fund"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="日常维修资金："
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_utility_fee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="水电公摊费："
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_elevator_fee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="电梯费：-楼："
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_elevator_fee_above"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="             楼及以上："
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_pressure_fee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="加压费：-楼："
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_pressure_fee_above"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="             楼及以上:"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_garbage_fee"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="生活垃圾处理费："
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tv_period"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="缴费周期："
+            android:layout_marginBottom="8dp"
+            android:textStyle="bold"/>
+
+        <TextView
+            android:id="@+id/tv_total"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="总计："
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/red"/>
+    </LinearLayout>
+</ScrollView>

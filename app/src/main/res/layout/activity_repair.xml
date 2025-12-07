@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 顶部导航栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:elevation="4dp">
+
+        <Button
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="返回"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="报修"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/btn_my_repairs"
+            android:layout_width="wrap_content"
+            android:layout_height="46dp"
+        android:text="我的报修"
+        android:textColor="@color/black"
+        android:background="@drawable/btn_my_repairs_bg"
+        android:textSize="16sp"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:layout_marginStart="8dp"/>
+    </LinearLayout>
+
+    <!-- 表单内容 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- 报修标题 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="请简要描述问题（如：3号楼东侧路灯不亮）"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/et_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="请输入问题摘要..."
+                android:inputType="text"
+                android:padding="12dp"
+                android:background="@drawable/edittext_bg"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- 报修详情 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="详细描述"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <EditText
+                android:id="@+id/et_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="请详细描述故障情况、具体现象等...（必填）"
+                android:inputType="textMultiLine"
+                android:minLines="5"
+                android:padding="12dp"
+                android:background="@drawable/edittext_bg"
+                android:layout_marginBottom="16dp"/>
+
+            <!-- 图片/视频上传 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="添加照片或视频（选填，最多9张/段）"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_images"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- 联系人信息 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="联系人信息（用于维修沟通）"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/edittext_bg"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tv_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="姓名："
+                    android:textSize="16sp"
+                    android:layout_marginBottom="8dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tv_phone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="电话："
+                        android:textSize="16sp"/>
+
+                    <Button
+                        android:id="@+id/tv_edit_contact"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="编辑"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:textSize="14sp"
+                        android:textColor="@color/blue"
+                        android:layout_marginLeft="0dp"
+                        android:layout_gravity="end"/> <!-- 修复：用layout_gravity实现右对齐 -->
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 提交按钮 -->
+            <Button
+                android:id="@+id/btn_submit"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="提交"
+                android:layout_marginTop="32dp"
+                android:backgroundTint="@color/gray"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:enabled="false"/>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

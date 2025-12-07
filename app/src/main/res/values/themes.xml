@@ -1,0 +1,27 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.CCSA" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- 自定义按钮样式（关键：指定自定义样式作为默认按钮样式） -->
+        <item name="buttonStyle">@style/CustomButton</item>
+    </style>
+
+    <!-- 自定义按钮样式：统一使用浅灰色背景 -->
+    <style name="CustomButton" parent="Widget.MaterialComponents.Button">
+        <!-- 禁用Material默认背景色 tint，使用目标浅灰色 #E5E4E2 -->
+        <item name="backgroundTint">@color/gray_light</item>
+        <!-- 清除默认背景 -->
+        <item name="android:background">@null</item>
+        <!-- 确保最小高度统一 -->
+        <item name="android:minHeight">48dp</item>
+    </style>
+</resources>

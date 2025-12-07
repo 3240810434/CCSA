@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#f5f5f5">
+
+    <!-- 顶部工具栏 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="#ffffff"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp">
+
+        <TextView
+            android:id="@+id/tv_back"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="返回"
+            android:textSize="16sp"
+            android:textColor="#333333"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp"/>
+
+        <TextView
+            android:id="@+id/tv_filter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="筛选 ▼"
+            android:textSize="16sp"
+            android:textColor="#333333"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true"/>
+
+    </LinearLayout>
+
+    <!-- 统计概览区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#ffffff"
+        android:padding="16dp"
+        android:layout_marginTop="1dp">
+
+        <!-- 总应收金额及人数 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="总应收金额"
+                android:textSize="12sp"
+                android:textColor="#666666" />
+
+            <TextView
+                android:id="@+id/tv_total_receivable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¥0.00"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="总应收人数"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tv_total_people"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0人"
+                android:textSize="16sp"
+                android:textColor="#333333"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="80dp"
+            android:background="#e0e0e0" />
+
+        <!-- 已缴金额及人数 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="已缴金额"
+                android:textSize="12sp"
+                android:textColor="#666666" />
+
+            <TextView
+                android:id="@+id/tv_paid_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¥0.00"
+                android:textSize="16sp"
+                android:textColor="#4CAF50"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="已缴人数"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tv_paid_people"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0人"
+                android:textSize="16sp"
+                android:textColor="#4CAF50"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="80dp"
+            android:background="#e0e0e0" />
+
+        <!-- 未缴金额及人数 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="未缴金额"
+                android:textSize="12sp"
+                android:textColor="#666666" />
+
+            <TextView
+                android:id="@+id/tv_unpaid_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="¥0.00"
+                android:textSize="16sp"
+                android:textColor="#F44336"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="未缴人数"
+                android:textSize="12sp"
+                android:textColor="#666666"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tv_unpaid_people"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0人"
+                android:textSize="16sp"
+                android:textColor="#F44336"
+                android:textStyle="bold"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- 缴费率 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#ffffff"
+        android:padding="16dp"
+        android:layout_marginTop="1dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="缴费率："
+            android:textSize="14sp"
+            android:textColor="#666666" />
+
+        <TextView
+            android:id="@+id/tv_payment_rate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0%"
+            android:textSize="14sp"
+            android:textColor="#333333"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <!-- 缴费明细标题和提醒按钮（修改后） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:background="#ffffff"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical">
+
+        <!-- 左侧标题：通过权重占据剩余空间，使按钮自然靠右 -->
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="缴费明细"
+            android:textSize="14sp"
+            android:textColor="#666666" />
+
+        <!-- 缴费提醒按钮：删除layout_marginLeft="auto" -->
+        <Button
+            android:id="@+id/btn_fee_reminder"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="缴费提醒"
+            android:backgroundTint="#F44336"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:paddingHorizontal="12dp"
+            android:visibility="gone"/> <!-- 默认隐藏 -->
+
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#ffffff" />
+
+</LinearLayout>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/btn_pay_fee"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="在线缴纳物业费"
+            android:textSize="16sp"
+            android:backgroundTint="@color/white"
+            android:drawableStart="@mipmap/ic_launcher"
+            android:drawablePadding="10dp"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:layout_marginBottom="12dp"
+            android:textColor="@color/black"/>
+
+        <Button
+            android:id="@+id/btn_fee_detail"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="查看缴费明细"
+            android:textSize="16sp"
+            android:backgroundTint="@color/white"
+            android:drawableStart="@mipmap/ic_launcher"
+            android:drawablePadding="10dp"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:layout_marginBottom="12dp"
+            android:textColor="@color/black"/>
+
+        <Button
+            android:id="@+id/btn_fee_appeal"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="缴费异常申诉"
+            android:textSize="16sp"
+            android:backgroundTint="@color/white"
+            android:drawableStart="@mipmap/ic_launcher"
+            android:drawablePadding="10dp"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:layout_marginBottom="12dp"
+            android:textColor="@color/black"/>
+
+        <Button
+            android:id="@+id/btn_buy_service"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="购买专业服务"
+            android:textSize="16sp"
+            android:backgroundTint="@color/white"
+            android:drawableStart="@mipmap/ic_launcher"
+            android:drawablePadding="10dp"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:layout_marginBottom="12dp"
+            android:textColor="@color/black"/>
+
+        <Button
+            android:id="@+id/btn_repair"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="在线报修"
+            android:textSize="16sp"
+            android:backgroundTint="@color/white"
+            android:drawableStart="@mipmap/ic_launcher"
+            android:drawablePadding="10dp"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:layout_marginBottom="12dp"
+            android:textColor="@color/black"/>
+
+        <Button
+            android:id="@+id/btn_contact_property"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="联系物业管理人员"
+            android:textSize="16sp"
+            android:backgroundTint="@color/white"
+            android:drawableStart="@mipmap/ic_launcher"
+            android:drawablePadding="10dp"
+            android:gravity="center_vertical"
+            android:paddingStart="20dp"
+            android:textColor="@color/black"/>
+    </LinearLayout>
+</ScrollView>

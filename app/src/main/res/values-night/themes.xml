@@ -1,0 +1,23 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.CCSA" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- 夜间模式原配置 -->
+        <item name="colorPrimary">@color/purple_200</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_200</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+
+        <!-- 同样添加自定义按钮样式 -->
+        <item name="buttonStyle">@style/CustomButton</item>
+    </style>
+
+    <!-- 夜间模式自定义按钮样式：与日间保持一致的浅灰色背景 -->
+    <style name="CustomButton" parent="Widget.MaterialComponents.Button">
+        <!-- 原透明配置改为浅灰色 #E5E4E2 -->
+        <item name="backgroundTint">@color/gray_light</item>
+        <item name="android:background">@null</item>
+    </style>
+</resources>

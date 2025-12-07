@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#E5E4E2</color>
+    <color name="purple_500">#C0C0C0</color>
+    <color name="purple_700">#D3D3D3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="blue_200">#FF0288D1</color>
+    <color name="green_500">#FF4CAF50</color>
+    <color name="red_500">#FFf44336</color>
+    <color name="alarm_red">#FF4444</color>
+    <color name="background">#F5F5F5</color>
+    <color name="darker_gray">#FFAAAAAA</color>
+    <color name="colorPrimary">#2196F3</color>
+    <color name="colorGrayLight">#F5F5F5</color>
+    <color name="blue">#2196F3</color>
+    <color name="red">#F44336</color>
+    <color name="green">#00C853</color>
+    <color name="gray">#888888</color>
+    <color name="box_bg">#F5F5F5</color>
+    <color name="gray_light">#E5E4E2</color>
+    <color name="blue_dark">#0056D2</color>
+    <color name="light_gray">#F5F5F5</color>
+    <color name="checkbox_unchecked">#BDBDBD</color>
+    <color name="checkbox_checked">#4CAF50</color>
+    <color name="radio_button_tint">#4CAF50</color>
+    <color name="primary">#2196F3</color>
+    <color name="yellow">#FFC107</color>
+</resources>

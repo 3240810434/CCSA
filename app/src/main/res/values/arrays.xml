@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 原有内容保持不变 -->
+    <string-array name="appeal_types">
+        <item>金额计算错误</item>
+        <item>重复缴费</item>
+        <item>缴费记录缺失</item>
+        <item>其他异常</item>
+    </string-array>
+
+    <string-array name="buildings">
+        <item>1号楼</item>
+        <item>2号楼</item>
+        <item>3号楼</item>
+        <item>4号楼</item>
+        <item>5号楼</item>
+    </string-array>
+
+    <string-array name="room_types">
+        <item>一室一厅</item>
+        <item>两室一厅</item>
+        <item>三室一厅</item>
+        <item>三室两厅</item>
+        <item>其他</item>
+    </string-array>
+
+    <!-- 确保数组名称正确（无空格，下划线连接） -->
+    <string-array name="payment_status">
+        <item>全部</item>
+        <item>已缴</item>
+        <item>未缴</item>
+    </string-array>
+</resources>

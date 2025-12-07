@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- 添加 Toolbar 作为 ActionBar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        android:titleTextColor="@android:color/white"
+        android:title="设置物业费标准"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="设置物业费标准"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="20dp"/>
+
+            <!-- 物业服务费 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="物业服务费每平方米每月费用："
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/et_property_service_fee"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <!-- 日常维修资金 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="日常维修资金："
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/et_maintenance_fund"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <!-- 水电公摊费 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="水电公摊费(每平方米)："
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/et_utility_fee"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <!-- 电梯费 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="电梯费："
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="2-"
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/et_elevator_floor_end"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:hint="5"
+                    android:inputType="number"
+                    android:maxLength="2"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="楼："
+                    android:textSize="14sp"
+                    android:layout_marginLeft="4dp"/>
+
+                <EditText
+                    android:id="@+id/et_elevator_fee"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <EditText
+                    android:id="@+id/et_elevator_floor_above"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:hint="6"
+                    android:inputType="number"
+                    android:maxLength="2"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="楼及以上："
+                    android:textSize="14sp"
+                    android:layout_marginLeft="4dp"/>
+
+                <EditText
+                    android:id="@+id/et_elevator_fee_above"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <!-- 高层二次加压费 -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="高层二次加压费："
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <EditText
+                    android:id="@+id/et_pressure_floor_start"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:hint="4"
+                    android:inputType="number"
+                    android:maxLength="2"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="-"
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/et_pressure_floor_end"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:hint="6"
+                    android:inputType="number"
+                    android:maxLength="2"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="楼："
+                    android:textSize="14sp"
+                    android:layout_marginLeft="4dp"/>
+
+                <EditText
+                    android:id="@+id/et_pressure_fee"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <EditText
+                    android:id="@+id/et_pressure_floor_above"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:hint="7"
+                    android:inputType="number"
+                    android:maxLength="2"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="楼及以上："
+                    android:textSize="14sp"
+                    android:layout_marginLeft="4dp"/>
+
+                <EditText
+                    android:id="@+id/et_pressure_fee_above"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <!-- 生活垃圾处理费 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="生活垃圾处理费："
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/et_garbage_fee"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="0.00"
+                    android:inputType="numberDecimal"/>
+            </LinearLayout>
+
+            <!-- 日期 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="日期："
+                    android:textSize="14sp"/>
+
+                <EditText
+                    android:id="@+id/et_effective_date"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="yyyy-MM"
+                    android:inputType="text"/>
+            </LinearLayout>
+            <!-- 缴费周期 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="24dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="缴费周期："
+                    android:textSize="14sp"/>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="月"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+
+            <!-- 按钮 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <Button
+                    android:id="@+id/btn_save"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="保存物业费标准"
+                    android:backgroundTint="@color/blue"
+                    android:textColor="@android:color/white"
+                    android:layout_marginRight="8dp"/>
+
+                <Button
+                    android:id="@+id/btn_reset"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="重置"
+                    android:backgroundTint="@color/gray"
+                    android:textColor="@android:color/white"/>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
