@@ -1,112 +1,159 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"> <!-- 确保background在colors.xml中定义为浅色调（如#F5F5F5） -->
+    android:background="#F5F5F5"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:orientation="vertical">
 
-        <!-- 用户信息卡片 -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="120dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
             android:background="@android:color/white"
-            android:orientation="horizontal"
-            android:padding="16dp"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical"
-            android:elevation="2dp">
-
-            <ImageView
-                android:id="@+id/iv_avatar"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:src="@mipmap/ic_launcher"
-                android:background="@drawable/circle_avatar"
-            android:scaleType="centerCrop"
-            android:contentDescription="用户头像"/>
+            android:layout_marginBottom="12dp"
+            android:paddingBottom="16dp">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginStart="16dp">
+                android:orientation="horizontal"
+                android:padding="20dp"
+                android:gravity="center_vertical">
 
-                <TextView
-                    android:id="@+id/tv_username"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="用户名"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/black"/>
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cv_avatar"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:cardCornerRadius="40dp"
+                    app:cardElevation="0dp"
+                    android:layout_marginEnd="16dp">
 
-                <TextView
-                    android:id="@+id/tv_address"
-                    android:layout_width="wrap_content"
+                    <ImageView
+                        android:id="@+id/iv_avatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/ic_avatar"
+                        android:scaleType="centerCrop"/>
+                </androidx.cardview.widget.CardView>
+
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="小区地址"
-                    android:textSize="14sp"
-                    android:textColor="@color/darker_gray"
-                android:layout_marginTop="8dp"/>
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_username"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="小明"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"
+                        android:layout_marginBottom="8dp"/>
+
+                    <TextView
+                        android:id="@+id/tv_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="悦景小区-1栋-501"
+                        android:textSize="14sp"
+                        android:textColor="#666666"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F0F0F0"
+                android:layout_marginBottom="16dp"
+                android:layout_marginHorizontal="20dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="false">
+
+                <LinearLayout
+                    android:id="@+id/btn_edit_profile"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/ic_manage"/> <TextView
+                    style="@style/MineMenuTextStyle"
+                    android:text="编辑主页"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_my_orders"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@android:drawable/ic_menu_agenda"/> <TextView
+                    style="@style/MineMenuTextStyle"
+                    android:text="我的订单"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_watch_history"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@android:drawable/ic_menu_recent_history"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="观看历史"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_change_password"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/ic_contact"/> <TextView
+                    style="@style/MineMenuTextStyle"
+                    android:text="更改密码"/>
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btn_edit_info"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="编辑个人信息"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-        android:textColor="@color/black"
-        android:drawableStart="@mipmap/ic_launcher"
-        android:drawablePadding="10dp"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:background="?attr/selectableItemBackground"/>
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:paddingVertical="8dp">
 
-        <Button
-            android:id="@+id/btn_change_pwd"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="修改密码"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:textColor="@color/black"
-        android:drawableStart="@mipmap/ic_launcher"
-        android:drawablePadding="10dp"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:layout_marginTop="12dp"
-        android:background="?attr/selectableItemBackground"/>
+            <TextView
+                android:id="@+id/btn_my_repairs"
+                style="@style/MineListItemStyle"
+                android:text="我的报修"
+                android:drawableStart="@drawable/ic_repair"/>
 
-        <Button
-            android:id="@+id/btn_history"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="查看历史记录"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:textColor="@color/black"
-        android:drawableStart="@mipmap/ic_launcher"
-        android:drawablePadding="10dp"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:layout_marginTop="12dp"
-        android:background="?attr/selectableItemBackground"/>
+            <View style="@style/DividerStyle"/>
 
-        <Button
-            android:id="@+id/btn_logout"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="退出登录"
-            android:textSize="16sp"
-            android:backgroundTint="@color/alarm_red"
-        android:elevation="2dp"/>
+            <TextView
+                android:id="@+id/btn_contact_property"
+                style="@style/MineListItemStyle"
+                android:text="联系物业"
+                android:drawableStart="@drawable/ic_contact"/>
+
+            <View style="@style/DividerStyle"/>
+
+            <TextView
+                android:id="@+id/btn_logout"
+                style="@style/MineListItemStyle"
+                android:text="退出登录"
+                android:textColor="#FF4D4F"
+                android:drawableStart="@android:drawable/ic_lock_power_off"/>
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

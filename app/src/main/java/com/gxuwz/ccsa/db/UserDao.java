@@ -6,6 +6,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import com.gxuwz.ccsa.model.User;
 import java.util.List;
+import androidx.room.Update; 
 
 @Dao
 public interface UserDao {
@@ -62,5 +63,7 @@ public interface UserDao {
     @Query("SELECT * FROM user WHERE phone = :phone")
     User getByPhone(String phone);
 
-
+    // 新增：更新用户信息
+    @Update
+    void update(User user);
 }
