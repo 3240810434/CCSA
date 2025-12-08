@@ -23,11 +23,13 @@ import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Comment;
 import com.gxuwz.ccsa.model.Post;
 import com.gxuwz.ccsa.model.PostMedia;
+import com.gxuwz.ccsa.model.User;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PostDetailActivity extends AppCompatActivity {
     private Post post;
+    private User currentUser; // 当前登录用户
     private RecyclerView rvComments;
     private CommentAdapter adapter;
     private List<Comment> commentList = new ArrayList<>();
@@ -35,8 +37,6 @@ public class PostDetailActivity extends AppCompatActivity {
 
     private TextView tvName, tvContent;
     private ImageView ivAvatar, ivBack;
-
-    // 媒体相关
     private ViewPager2 viewPager;
     private VideoView videoView;
     private LinearLayout indicatorContainer;
@@ -47,6 +47,8 @@ public class PostDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post_detail_custom);
 
         post = (Post) getIntent().getSerializableExtra("post");
+        // 获取传递过来的当前用户
+        currentUser = (User) getIntent().getSerializableExtra("user");
 
         initViews();
         setupPostContent();
@@ -85,10 +87,12 @@ public class PostDetailActivity extends AppCompatActivity {
         tvName.setText(post.userName);
         tvContent.setText(post.content);
 
-        // 头像处理
-        if (post.userAvatar != null && !post.userAvatar.isEmpty()) {
-            Glide.with(this).load(post.userAvatar).into(ivAvatar);
-        }
+        // 加载帖子发布者的头像
+        Glide.with(this)
+                .load(post.userAvatar)
+                .placeholder(R.drawable.lan)
+                .error(R.drawable.lan)
+                .into(ivAvatar);
 
         // 媒体处理
         if (post.mediaList != null && !post.mediaList.isEmpty()) {
@@ -100,6 +104,7 @@ public class PostDetailActivity extends AppCompatActivity {
 
                 videoView.setVideoPath(post.mediaList.get(0).url);
                 videoView.start();
+                // 点击暂停/播放
                 videoView.setOnClickListener(v -> {
                     if (videoView.isPlaying()) videoView.pause();
                     else videoView.start();
@@ -108,15 +113,9 @@ public class PostDetailActivity extends AppCompatActivity {
                 // === 图片 ===
                 videoView.setVisibility(View.GONE);
                 viewPager.setVisibility(View.VISIBLE);
-
-                // 设置 ViewPager Adapter
                 ImagePagerAdapter imageAdapter = new ImagePagerAdapter(post.mediaList);
                 viewPager.setAdapter(imageAdapter);
-
-                // 设置指示器
                 setupIndicators(post.mediaList.size());
-
-                // 监听滑动更新指示器
                 viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                     @Override
                     public void onPageSelected(int position) {
@@ -126,14 +125,12 @@ public class PostDetailActivity extends AppCompatActivity {
                 });
             }
         } else {
-            // 纯文本
             viewPager.setVisibility(View.GONE);
             videoView.setVisibility(View.GONE);
             indicatorContainer.setVisibility(View.GONE);
         }
     }
 
-    // 初始化指示器条 (灰色透明条)
     private void setupIndicators(int count) {
         if (count < 2) {
             indicatorContainer.setVisibility(View.GONE);
@@ -141,28 +138,22 @@ public class PostDetailActivity extends AppCompatActivity {
         }
         indicatorContainer.setVisibility(View.VISIBLE);
         indicatorContainer.removeAllViews();
-
         for (int i = 0; i < count; i++) {
             View view = new View(this);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.0f);
-            params.setMargins(5, 0, 5, 0); // 间隔
+            params.setMargins(5, 0, 5, 0);
             view.setLayoutParams(params);
-            view.setBackgroundColor(0xFFE0E0E0); // 默认浅灰
+            view.setBackgroundColor(0xFFE0E0E0);
             indicatorContainer.addView(view);
         }
         updateIndicators(0);
     }
 
-    // 更新指示器颜色
     private void updateIndicators(int position) {
         int count = indicatorContainer.getChildCount();
         for (int i = 0; i < count; i++) {
             View view = indicatorContainer.getChildAt(i);
-            if (i == position) {
-                view.setBackgroundColor(0xFF888888); // 选中深灰
-            } else {
-                view.setBackgroundColor(0xFFE0E0E0); // 未选中浅灰
-            }
+            view.setBackgroundColor(i == position ? 0xFF888888 : 0xFFE0E0E0);
         }
     }
 
@@ -175,7 +166,18 @@ public class PostDetailActivity extends AppCompatActivity {
 
     private void loadComments() {
         new Thread(() -> {
-            List<Comment> comments = AppDatabase.getInstance(this).postDao().getCommentsForPost(post.id);
+            AppDatabase db = AppDatabase.getInstance(this);
+            List<Comment> comments = db.postDao().getCommentsForPost(post.id);
+
+            // 关键：同步评论用户的最新头像和昵称
+            for (Comment c : comments) {
+                User u = db.userDao().getUserById(c.userId);
+                if (u != null) {
+                    c.userName = u.getName();
+                    c.userAvatar = u.getAvatar();
+                }
+            }
+
             runOnUiThread(() -> {
                 commentList.clear();
                 commentList.addAll(comments);
@@ -185,58 +187,50 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void sendComment(String content) {
+        if (post == null) return;
+        if (currentUser == null) {
+            Toast.makeText(this, "用户未登录，无法评论", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         new Thread(() -> {
             Comment comment = new Comment();
             comment.postId = post.id;
-            comment.userId = 1;
-            comment.userName = "我";
+            comment.userId = currentUser.getId();
+            comment.userName = currentUser.getName();
+            comment.userAvatar = currentUser.getAvatar(); // 使用当前页面显示的头像
             comment.content = content;
             comment.createTime = System.currentTimeMillis();
+
             AppDatabase.getInstance(this).postDao().insertComment(comment);
+
             runOnUiThread(() -> {
                 etComment.setText("");
                 Toast.makeText(this, "评论成功", Toast.LENGTH_SHORT).show();
-                loadComments();
+                loadComments(); // 重新加载以显示新评论
             });
         }).start();
     }
 
-    // 内部类：图片 ViewPager 适配器
     class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.ImageViewHolder> {
         private List<PostMedia> mediaList;
-
-        public ImagePagerAdapter(List<PostMedia> mediaList) {
-            this.mediaList = mediaList;
-        }
-
-        @NonNull
-        @Override
+        public ImagePagerAdapter(List<PostMedia> mediaList) { this.mediaList = mediaList; }
+        @NonNull @Override
         public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             ImageView imageView = new ImageView(parent.getContext());
-            imageView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER); // 保持比例展示
+            imageView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             return new ImageViewHolder(imageView);
         }
-
         @Override
         public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
-            Glide.with(holder.imageView.getContext())
-                    .load(mediaList.get(position).url)
-                    .into(holder.imageView);
+            Glide.with(holder.imageView.getContext()).load(mediaList.get(position).url).into(holder.imageView);
         }
-
         @Override
-        public int getItemCount() {
-            return mediaList.size();
-        }
-
+        public int getItemCount() { return mediaList.size(); }
         class ImageViewHolder extends RecyclerView.ViewHolder {
             ImageView imageView;
-            public ImageViewHolder(@NonNull View itemView) {
-                super(itemView);
-                this.imageView = (ImageView) itemView;
-            }
+            public ImageViewHolder(@NonNull View itemView) { super(itemView); this.imageView = (ImageView) itemView; }
         }
     }
 }

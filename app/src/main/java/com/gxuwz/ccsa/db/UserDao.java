@@ -6,7 +6,7 @@ import androidx.room.Insert;
 import androidx.room.Query;
 import com.gxuwz.ccsa.model.User;
 import java.util.List;
-import androidx.room.Update; 
+import androidx.room.Update;
 
 @Dao
 public interface UserDao {
@@ -29,6 +29,12 @@ public interface UserDao {
     User findByPhone(String phone);
 
     /**
+     * 根据ID获取最新用户信息（头像、昵称等）
+     */
+    @Query("SELECT * FROM user WHERE id = :id")
+    User getUserById(int id);
+
+    /**
      * 根据小区查询居民并按楼栋和房号排序
      */
     @Query("SELECT * FROM user WHERE community = :community ORDER BY building ASC, room ASC")
@@ -46,24 +52,18 @@ public interface UserDao {
     @Query("SELECT * FROM user WHERE community = :community ORDER BY building ASC, room ASC")
     List<User> findResidentsByCommunitySorted(String community);
 
-
-    // 新增：统计指定社区的用户数量
     @Query("SELECT COUNT(*) FROM user WHERE community = :community")
     int countByCommunity(String community);
 
-    // 修正后代码（删除role条件，假设通过其他方式区分居民）：
     @Query("SELECT * FROM user WHERE community = :community")
     List<User> getResidentsByCommunity(String community);
 
-    // 在 CCSA/app/src/main/java/com/gxuwz/ccsa/db/UserDao.java 中添加
     @Query("SELECT * FROM user WHERE community = :community AND building = :building AND room = :roomNumber LIMIT 1")
     User getByRoom(String community, String building, String roomNumber);
 
-    // 在 UserDao 接口中添加
     @Query("SELECT * FROM user WHERE phone = :phone")
     User getByPhone(String phone);
 
-    // 新增：更新用户信息
     @Update
     void update(User user);
 }
