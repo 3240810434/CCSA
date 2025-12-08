@@ -10,8 +10,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Comment;
@@ -23,7 +21,7 @@ import java.util.List;
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
     private Context context;
     private List<Comment> list;
-    private int currentUserId = 1; // 假定当前用户ID，实际项目中应从SharedPref或Activity获取
+    private int currentUserId = 1; // 假定当前用户ID
 
     public CommentAdapter(Context context, List<Comment> list) {
         this.context = context;
@@ -43,37 +41,33 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
         holder.tvContent.setText(comment.content);
         holder.tvTime.setText(DateUtils.getRelativeTime(comment.createTime));
-
-        // 默认先显示 Comment 对象中存储的快照信息（防止网络/数据库延迟时空白）
         holder.tvName.setText(comment.userName);
+
+        // ============ 修改点 1：默认头像改为 lan (lan.jpg) ============
+        // 解决评论显示“黑人头像”的问题，默认加载 lan.jpg
         Glide.with(context)
                 .load(comment.userAvatar)
-                .placeholder(R.drawable.ic_avatar)
-                .error(R.drawable.ic_avatar)
+                .placeholder(R.drawable.lan) // 修改这里
+                .error(R.drawable.lan)       // 修改这里
                 .into(holder.ivAvatar);
 
-        // ============ 核心修改：实时同步用户信息 ============
-        // 开启线程查询该评论发布者的最新信息（头像、昵称）
+        // 实时同步用户信息
         new Thread(() -> {
-            // 根据 comment.userId 查询最新的 User 数据
             User latestUser = AppDatabase.getInstance(context).userDao().getUserById(comment.userId);
-
             if (latestUser != null && context instanceof Activity) {
                 ((Activity) context).runOnUiThread(() -> {
-                    // 在主线程更新UI
                     holder.tvName.setText(latestUser.getName());
-
+                    // 同步加载最新头像，同样使用 lan 作为占位
                     Glide.with(context)
-                            .load(latestUser.getAvatar()) // 加载最新头像
-                            .placeholder(R.drawable.ic_avatar)
-                            .error(R.drawable.ic_avatar)
+                            .load(latestUser.getAvatar())
+                            .placeholder(R.drawable.lan) // 修改这里
+                            .error(R.drawable.lan)       // 修改这里
                             .into(holder.ivAvatar);
                 });
             }
         }).start();
-        // ===============================================
 
-        // 长按删除自己的评论
+        // 长按删除
         holder.itemView.setOnLongClickListener(v -> {
             if (comment.userId == currentUserId) {
                 new AlertDialog.Builder(context)
@@ -81,7 +75,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
                         .setPositiveButton("删除", (d, w) -> {
                             new Thread(() -> {
                                 AppDatabase.getInstance(context).postDao().deleteComment(comment);
-                                // UI更新需在Activity中回调，此处简化直接移除List
                                 if (context instanceof Activity) {
                                     ((Activity) context).runOnUiThread(() -> {
                                         list.remove(position);
@@ -103,7 +96,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvContent, tvTime;
-        CircleImageView ivAvatar; // 使用 CircleImageView 或 ImageView
+        CircleImageView ivAvatar;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
