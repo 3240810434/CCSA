@@ -36,8 +36,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     private User currentUser;
     private int screenWidth;
     private int screenHeight;
-    // 预估的导航栏总高度 (顶部标题 + 状态栏 + 底部导航)，用于限制视频最大高度
-    private static final int NAV_BARS_HEIGHT_DP = 160;
+
+    // 估算上下导航栏及状态栏的总高度 (单位 dp)
+    // 顶部标题栏(约48) + 状态栏(约24) + 底部导航(约56) + 顶部Tab(约40) + 边距余量
+    private static final int OCCUPIED_HEIGHT_DP = 180;
 
     public PostAdapter(Context context, List<Post> list, User currentUser) {
         this.context = context;
@@ -97,34 +99,45 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 holder.mediaContainer.setPadding(0, 0, 0, 0);
 
                 String videoUrl = post.mediaList.get(0).url;
-                int cardWidth = screenWidth - dp2px(context, 20); // CardView margin
 
-                // 创建相对布局作为容器，用于放置视频和右侧按钮
+                // 计算固定高度：屏幕高度 - 上下导航栏占用的高度
+                int fixedVideoHeight = screenHeight - dp2px(context, OCCUPIED_HEIGHT_DP);
+
+                // 确保高度至少是宽度的一半，防止屏幕计算异常导致太矮
+                if (fixedVideoHeight < screenWidth / 2) {
+                    fixedVideoHeight = screenWidth; // 降级策略
+                }
+
+                // 创建相对布局作为容器
                 RelativeLayout relativeLayout = new RelativeLayout(context);
-                relativeLayout.setLayoutParams(new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                // 强制设置容器高度，确保不会是白色或0高度
+                RelativeLayout.LayoutParams containerParams = new RelativeLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, fixedVideoHeight);
+                relativeLayout.setLayoutParams(containerParams);
+                relativeLayout.setBackgroundColor(0xFF000000); // 设置黑色背景，避免视频加载前显示白色
 
                 // VideoView
                 VideoView videoView = new VideoView(context);
                 RelativeLayout.LayoutParams videoParams = new RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                videoParams.addRule(RelativeLayout.CENTER_IN_PARENT);
+                videoParams.addRule(RelativeLayout.CENTER_IN_PARENT); // 视频居中
                 videoView.setLayoutParams(videoParams);
                 videoView.setVideoPath(videoUrl);
 
-                // 封面图
+                // 封面图 (填满容器)
                 ImageView coverImage = new ImageView(context);
                 coverImage.setLayoutParams(new RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                coverImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                coverImage.setScaleType(ImageView.ScaleType.CENTER_CROP); // 裁剪填满
                 Glide.with(context).load(videoUrl).frame(1000000).into(coverImage);
 
                 // 播放图标
                 ImageView playIcon = new ImageView(context);
                 playIcon.setImageResource(android.R.drawable.ic_media_play);
-                RelativeLayout.LayoutParams iconParams = new RelativeLayout.LayoutParams(120, 120);
+                RelativeLayout.LayoutParams iconParams = new RelativeLayout.LayoutParams(150, 150); //稍微调大一点图标
                 iconParams.addRule(RelativeLayout.CENTER_IN_PARENT);
                 playIcon.setLayoutParams(iconParams);
+                playIcon.setElevation(10f); // 确保图标在最上层
 
                 // ============ 侧边栏按钮 (点赞/点踩/评论) ============
                 LinearLayout sideBar = new LinearLayout(context);
@@ -133,11 +146,11 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 RelativeLayout.LayoutParams sideBarParams = new RelativeLayout.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 sideBarParams.addRule(RelativeLayout.ALIGN_PARENT_END);
-                sideBarParams.addRule(RelativeLayout.CENTER_VERTICAL);
+                sideBarParams.addRule(RelativeLayout.CENTER_VERTICAL); // 垂直居中
                 sideBarParams.setMargins(0, 0, dp2px(context, 10), 0);
                 sideBar.setLayoutParams(sideBarParams);
+                sideBar.setElevation(10f); // 确保侧边栏在视频上方
 
-                // 创建侧边栏按钮的方法
                 ImageView btnLike = createSideIcon(context, post.isLiked ? R.drawable.liked : R.drawable.like);
                 ImageView btnDislike = createSideIcon(context, post.isDisliked ? R.drawable.disliked : R.drawable.dislike);
                 ImageView btnComment = createSideIcon(context, R.drawable.ic_notice);
@@ -146,46 +159,44 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 sideBar.addView(btnDislike);
                 sideBar.addView(btnComment);
 
-                // 添加到容器
+                // 添加到容器 (注意添加顺序，后添加的在上面)
                 relativeLayout.addView(videoView);
                 relativeLayout.addView(coverImage);
                 relativeLayout.addView(playIcon);
                 relativeLayout.addView(sideBar);
                 holder.mediaContainer.addView(relativeLayout);
 
-                // 视频尺寸动态计算与限制
+                // 视频准备监听 - 不再改变高度，只处理视频居中逻辑
                 videoView.setOnPreparedListener(mp -> {
                     mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT);
-                    int videoW = mp.getVideoWidth();
-                    int videoH = mp.getVideoHeight();
-
-                    if (videoW > 0 && videoH > 0) {
-                        // 1. 根据宽度计算等比高度
-                        float ratio = (float) videoH / videoW;
-                        int targetHeight = (int) (cardWidth * ratio);
-
-                        // 2. 限制最大高度 (屏幕高度 - 导航栏预估高度)
-                        int maxHeight = screenHeight - dp2px(context, NAV_BARS_HEIGHT_DP);
-                        if (targetHeight > maxHeight) {
-                            targetHeight = maxHeight;
-                        }
-
-                        // 3. 应用高度
-                        ViewGroup.LayoutParams lp = relativeLayout.getLayoutParams();
-                        lp.height = targetHeight;
-                        relativeLayout.setLayoutParams(lp);
-                    }
+                    // 如果需要视频完全铺满不留黑边（可能会裁剪画面），可以使用：
+                    // mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING);
                 });
 
-                // 点击播放
-                playIcon.setOnClickListener(v -> {
+                videoView.setOnErrorListener((mp, what, extra) -> {
+                    // 视频加载错误处理，防止卡死
+                    return true;
+                });
+
+                // 点击播放逻辑
+                View.OnClickListener playAction = v -> {
                     coverImage.setVisibility(View.GONE);
                     playIcon.setVisibility(View.GONE);
-                    videoView.start();
-                });
-                videoView.setOnCompletionListener(mp -> playIcon.setVisibility(View.VISIBLE));
+                    if (!videoView.isPlaying()) {
+                        videoView.start();
+                    }
+                };
 
-                // 侧边栏按钮点击事件
+                // 让播放图标和封面图都响应点击
+                playIcon.setOnClickListener(playAction);
+                coverImage.setOnClickListener(playAction);
+
+                videoView.setOnCompletionListener(mp -> {
+                    playIcon.setVisibility(View.VISIBLE);
+                    // 播放完不显示封面图，或者你可以选择显示 coverImage.setVisibility(View.VISIBLE);
+                });
+
+                // 侧边栏交互
                 btnLike.setOnClickListener(v -> {
                     if (post.isDisliked) {
                         post.isDisliked = false;
@@ -260,16 +271,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                     holder.mediaContainer.addView(gridLayout);
                 }
 
-                // 非视频帖子，绑定底部按钮事件
                 bindBottomActions(holder, post);
             }
         } else {
-            // 纯文本帖子，绑定底部按钮事件
             bindBottomActions(holder, post);
         }
     }
 
-    // 绑定底部互动栏事件
     private void bindBottomActions(PostViewHolder holder, Post post) {
         holder.ivLike.setImageResource(post.isLiked ? R.drawable.liked : R.drawable.like);
         holder.ivDislike.setImageResource(post.isDisliked ? R.drawable.disliked : R.drawable.dislike);
@@ -304,15 +312,14 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         context.startActivity(intent);
     }
 
-    // 创建侧边栏图标的辅助方法
     private ImageView createSideIcon(Context context, int resId) {
         ImageView iv = new ImageView(context);
         iv.setImageResource(resId);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp2px(context, 32), dp2px(context, 32));
-        params.setMargins(0, 0, 0, dp2px(context, 20)); // 垂直间距
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp2px(context, 35), dp2px(context, 35)); // 稍微调大按钮尺寸
+        params.setMargins(0, 0, 0, dp2px(context, 25)); // 增加垂直间距
         iv.setLayoutParams(params);
-        // 添加阴影以确保在亮色视频背景上可见
-        iv.setElevation(4f);
+        // 添加阴影
+        iv.setElevation(6f);
         return iv;
     }
 
@@ -331,7 +338,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         ImageView ivAvatar;
         FrameLayout mediaContainer;
         View layoutLike, layoutDislike, layoutComment;
-        LinearLayout layoutBottomBar; // 新增：底部整个互动栏
+        LinearLayout layoutBottomBar;
         ImageView ivLike, ivDislike;
 
         public PostViewHolder(@NonNull View itemView) {
@@ -345,7 +352,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             layoutLike = itemView.findViewById(R.id.layout_like);
             layoutDislike = itemView.findViewById(R.id.layout_dislike);
             layoutComment = itemView.findViewById(R.id.layout_comment);
-            layoutBottomBar = itemView.findViewById(R.id.layout_bottom_bar); // 获取底部栏引用
+            layoutBottomBar = itemView.findViewById(R.id.layout_bottom_bar);
             ivLike = itemView.findViewById(R.id.iv_like);
             ivDislike = itemView.findViewById(R.id.iv_dislike);
         }
