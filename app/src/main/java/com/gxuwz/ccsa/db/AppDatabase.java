@@ -33,7 +33,8 @@ import com.gxuwz.ccsa.model.Repair; // 新增：导入Repair实体
                 RoomArea.class,
                 PropertyFeeBill.class,
                 Notification.class, // 新增：添加通知实体
-                Repair.class // 添加Repair实体
+                Repair.class, // 添加Repair实体
+
         },
         version = 7,
         exportSchema = false
