@@ -107,7 +107,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvTime = itemView.findViewById(R.id.tv_time);
             tvContent = itemView.findViewById(R.id.tv_content);
             tvCommentCount = itemView.findViewById(R.id.tv_comment_count);
-            ivAvatar = itemView.findViewById(R.id.iv_avatar); // 绑定头像ID
+
+            // 关键点：这里绑定的是 XML 中的 id/iv_avatar
+            ivAvatar = itemView.findViewById(R.id.iv_avatar);
+
             ivImage1 = itemView.findViewById(R.id.iv_img_1);
             ivImage2 = itemView.findViewById(R.id.iv_img_2);
             ivImage3 = itemView.findViewById(R.id.iv_img_3);
