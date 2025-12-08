@@ -21,7 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.bumptech.glide.Glide; // 如果项目中没有Glide，可以使用setImageURI，建议添加依赖
+// import com.bumptech.glide.Glide; // 如果项目中没有Glide，可以使用setImageURI
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.login.LoginActivity;
@@ -115,14 +115,15 @@ public class MineFragment extends Fragment {
 
     private void loadUserData() {
         if (currentUser != null) {
-            tvUsername.setText(currentUser.getUsername());
+            // 修复：使用 getName() 代替 getUsername()
+            tvUsername.setText(currentUser.getName());
+
             String address = currentUser.getCommunity() + "-" + currentUser.getBuilding() + "-" + currentUser.getRoom();
             tvAddress.setText(address);
 
             // 加载头像
             if (currentUser.getAvatar() != null && !currentUser.getAvatar().isEmpty()) {
-                // 使用 Glide 加载图片 (推荐) 或者原生 setImageURI
-                // Glide.with(this).load(currentUser.getAvatar()).into(ivAvatar);
+                // 使用原生 setImageURI
                 ivAvatar.setImageURI(Uri.parse(currentUser.getAvatar()));
             } else {
                 ivAvatar.setImageResource(R.drawable.ic_avatar); // 默认头像
@@ -154,7 +155,8 @@ public class MineFragment extends Fragment {
         // 修改用户名输入框
         final EditText etUsername = new EditText(getContext());
         etUsername.setHint("请输入新的用户名");
-        etUsername.setText(currentUser.getUsername());
+        // 修复：使用 getName() 代替 getUsername()
+        etUsername.setText(currentUser.getName());
         layout.addView(etUsername);
 
         builder.setView(layout);
@@ -186,7 +188,8 @@ public class MineFragment extends Fragment {
 
     // 更新数据库中的用户名
     private void updateUsername(String newName) {
-        currentUser.setUsername(newName);
+        // 修复：使用 setName() 代替 setUsername()
+        currentUser.setName(newName);
         tvUsername.setText(newName); // 立即更新UI
         saveUserToDb();
     }
