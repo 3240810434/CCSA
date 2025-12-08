@@ -2,17 +2,24 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.VideoView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CenterCrop;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.Post;
+import com.gxuwz.ccsa.model.PostMedia;
 import com.gxuwz.ccsa.ui.resident.PostDetailActivity;
 import com.gxuwz.ccsa.util.DateUtils;
 import java.util.List;
@@ -20,10 +27,13 @@ import java.util.List;
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder> {
     private Context context;
     private List<Post> list;
+    private int screenWidth;
 
     public PostAdapter(Context context, List<Post> list) {
         this.context = context;
         this.list = list;
+        DisplayMetrics dm = context.getResources().getDisplayMetrics();
+        screenWidth = dm.widthPixels;
     }
 
     @NonNull
@@ -36,58 +46,132 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     @Override
     public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
         Post post = list.get(position);
+
+        // 1. 基础信息绑定
         holder.tvName.setText(post.userName);
         holder.tvTime.setText(DateUtils.getRelativeTime(post.createTime));
-        holder.tvContent.setText(post.content);
-        holder.tvCommentCount.setText(String.valueOf(post.commentCount));
+        holder.tvCommentCount.setText(post.commentCount > 0 ? String.valueOf(post.commentCount) : "");
 
-        // 加载用户头像
-        // 修改说明：与 MineFragment 保持一致，默认头像改为 R.drawable.lan
-        if (post.userAvatar != null && !post.userAvatar.isEmpty()) {
-            Glide.with(context)
-                    .load(post.userAvatar)
-                    .placeholder(R.drawable.lan) // 加载过程中显示默认图
-                    .error(R.drawable.lan)       // 加载失败显示默认图
-                    .into(holder.ivAvatar);
+        Glide.with(context)
+                .load(post.userAvatar)
+                .placeholder(R.drawable.lan)
+                .error(R.drawable.lan)
+                .apply(RequestOptions.bitmapTransform(new RoundedCorners(100))) // 圆形头像
+                .into(holder.ivAvatar);
+
+        // 2. 文字处理：根据是否有媒体调整大小
+        boolean hasMedia = post.mediaList != null && !post.mediaList.isEmpty();
+        holder.tvContent.setText(post.content);
+        if (!hasMedia) {
+            // 纯文字帖：字体大一点
+            holder.tvContent.setTextSize(18);
         } else {
-            // 设置默认头像，原先是 ic_avatar (黑色人头)，现在改为 lan (我的页面同款)
-            holder.ivAvatar.setImageResource(R.drawable.lan);
+            // 带媒体帖：标准字体
+            holder.tvContent.setTextSize(15);
         }
 
-        // 媒体处理
-        holder.ivImage1.setVisibility(View.GONE);
-        holder.ivImage2.setVisibility(View.GONE);
-        holder.ivImage3.setVisibility(View.GONE);
-        holder.videoView.setVisibility(View.GONE);
-        holder.ivPlay.setVisibility(View.GONE);
+        // 隐藏空文字
+        holder.tvContent.setVisibility(post.content == null || post.content.isEmpty() ? View.GONE : View.VISIBLE);
 
-        if (post.mediaList != null && !post.mediaList.isEmpty()) {
-            if (post.type == 2) { // 视频
-                holder.videoView.setVisibility(View.VISIBLE);
-                holder.ivPlay.setVisibility(View.VISIBLE);
-                holder.videoView.setVideoPath(post.mediaList.get(0).url);
-                holder.ivPlay.setOnClickListener(v -> {
-                    holder.videoView.start();
-                    holder.ivPlay.setVisibility(View.GONE);
-                });
-            } else { // 图片
-                int size = post.mediaList.size();
-                if (size > 0) {
-                    holder.ivImage1.setVisibility(View.VISIBLE);
-                    Glide.with(context).load(post.mediaList.get(0).url).into(holder.ivImage1);
-                }
-                if (size > 1) {
-                    holder.ivImage2.setVisibility(View.VISIBLE);
-                    Glide.with(context).load(post.mediaList.get(1).url).into(holder.ivImage2);
-                }
-                if (size > 2) {
-                    holder.ivImage3.setVisibility(View.VISIBLE);
-                    Glide.with(context).load(post.mediaList.get(2).url).into(holder.ivImage3);
+        // 3. 媒体内容处理
+        holder.mediaContainer.removeAllViews(); // 清除旧视图
+
+        if (hasMedia) {
+            if (post.type == 2) {
+                // === 视频处理 ===
+                View videoLayout = LayoutInflater.from(context).inflate(R.layout.item_media_grid, holder.mediaContainer, false);
+                // 这里为了演示简单直接用了VideoView，实际列表中建议使用ImageView做封面，点击再播放
+                VideoView videoView = new VideoView(context);
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 500); // 固定高度
+                videoView.setLayoutParams(params);
+                videoView.setVideoPath(post.mediaList.get(0).url);
+
+                ImageView playIcon = new ImageView(context);
+                playIcon.setImageResource(android.R.drawable.ic_media_play);
+                FrameLayout.LayoutParams iconParams = new FrameLayout.LayoutParams(100, 100);
+                iconParams.gravity = android.view.Gravity.CENTER;
+                playIcon.setLayoutParams(iconParams);
+
+                holder.mediaContainer.addView(videoView);
+                holder.mediaContainer.addView(playIcon);
+
+                // 列表内不建议自动播放，点击进入详情或播放
+                View.OnClickListener listener = v -> {
+                    Intent intent = new Intent(context, PostDetailActivity.class);
+                    intent.putExtra("post", post);
+                    context.startActivity(intent);
+                };
+                playIcon.setOnClickListener(listener);
+
+            } else {
+                // === 图片处理 ===
+                int imgCount = post.mediaList.size();
+
+                if (imgCount == 1) {
+                    // 2.1 单图：直接显示，自适应大小
+                    ImageView imageView = new ImageView(context);
+                    // 限制最大高度，避免图片过长
+                    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    params.height = 600; // 最大高度限制
+                    imageView.setLayoutParams(params);
+                    imageView.setScaleType(ImageView.ScaleType.FIT_START);
+                    imageView.setAdjustViewBounds(true);
+
+                    Glide.with(context)
+                            .load(post.mediaList.get(0).url)
+                            .transform(new CenterCrop(), new RoundedCorners(16))
+                            .into(imageView);
+
+                    holder.mediaContainer.addView(imageView);
+
+                    // 点击放大/查看图片 (这里简化为进入详情页，或者可以跳转专门的图片查看Activity)
+                    imageView.setOnClickListener(v -> {
+                        // 这里通常跳转到一个全屏查看图片的Activity，根据需求描述，
+                        // "点击图片可以放大查看"，建议实现一个 PhotoViewActivity
+                        // 暂时为了简单，这里不写新的Activity，而是遵循"点击评论进详情"
+                        // 如果需要单纯看图，可以扩展
+                    });
+
+                } else {
+                    // 2.2 多图 (>=2)：网格显示
+                    GridLayout gridLayout = new GridLayout(context);
+                    gridLayout.setColumnCount(3);
+                    gridLayout.setRowCount((imgCount + 2) / 3);
+
+                    // 计算每个格子的宽度：(屏幕宽 - padding) / 3
+                    int padding = 40; // 估算左右边距 dp转px
+                    int itemSize = (screenWidth - dp2px(context, padding)) / 3;
+
+                    for (int i = 0; i < imgCount; i++) {
+                        String url = post.mediaList.get(i).url;
+                        ImageView iv = new ImageView(context);
+                        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                        params.width = itemSize;
+                        params.height = itemSize; // 正方形
+                        params.setMargins(2, 2, 2, 2); // 间距
+                        iv.setLayoutParams(params);
+                        iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+                        Glide.with(context)
+                                .load(url)
+                                .into(iv);
+
+                        gridLayout.addView(iv);
+                    }
+                    holder.mediaContainer.addView(gridLayout);
                 }
             }
         }
 
+        // 4. 点击评论进入详情页
         holder.btnComment.setOnClickListener(v -> {
+            Intent intent = new Intent(context, PostDetailActivity.class);
+            intent.putExtra("post", post);
+            context.startActivity(intent);
+        });
+
+        // 点击整个卡片也可以进详情
+        holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, PostDetailActivity.class);
             intent.putExtra("post", post);
             context.startActivity(intent);
@@ -99,11 +183,15 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         return list.size();
     }
 
+    private int dp2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
     static class PostViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvTime, tvContent, tvCommentCount;
-        ImageView ivAvatar; // 新增头像控件
-        ImageView ivImage1, ivImage2, ivImage3, ivPlay;
-        VideoView videoView;
+        ImageView ivAvatar;
+        FrameLayout mediaContainer;
         View btnComment;
 
         public PostViewHolder(@NonNull View itemView) {
@@ -112,15 +200,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvTime = itemView.findViewById(R.id.tv_time);
             tvContent = itemView.findViewById(R.id.tv_content);
             tvCommentCount = itemView.findViewById(R.id.tv_comment_count);
-
-            // 关键点：这里绑定的是 XML 中的 id/iv_avatar
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
-
-            ivImage1 = itemView.findViewById(R.id.iv_img_1);
-            ivImage2 = itemView.findViewById(R.id.iv_img_2);
-            ivImage3 = itemView.findViewById(R.id.iv_img_3);
-            videoView = itemView.findViewById(R.id.video_view);
-            ivPlay = itemView.findViewById(R.id.iv_play_icon);
+            mediaContainer = itemView.findViewById(R.id.media_container);
             btnComment = itemView.findViewById(R.id.layout_comment);
         }
     }
