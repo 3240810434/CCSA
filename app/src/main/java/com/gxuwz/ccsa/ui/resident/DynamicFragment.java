@@ -6,18 +6,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
+// import android.widget.Toast; // 不需要 Toast 了
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+// import com.google.android.material.floatingactionbutton.FloatingActionButton; // 删除导入
 import com.gxuwz.ccsa.R;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 居民端-动态主页面
@@ -28,7 +25,7 @@ public class DynamicFragment extends Fragment {
     private TextView tvLifeDynamics;
     private TextView tvNeighborHelp;
     private ViewPager2 viewPager;
-    private FloatingActionButton fabPublish;
+    // private FloatingActionButton fabPublish; // 删除变量
 
     // 选中和未选中的颜色
     private static final int COLOR_SELECTED = Color.parseColor("#000000"); // 黑色
@@ -46,20 +43,13 @@ public class DynamicFragment extends Fragment {
         tvLifeDynamics = view.findViewById(R.id.tv_life_dynamics);
         tvNeighborHelp = view.findViewById(R.id.tv_neighbor_help);
         viewPager = view.findViewById(R.id.view_pager_dynamic);
-        fabPublish = view.findViewById(R.id.fab_publish);
+        // fabPublish = view.findViewById(R.id.fab_publish); // 删除初始化
 
         // 点击标题切换页面
         tvLifeDynamics.setOnClickListener(v -> viewPager.setCurrentItem(0));
         tvNeighborHelp.setOnClickListener(v -> viewPager.setCurrentItem(1));
 
-        // 发布按钮点击事件
-        fabPublish.setOnClickListener(v -> {
-            // 根据当前页面判断是发布动态还是发布求助
-            int currentItem = viewPager.getCurrentItem();
-            String type = currentItem == 0 ? "生活动态" : "邻里互助";
-            Toast.makeText(getContext(), "准备发布：" + type, Toast.LENGTH_SHORT).show();
-            // TODO: 跳转到发布页面
-        });
+        // 删除 fabPublish 的点击事件代码块
     }
 
     private void setupViewPager() {
