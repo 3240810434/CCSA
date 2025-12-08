@@ -42,11 +42,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         holder.tvCommentCount.setText(String.valueOf(post.commentCount));
 
         // 加载用户头像
+        // 修改说明：与 MineFragment 保持一致，默认头像改为 R.drawable.lan
         if (post.userAvatar != null && !post.userAvatar.isEmpty()) {
-            Glide.with(context).load(post.userAvatar).into(holder.ivAvatar);
+            Glide.with(context)
+                    .load(post.userAvatar)
+                    .placeholder(R.drawable.lan) // 加载过程中显示默认图
+                    .error(R.drawable.lan)       // 加载失败显示默认图
+                    .into(holder.ivAvatar);
         } else {
-            // 设置默认头像
-            holder.ivAvatar.setImageResource(R.drawable.ic_avatar);
+            // 设置默认头像，原先是 ic_avatar (黑色人头)，现在改为 lan (我的页面同款)
+            holder.ivAvatar.setImageResource(R.drawable.lan);
         }
 
         // 媒体处理
