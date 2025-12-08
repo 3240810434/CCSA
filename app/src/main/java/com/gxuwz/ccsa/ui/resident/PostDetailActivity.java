@@ -184,15 +184,25 @@ public class PostDetailActivity extends AppCompatActivity {
         }).start();
     }
 
+    // 在 PostDetailActivity.java 的 sendComment 方法中修改：
     private void sendComment(String content) {
+        if (post == null) return;
         new Thread(() -> {
+            // 获取当前用户信息
+            // 假设 getUser() 方法能获取当前登录User对象，或者从SharedPreferences拿
+            // 这里假设已经有 currentUser 对象
+            User currentUser = AppDatabase.getInstance(this).userDao().getUserById(1); // 示例ID
+
             Comment comment = new Comment();
             comment.postId = post.id;
-            comment.userId = 1;
-            comment.userName = "我";
+            comment.userId = currentUser.id;
+            comment.userName = currentUser.nickname;
+            comment.userAvatar = currentUser.avatar; // 【新增】保存当前头像
             comment.content = content;
             comment.createTime = System.currentTimeMillis();
+
             AppDatabase.getInstance(this).postDao().insertComment(comment);
+
             runOnUiThread(() -> {
                 etComment.setText("");
                 Toast.makeText(this, "评论成功", Toast.LENGTH_SHORT).show();
