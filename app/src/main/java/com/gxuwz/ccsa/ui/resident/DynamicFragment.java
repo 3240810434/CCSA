@@ -6,14 +6,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-// import android.widget.Toast; // 不需要 Toast 了
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
-// import com.google.android.material.floatingactionbutton.FloatingActionButton; // 删除导入
 import com.gxuwz.ccsa.R;
 
 /**
@@ -25,7 +23,7 @@ public class DynamicFragment extends Fragment {
     private TextView tvLifeDynamics;
     private TextView tvNeighborHelp;
     private ViewPager2 viewPager;
-    // private FloatingActionButton fabPublish; // 删除变量
+    // private FloatingActionButton fabPublish; // 已删除
 
     // 选中和未选中的颜色
     private static final int COLOR_SELECTED = Color.parseColor("#000000"); // 黑色
@@ -43,13 +41,13 @@ public class DynamicFragment extends Fragment {
         tvLifeDynamics = view.findViewById(R.id.tv_life_dynamics);
         tvNeighborHelp = view.findViewById(R.id.tv_neighbor_help);
         viewPager = view.findViewById(R.id.view_pager_dynamic);
-        // fabPublish = view.findViewById(R.id.fab_publish); // 删除初始化
+        // fabPublish = view.findViewById(R.id.fab_publish); // 已删除初始化
 
         // 点击标题切换页面
         tvLifeDynamics.setOnClickListener(v -> viewPager.setCurrentItem(0));
         tvNeighborHelp.setOnClickListener(v -> viewPager.setCurrentItem(1));
 
-        // 删除 fabPublish 的点击事件代码块
+        // 原有的 fabPublish 点击事件已删除，因为具体的发布按钮现在都在子Fragment里
     }
 
     private void setupViewPager() {
@@ -95,7 +93,7 @@ public class DynamicFragment extends Fragment {
         @Override
         public Fragment createFragment(int position) {
             if (position == 0) {
-                return new LifeDynamicsFragment(); // 生活动态子页面
+                return new LifeDynamicsFragment(); // 生活动态子页面（里面自带红色发布按钮）
             } else {
                 return new NeighborHelpFragment(); // 邻里互助子页面
             }
