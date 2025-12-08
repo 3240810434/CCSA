@@ -53,6 +53,8 @@
         <activity android:name=".ui.resident.PostDetailActivity" android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
 
+        <activity android:name=".ui.resident.ImagePreviewActivity" android:exported="false"/>
+
         <activity android:name=".ui.admin.SetFeeStandardActivity" android:exported="false"/>
         <activity android:name=".ui.admin.FeeAnnouncementActivity" android:exported="false"/>
         <activity android:name=".ui.admin.PaymentStatisticsActivity" android:exported="false"/>

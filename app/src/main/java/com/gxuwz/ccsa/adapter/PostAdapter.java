@@ -253,4 +253,4 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             ivDislike = itemView.findViewById(R.id.iv_dislike);
         }
     }
-}1
+}
