@@ -17,14 +17,11 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-// import com.bumptech.glide.Glide; // 如果项目中没有Glide，可以使用setImageURI
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
-import com.gxuwz.ccsa.login.LoginActivity;
 import com.gxuwz.ccsa.model.User;
 
 import java.util.concurrent.Executors;
@@ -100,33 +97,23 @@ public class MineFragment extends Fragment {
         view.findViewById(R.id.btn_watch_history).setOnClickListener(notImplListener);
         view.findViewById(R.id.btn_change_password).setOnClickListener(notImplListener);
 
-        // 既有功能
-        view.findViewById(R.id.btn_my_repairs).setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), MyRepairsActivity.class);
-            intent.putExtra("user", currentUser); // 传递用户对象
-            startActivity(intent);
-        });
-
-        view.findViewById(R.id.btn_contact_property).setOnClickListener(v ->
-                startActivity(new Intent(getActivity(), ContactPropertyActivity.class)));
-
-        view.findViewById(R.id.btn_logout).setOnClickListener(v -> showLogoutDialog());
+        // 已移除：我的报修、联系物业、退出登录 的监听器
     }
 
     private void loadUserData() {
         if (currentUser != null) {
-            // 修复：使用 getName() 代替 getUsername()
-            tvUsername.setText(currentUser.getName());
+            tvUsername.setText(currentUser.getName()); // 使用 getName()
 
             String address = currentUser.getCommunity() + "-" + currentUser.getBuilding() + "-" + currentUser.getRoom();
             tvAddress.setText(address);
 
             // 加载头像
             if (currentUser.getAvatar() != null && !currentUser.getAvatar().isEmpty()) {
-                // 使用原生 setImageURI
+                // 如果用户自定义了头像，使用URI加载
                 ivAvatar.setImageURI(Uri.parse(currentUser.getAvatar()));
             } else {
-                ivAvatar.setImageResource(R.drawable.ic_avatar); // 默认头像
+                // 如果没有自定义，使用新的默认头像 lan
+                ivAvatar.setImageResource(R.drawable.lan);
             }
         }
     }
@@ -155,8 +142,7 @@ public class MineFragment extends Fragment {
         // 修改用户名输入框
         final EditText etUsername = new EditText(getContext());
         etUsername.setHint("请输入新的用户名");
-        // 修复：使用 getName() 代替 getUsername()
-        etUsername.setText(currentUser.getName());
+        etUsername.setText(currentUser.getName()); // 使用 getName()
         layout.addView(etUsername);
 
         builder.setView(layout);
@@ -188,8 +174,7 @@ public class MineFragment extends Fragment {
 
     // 更新数据库中的用户名
     private void updateUsername(String newName) {
-        // 修复：使用 setName() 代替 setUsername()
-        currentUser.setName(newName);
+        currentUser.setName(newName); // 使用 setName()
         tvUsername.setText(newName); // 立即更新UI
         saveUserToDb();
     }
@@ -204,16 +189,5 @@ public class MineFragment extends Fragment {
         });
     }
 
-    private void showLogoutDialog() {
-        new AlertDialog.Builder(getContext())
-                .setTitle("提示")
-                .setMessage("确定要退出登录吗？")
-                .setPositiveButton("确定", (dialog, which) -> {
-                    Intent intent = new Intent(getActivity(), LoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(intent);
-                })
-                .setNegativeButton("取消", null)
-                .show();
-    }
+    // 已移除：showLogoutDialog() 方法，因为界面已删除退出入口
 }

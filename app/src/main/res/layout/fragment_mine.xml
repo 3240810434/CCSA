@@ -38,7 +38,7 @@
                         android:id="@+id/iv_avatar"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:src="@drawable/ic_avatar"
+                        android:src="@drawable/lan"
                         android:scaleType="centerCrop"/>
                 </androidx.cardview.widget.CardView>
 
@@ -86,9 +86,10 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@drawable/ic_manage"/> <TextView
-                    style="@style/MineMenuTextStyle"
-                    android:text="编辑主页"/>
+                        android:src="@drawable/ic_manage"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="编辑主页"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -96,9 +97,10 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@android:drawable/ic_menu_agenda"/> <TextView
-                    style="@style/MineMenuTextStyle"
-                    android:text="我的订单"/>
+                        android:src="@android:drawable/ic_menu_agenda"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="我的订单"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -117,9 +119,10 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@drawable/ic_contact"/> <TextView
-                    style="@style/MineMenuTextStyle"
-                    android:text="更改密码"/>
+                        android:src="@drawable/ic_contact"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="更改密码"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -129,30 +132,32 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="@android:color/white"
-            android:paddingVertical="8dp">
+            android:padding="16dp"
+            android:minHeight="200dp">
 
             <TextView
-                android:id="@+id/btn_my_repairs"
-                style="@style/MineListItemStyle"
-                android:text="我的报修"
-                android:drawableStart="@drawable/ic_repair"/>
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="我的作品"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="16dp"/>
 
-            <View style="@style/DividerStyle"/>
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="120dp"
+                android:background="#FAFAFA">
 
-            <TextView
-                android:id="@+id/btn_contact_property"
-                style="@style/MineListItemStyle"
-                android:text="联系物业"
-                android:drawableStart="@drawable/ic_contact"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="暂无作品，快去发布吧~"
+                    android:textColor="#999999"
+                    android:layout_gravity="center"/>
+            </FrameLayout>
 
-            <View style="@style/DividerStyle"/>
-
-            <TextView
-                android:id="@+id/btn_logout"
-                style="@style/MineListItemStyle"
-                android:text="退出登录"
-                android:textColor="#FF4D4F"
-                android:drawableStart="@android:drawable/ic_lock_power_off"/>
         </LinearLayout>
 
     </LinearLayout>
