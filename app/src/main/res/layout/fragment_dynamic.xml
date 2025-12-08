@@ -1,61 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- 顶部切换按钮 -->
     <LinearLayout
+        android:id="@+id/ll_top_bar"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:orientation="horizontal"
+        android:gravity="center"
         android:background="@android:color/white"
         android:elevation="2dp">
 
-        <Button
-            android:id="@+id/btn_life"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tv_life_dynamics"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
             android:text="生活动态"
-            android:textSize="16sp"
-            android:backgroundTint="@color/teal_200"
-            android:textColor="@android:color/black"/>
+            android:textSize="18sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"/>
 
-        <Button
-            android:id="@+id/btn_help"
-            android:layout_width="0dp"
+        <View
+            android:layout_width="40dp"
+            android:layout_height="1dp" />
+
+        <TextView
+            android:id="@+id/tv_neighbor_help"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_weight="1"
             android:text="邻里互助"
-            android:textSize="16sp"
-            android:backgroundTint="@android:color/darker_gray"
-            android:textColor="@android:color/black"/>
+            android:textSize="18sp"
+            android:textColor="#888888"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"/>
     </LinearLayout>
 
-    <!-- 发布按钮 -->
-    <Button
-        android:id="@+id/btn_publish"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/view_pager_dynamic"
         android:layout_width="match_parent"
-        android:layout_height="45dp"
-        android:text="发布动态/求助"
-        android:textSize="16sp"
-        android:backgroundTint="@color/blue_200"
-        android:textColor="@android:color/black"
-        android:layout_margin="10dp"/>
+        android:layout_height="match_parent"
+        android:layout_below="@id/ll_top_bar"/>
 
-    <!-- 内容区域 -->
-    <FrameLayout
-        android:id="@+id/fl_dynamic_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_publish"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="24dp"
+        android:src="@drawable/ic_add"
+        android:backgroundTint="@color/teal_200"
+        android:contentDescription="发布"
+        android:elevation="6dp"/>
 
-        <!-- 动态列表 -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_dynamics"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="10dp"/>
-    </FrameLayout>
-</LinearLayout>
+</RelativeLayout>
