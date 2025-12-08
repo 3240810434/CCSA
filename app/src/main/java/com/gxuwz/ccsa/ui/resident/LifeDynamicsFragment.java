@@ -13,7 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+// import com.google.android.material.floatingactionbutton.FloatingActionButton; // 删除或注释掉这行
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.PostAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
@@ -27,7 +27,10 @@ public class LifeDynamicsFragment extends Fragment {
     private RecyclerView recyclerView;
     private PostAdapter adapter;
     private List<Post> postList = new ArrayList<>();
-    private FloatingActionButton fabAdd;
+
+    // 修改点 1: 将类型从 FloatingActionButton 改为 ImageView
+    private ImageView fabAdd;
+
     private ImageView btnRefresh;
     private User currentUser;
 
@@ -37,8 +40,10 @@ public class LifeDynamicsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_life_dynamics, container, false);
 
         recyclerView = view.findViewById(R.id.recycler_view);
+
+        // 修改点 2: 这里 findViewById 获取到的是 ImageView，现在类型匹配了，不会再报错
         fabAdd = view.findViewById(R.id.fab_add);
-        // XML修改后，这里将不再报错
+
         btnRefresh = view.findViewById(R.id.btn_refresh);
 
         // 获取当前登录用户
@@ -52,13 +57,15 @@ public class LifeDynamicsFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         // 点击发布
-        fabAdd.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), MediaSelectActivity.class);
-            if (currentUser != null) {
-                intent.putExtra("user", currentUser);
-            }
-            startActivity(intent);
-        });
+        if (fabAdd != null) {
+            fabAdd.setOnClickListener(v -> {
+                Intent intent = new Intent(getActivity(), MediaSelectActivity.class);
+                if (currentUser != null) {
+                    intent.putExtra("user", currentUser);
+                }
+                startActivity(intent);
+            });
+        }
 
         // 刷新按钮逻辑：顺时针旋转一圈并刷新
         if (btnRefresh != null) {
