@@ -3,16 +3,15 @@ package com.gxuwz.ccsa.ui.resident;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.gxuwz.ccsa.R;
-import com.gxuwz.ccsa.adapter.ImageGridAdapter; // 复用已有的或新建简单Adapter用于预览
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Post;
 import com.gxuwz.ccsa.model.PostMedia;
+import com.gxuwz.ccsa.model.User;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +19,7 @@ public class PostEditActivity extends AppCompatActivity {
     private EditText etContent;
     private RecyclerView rvPreview;
     private List<PostMedia> mediaList;
+    private User currentUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,14 +27,14 @@ public class PostEditActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post_edit);
 
         mediaList = (ArrayList<PostMedia>) getIntent().getSerializableExtra("selected_media");
+        currentUser = (User) getIntent().getSerializableExtra("user"); // 接收用户数据
+
         etContent = findViewById(R.id.et_content);
         rvPreview = findViewById(R.id.rv_preview);
 
-        // 简单的横向预览
         if (mediaList != null && !mediaList.isEmpty()) {
             rvPreview.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-            // 这里为了省事直接用MediaGridAdapter，实际建议写个简单的PreviewAdapter
-            // adapter代码略，逻辑同上，只是显示图片
+            // 简单预览逻辑，此处省略Adapter设置，保持原有逻辑即可
         }
 
         findViewById(R.id.btn_publish).setOnClickListener(v -> publishPost());
@@ -50,9 +50,18 @@ public class PostEditActivity extends AppCompatActivity {
 
         new Thread(() -> {
             Post post = new Post();
-            post.userId = 1; // 假定当前登录用户ID
-            post.userName = "居民小王";
-            post.userAvatar = "";
+            // 使用真实用户数据
+            if (currentUser != null) {
+                post.userId = currentUser.getId();
+                post.userName = currentUser.getName();
+                post.userAvatar = currentUser.getAvatar();
+            } else {
+                // 异常兜底
+                post.userId = 0;
+                post.userName = "未知用户";
+                post.userAvatar = "";
+            }
+
             post.content = content;
             post.createTime = System.currentTimeMillis();
             post.type = (mediaList != null && !mediaList.isEmpty()) ? mediaList.get(0).type : 0;
@@ -68,7 +77,7 @@ public class PostEditActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 Toast.makeText(this, "发布成功", Toast.LENGTH_SHORT).show();
-                finish(); // 回到上级，需要关闭MediaSelectActivity建议使用flag
+                finish(); // 回到 LifeDynamicsFragment
             });
         }).start();
     }

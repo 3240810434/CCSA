@@ -21,10 +21,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.MediaGridAdapter;
 import com.gxuwz.ccsa.model.PostMedia;
+import com.gxuwz.ccsa.model.User;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class MediaSelectActivity extends AppCompatActivity {
@@ -34,6 +34,7 @@ public class MediaSelectActivity extends AppCompatActivity {
     private TextView btnContinue;
     private List<PostMedia> allMedia = new ArrayList<>();
     private List<PostMedia> selectedMedia = new ArrayList<>();
+    private User currentUser;
 
     // 临时内部类，用于排序
     private static class MediaItem {
@@ -55,6 +56,9 @@ public class MediaSelectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media_select);
 
+        // 接收用户信息
+        currentUser = (User) getIntent().getSerializableExtra("user");
+
         // 初始化视图
         recyclerView = findViewById(R.id.recycler_view);
         btnContinue = findViewById(R.id.tv_continue);
@@ -70,15 +74,17 @@ public class MediaSelectActivity extends AppCompatActivity {
             selectedMedia = adapter.getSelectedItems();
             Intent intent = new Intent(MediaSelectActivity.this, PostEditActivity.class);
             intent.putExtra("selected_media", (Serializable) selectedMedia);
+            // 传递用户信息到编辑页
+            intent.putExtra("user", currentUser);
             startActivity(intent);
+            // 关键：关闭当前页面，这样PostEditActivity关闭后会直接回到LifeDynamicsFragment
+            finish();
         });
 
         checkPermissionAndLoad();
     }
 
     private void checkPermissionAndLoad() {
-        // Android 13 (API 33) 以后权限有变化，这里为了兼容旧版代码，先用 READ_EXTERNAL_STORAGE
-        // 如果你的TargetSDK是33+，请添加 READ_MEDIA_IMAGES 和 READ_MEDIA_VIDEO
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
@@ -102,7 +108,6 @@ public class MediaSelectActivity extends AppCompatActivity {
                     while (cursor.moveToNext()) {
                         long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
                         long date = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_ADDED));
-                        // 关键修复：使用 ContentUris 获取 URI，而不是路径
                         Uri uri = ContentUris.withAppendedId(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
                         tempItems.add(new MediaItem(id, uri, date, 1));
                     }
@@ -121,7 +126,6 @@ public class MediaSelectActivity extends AppCompatActivity {
                     while (cursor.moveToNext()) {
                         long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
                         long date = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_ADDED));
-                        // 关键修复：获取视频 URI
                         Uri uri = ContentUris.withAppendedId(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, id);
                         tempItems.add(new MediaItem(id, uri, date, 2));
                     }
@@ -130,20 +134,17 @@ public class MediaSelectActivity extends AppCompatActivity {
                 Log.e("MediaSelect", "Error loading videos", e);
             }
 
-            // 3. 混合排序 (按时间倒序)
             Collections.sort(tempItems, (o1, o2) -> Long.compare(o2.dateAdded, o1.dateAdded));
 
-            // 4. 转换回 PostMedia 对象
             List<PostMedia> finalList = new ArrayList<>();
             for (MediaItem item : tempItems) {
                 PostMedia m = new PostMedia();
-                m.url = item.uri.toString(); // 存URI字符串
+                m.url = item.uri.toString();
                 m.type = item.type;
                 finalList.add(m);
-                if (finalList.size() > 1000) break; // 限制数量防止卡顿
+                if (finalList.size() > 1000) break;
             }
 
-            // 5. 刷新UI
             runOnUiThread(() -> {
                 allMedia.clear();
                 allMedia.addAll(finalList);

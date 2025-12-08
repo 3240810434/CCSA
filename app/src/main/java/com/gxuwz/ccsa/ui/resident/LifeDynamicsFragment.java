@@ -15,6 +15,7 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.PostAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Post;
+import com.gxuwz.ccsa.model.User;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +40,13 @@ public class LifeDynamicsFragment extends Fragment {
 
         // 点击右下角发布
         fabAdd.setOnClickListener(v -> {
-            startActivity(new Intent(getActivity(), MediaSelectActivity.class));
+            Intent intent = new Intent(getActivity(), MediaSelectActivity.class);
+            // 获取当前登录用户信息并传递
+            if (getActivity() instanceof ResidentMainActivity) {
+                User currentUser = ((ResidentMainActivity) getActivity()).getUser();
+                intent.putExtra("user", currentUser);
+            }
+            startActivity(intent);
         });
 
         return view;
@@ -59,11 +66,13 @@ public class LifeDynamicsFragment extends Fragment {
                 p.mediaList = AppDatabase.getInstance(getContext()).postDao().getMediaForPost(p.id);
                 p.commentCount = AppDatabase.getInstance(getContext()).postDao().getCommentCount(p.id);
             }
-            getActivity().runOnUiThread(() -> {
-                postList.clear();
-                postList.addAll(posts);
-                adapter.notifyDataSetChanged();
-            });
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    postList.clear();
+                    postList.addAll(posts);
+                    adapter.notifyDataSetChanged();
+                });
+            }
         }).start();
     }
 }

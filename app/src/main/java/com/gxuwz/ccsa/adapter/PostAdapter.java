@@ -37,10 +37,17 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
         Post post = list.get(position);
         holder.tvName.setText(post.userName);
-        // 使用 DateUtils 处理时间 "xxx前"
         holder.tvTime.setText(DateUtils.getRelativeTime(post.createTime));
         holder.tvContent.setText(post.content);
         holder.tvCommentCount.setText(String.valueOf(post.commentCount));
+
+        // 加载用户头像
+        if (post.userAvatar != null && !post.userAvatar.isEmpty()) {
+            Glide.with(context).load(post.userAvatar).into(holder.ivAvatar);
+        } else {
+            // 设置默认头像
+            holder.ivAvatar.setImageResource(R.drawable.ic_avatar);
+        }
 
         // 媒体处理
         holder.ivImage1.setVisibility(View.GONE);
@@ -53,7 +60,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             if (post.type == 2) { // 视频
                 holder.videoView.setVisibility(View.VISIBLE);
                 holder.ivPlay.setVisibility(View.VISIBLE);
-                // 简单设置路径，点击播放
                 holder.videoView.setVideoPath(post.mediaList.get(0).url);
                 holder.ivPlay.setOnClickListener(v -> {
                     holder.videoView.start();
@@ -76,7 +82,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             }
         }
 
-        // 点击评论跳转详情
         holder.btnComment.setOnClickListener(v -> {
             Intent intent = new Intent(context, PostDetailActivity.class);
             intent.putExtra("post", post);
@@ -91,6 +96,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
     static class PostViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvTime, tvContent, tvCommentCount;
+        ImageView ivAvatar; // 新增头像控件
         ImageView ivImage1, ivImage2, ivImage3, ivPlay;
         VideoView videoView;
         View btnComment;
@@ -101,6 +107,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvTime = itemView.findViewById(R.id.tv_time);
             tvContent = itemView.findViewById(R.id.tv_content);
             tvCommentCount = itemView.findViewById(R.id.tv_comment_count);
+            ivAvatar = itemView.findViewById(R.id.iv_avatar); // 绑定头像ID
             ivImage1 = itemView.findViewById(R.id.iv_img_1);
             ivImage2 = itemView.findViewById(R.id.iv_img_2);
             ivImage3 = itemView.findViewById(R.id.iv_img_3);
