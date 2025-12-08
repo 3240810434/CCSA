@@ -2,6 +2,7 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -86,14 +87,15 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
                 String videoUrl = post.mediaList.get(0).url;
 
-                // 3.2 宽度使用 MATCH_PARENT (XML中父布局去除了padding)，高度按比例计算
                 // CardView 有 marginHorizontal 10dp * 2 = 20dp
                 int cardWidth = screenWidth - dp2px(context, 20);
-                int videoHeight = (int) (cardWidth * 0.56f); // 16:9 比例
+
+                // 初始高度设为宽度的 3/4，防止加载前过扁，后续会根据视频真实比例动态调整
+                int initialHeight = (int) (cardWidth * 0.75f);
 
                 FrameLayout frameLayout = new FrameLayout(context);
                 FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, videoHeight);
+                        ViewGroup.LayoutParams.MATCH_PARENT, initialHeight);
                 frameLayout.setLayoutParams(layoutParams);
 
                 // VideoView
@@ -108,7 +110,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 ImageView coverImage = new ImageView(context);
                 coverImage.setLayoutParams(new FrameLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-                coverImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                coverImage.setScaleType(ImageView.ScaleType.CENTER_CROP); // 封面图填满
                 Glide.with(context).load(videoUrl).frame(1000000).into(coverImage);
 
                 // 播放图标
@@ -123,7 +125,25 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 frameLayout.addView(playIcon);
                 holder.mediaContainer.addView(frameLayout);
 
-                // 3.3 点击直接播放，不跳转详情
+                // 核心修改：监听视频准备完成，动态调整高度以显示全部画面
+                videoView.setOnPreparedListener(mp -> {
+                    mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT);
+
+                    int videoW = mp.getVideoWidth();
+                    int videoH = mp.getVideoHeight();
+
+                    if (videoW > 0 && videoH > 0) {
+                        // 根据视频比例计算新的高度
+                        int newHeight = (int) ((float) videoH / videoW * cardWidth);
+
+                        // 更新容器高度
+                        ViewGroup.LayoutParams lp = frameLayout.getLayoutParams();
+                        lp.height = newHeight;
+                        frameLayout.setLayoutParams(lp);
+                    }
+                });
+
+                // 3.3 点击直接播放
                 playIcon.setOnClickListener(v -> {
                     coverImage.setVisibility(View.GONE);
                     playIcon.setVisibility(View.GONE);
