@@ -49,13 +49,16 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
                 .placeholder(android.R.color.darker_gray)
                 .into(holder.ivImage);
 
-        // 2. 判断是否是视频，显示图标和遮罩
-        if (media.type == 2) { // 2代表视频
-            holder.ivPlay.setVisibility(View.VISIBLE);
-            holder.vMask.setVisibility(View.VISIBLE); // 这里需要 holder 中定义 vMask
-        } else {
-            holder.ivPlay.setVisibility(View.GONE);
-            holder.vMask.setVisibility(View.GONE);
+        // 2. 根据类型显示/隐藏视频图标和遮罩
+        // 确保 vMask 不为空再调用
+        if (holder.vMask != null && holder.ivPlay != null) {
+            if (media.type == 2) { // 2代表视频
+                holder.ivPlay.setVisibility(View.VISIBLE);
+                holder.vMask.setVisibility(View.VISIBLE);
+            } else {
+                holder.ivPlay.setVisibility(View.GONE);
+                holder.vMask.setVisibility(View.GONE);
+            }
         }
 
         // 3. 处理选中状态
@@ -69,7 +72,7 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
             holder.vRing.setBackgroundResource(R.drawable.circle_alarm_bg);
         }
 
-        // 4. 点击选择逻辑
+        // 4. 点击逻辑
         holder.vRing.setOnClickListener(v -> {
             if (selectedList.contains(media)) {
                 selectedList.remove(media);
@@ -87,6 +90,7 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
     private boolean isSelectionValid(PostMedia newMedia) {
         if (selectedList.isEmpty()) return true;
         PostMedia firstSelected = selectedList.get(0);
+
         if (firstSelected.type != newMedia.type) {
             Toast.makeText(context, "不能同时选择照片和视频", Toast.LENGTH_SHORT).show();
             return false;
@@ -108,16 +112,18 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivImage, ivPlay;
-        View vRing, vMask; // 必须声明 vMask
-        TextView tvIndex;
+        ImageView ivImage;
+        ImageView ivPlay; // 视频播放图标
+        View vRing;       // 选中圈
+        View vMask;       // 视频遮罩层 (关键修复)
+        TextView tvIndex; // 选中序号
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivImage = itemView.findViewById(R.id.iv_image);
             ivPlay = itemView.findViewById(R.id.iv_play_icon);
-            vMask = itemView.findViewById(R.id.v_mask); // 必须初始化 vMask
             vRing = itemView.findViewById(R.id.view_ring);
+            vMask = itemView.findViewById(R.id.v_mask); // 确保 ID 与 XML 一致
             tvIndex = itemView.findViewById(R.id.tv_index);
         }
     }
