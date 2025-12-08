@@ -41,18 +41,18 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         PostMedia media = list.get(position);
 
-        // 1. 加载图片/视频缩略图 (Glide可以自动处理content:// URI)
+        // 1. 加载图片/视频缩略图
         Glide.with(context)
-                .load(media.url) // 这里现在是Uri字符串
+                .load(media.url)
                 .centerCrop()
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .placeholder(android.R.color.darker_gray) // 加载中占位图
+                .placeholder(android.R.color.darker_gray)
                 .into(holder.ivImage);
 
-        // 2. 判断是否是视频，显示图标
+        // 2. 判断是否是视频，显示图标和遮罩
         if (media.type == 2) { // 2代表视频
             holder.ivPlay.setVisibility(View.VISIBLE);
-            holder.vMask.setVisibility(View.VISIBLE);
+            holder.vMask.setVisibility(View.VISIBLE); // 这里需要 holder 中定义 vMask
         } else {
             holder.ivPlay.setVisibility(View.GONE);
             holder.vMask.setVisibility(View.GONE);
@@ -63,19 +63,17 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
         if (index != -1) {
             holder.tvIndex.setVisibility(View.VISIBLE);
             holder.tvIndex.setText(String.valueOf(index + 1));
-            holder.vRing.setBackgroundResource(R.drawable.red_circle); // 选中变红
+            holder.vRing.setBackgroundResource(R.drawable.red_circle);
         } else {
             holder.tvIndex.setVisibility(View.GONE);
-            holder.vRing.setBackgroundResource(R.drawable.circle_alarm_bg); // 未选中白圈
+            holder.vRing.setBackgroundResource(R.drawable.circle_alarm_bg);
         }
 
         // 4. 点击选择逻辑
         holder.vRing.setOnClickListener(v -> {
             if (selectedList.contains(media)) {
-                // 取消选择
                 selectedList.remove(media);
             } else {
-                // 尝试选择
                 if (isSelectionValid(media)) {
                     selectedList.add(media);
                 }
@@ -83,34 +81,24 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
             notifyDataSetChanged();
         });
 
-        // 点击整个Item也可以触发选择
         holder.itemView.setOnClickListener(v -> holder.vRing.performClick());
     }
 
-    // 校验选择是否合法
     private boolean isSelectionValid(PostMedia newMedia) {
         if (selectedList.isEmpty()) return true;
-
         PostMedia firstSelected = selectedList.get(0);
-
-        // 规则1：视频和图片不能混选
         if (firstSelected.type != newMedia.type) {
             Toast.makeText(context, "不能同时选择照片和视频", Toast.LENGTH_SHORT).show();
             return false;
         }
-
-        // 规则2：如果是视频，只能选1个
         if (firstSelected.type == 2) {
             Toast.makeText(context, "最多选择1个视频", Toast.LENGTH_SHORT).show();
             return false;
         }
-
-        // 规则3：如果是图片，最多选10张
         if (selectedList.size() >= 10) {
             Toast.makeText(context, "最多选择10张照片", Toast.LENGTH_SHORT).show();
             return false;
         }
-
         return true;
     }
 
@@ -121,14 +109,14 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage, ivPlay;
-        View vRing, vMask;
+        View vRing, vMask; // 必须声明 vMask
         TextView tvIndex;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivImage = itemView.findViewById(R.id.iv_image);
             ivPlay = itemView.findViewById(R.id.iv_play_icon);
-            vMask = itemView.findViewById(R.id.v_mask);
+            vMask = itemView.findViewById(R.id.v_mask); // 必须初始化 vMask
             vRing = itemView.findViewById(R.id.view_ring);
             tvIndex = itemView.findViewById(R.id.tv_index);
         }
