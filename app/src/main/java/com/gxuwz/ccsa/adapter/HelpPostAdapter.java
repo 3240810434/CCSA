@@ -45,13 +45,16 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
         // 1. 设置文本内容
         holder.tvTitle.setText(post.title);
         holder.tvContent.setText(post.content);
-        holder.tvAuthor.setText(post.userName);
+
+        // 修复：确保显示正确的用户名，如果为空则显示默认
+        holder.tvAuthor.setText(post.userName != null ? post.userName : "未知邻居");
         holder.tvTime.setText(DateUtils.formatTime(post.createTime));
 
-        // 2. 加载头像
+        // 2. 加载头像 (核心修复：使用 lan 作为默认占位图)
         Glide.with(context)
-                .load(post.userAvatar)
-                .placeholder(R.drawable.ic_avatar)
+                .load(post.userAvatar) // 如果 post.userAvatar 为 null，Glide 会自动加载 placeholder
+                .placeholder(R.drawable.lan) // 加载中/为空时显示 lan.png
+                .error(R.drawable.lan)       // 加载失败时显示 lan.png
                 .circleCrop()
                 .into(holder.ivAvatar);
 
@@ -60,7 +63,6 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
             holder.rvMedia.setVisibility(View.GONE);
         } else {
             holder.rvMedia.setVisibility(View.VISIBLE);
-            // 关键修改：使用 HelpPostMediaAdapter
             HelpPostMediaAdapter mediaAdapter = new HelpPostMediaAdapter(context, post.mediaList);
             holder.rvMedia.setLayoutManager(new GridLayoutManager(context, 3));
             holder.rvMedia.setAdapter(mediaAdapter);
@@ -94,14 +96,13 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // 绑定 XML 中修正后的 ID
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
-            tvAuthor = itemView.findViewById(R.id.tv_author_name); // 对应 xml id: tv_author_name
+            tvAuthor = itemView.findViewById(R.id.tv_author_name);
             tvTime = itemView.findViewById(R.id.tv_time);
             tvTitle = itemView.findViewById(R.id.tv_title);
             tvContent = itemView.findViewById(R.id.tv_content);
-            rvMedia = itemView.findViewById(R.id.rv_media);       // 对应 xml id: rv_media
-            llContact = itemView.findViewById(R.id.ll_contact);   // 对应 xml id: ll_contact
+            rvMedia = itemView.findViewById(R.id.rv_media);
+            llContact = itemView.findViewById(R.id.ll_contact);
         }
     }
 }
