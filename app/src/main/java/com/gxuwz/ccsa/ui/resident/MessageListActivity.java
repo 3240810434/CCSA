@@ -36,10 +36,11 @@ public class MessageListActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // 这里的 adapter 不需要改动，沿用你原来的
         adapter = new MessageListAdapter(this, conversationList, currentUser);
         recyclerView.setAdapter(adapter);
 
-        setupSwipeDelete(); // 左滑删除功能
+        setupSwipeDelete();
     }
 
     @Override
@@ -50,13 +51,15 @@ public class MessageListActivity extends AppCompatActivity {
 
     private void loadConversations() {
         new Thread(() -> {
-            // 获取所有与我有关的消息
+            // Dao 已经修改为只返回未标记删除的消息
             List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId());
             Map<Integer, ChatMessage> latestMsgMap = new HashMap<>();
 
             // 过滤出每个会话的最新一条消息
             for (ChatMessage msg : allMsgs) {
                 int otherId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
+
+                // 因为 list 是按时间倒序的 (DESC)，所以遇到的第一个就是最新的
                 if (!latestMsgMap.containsKey(otherId)) {
                     // 补充对方用户信息
                     User target = db.userDao().getUserById(otherId);
@@ -64,6 +67,9 @@ public class MessageListActivity extends AppCompatActivity {
                         msg.targetName = target.getName();
                         msg.targetAvatar = target.getAvatar();
                         latestMsgMap.put(otherId, msg);
+                    } else {
+                        // 如果找不到用户，给默认值防止崩溃
+                        msg.targetName = "未知用户";
                     }
                 }
             }
@@ -86,10 +92,14 @@ public class MessageListActivity extends AppCompatActivity {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 int position = viewHolder.getAdapterPosition();
+
+                // 防止数组越界（快速滑动时可能发生）
+                if (position < 0 || position >= conversationList.size()) return;
+
                 ChatMessage msg = conversationList.get(position);
                 int targetId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
 
-                // 数据库删除
+                // 数据库逻辑删除（只对我不可见）
                 new Thread(() -> db.chatDao().deleteConversation(currentUser.getId(), targetId)).start();
 
                 // UI移除
