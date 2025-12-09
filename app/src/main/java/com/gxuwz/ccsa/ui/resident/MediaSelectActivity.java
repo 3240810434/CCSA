@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build; // 需要导入 Build
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -84,14 +85,35 @@ public class MediaSelectActivity extends AppCompatActivity {
         checkPermissionAndLoad();
     }
 
+    // ============ 修改重点：适配 Android 13+ 权限 ============
     private void checkPermissionAndLoad() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
+        List<String> permissionsToRequest = new ArrayList<>();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13 (API 33) 及以上：申请细分媒体权限
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_MEDIA_VIDEO);
+            }
+        } else {
+            // Android 12 及以下：申请旧版存储权限
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+        }
+
+        if (!permissionsToRequest.isEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toArray(new String[0]), 100);
         } else {
             loadMedia();
         }
     }
+    // =======================================================
 
     private void loadMedia() {
         new Thread(() -> {
@@ -150,7 +172,9 @@ public class MediaSelectActivity extends AppCompatActivity {
                 allMedia.addAll(finalList);
                 adapter.notifyDataSetChanged();
                 if (allMedia.isEmpty()) {
-                    Toast.makeText(this, "未找到媒体文件", Toast.LENGTH_SHORT).show();
+                    // 如果权限获取了但还是没图，可能是相册真没图，或者权限被永久拒绝了
+                    // 可以在这里提示更详细的信息，但在 loadMedia 调用前权限已检查
+                    Toast.makeText(this, "未扫描到媒体文件", Toast.LENGTH_SHORT).show();
                 }
             });
         }).start();
@@ -159,10 +183,24 @@ public class MediaSelectActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 100 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            loadMedia();
-        } else {
-            Toast.makeText(this, "没有权限无法获取照片", Toast.LENGTH_SHORT).show();
+        if (requestCode == 100) {
+            boolean allGranted = true;
+            if (grantResults.length > 0) {
+                for (int result : grantResults) {
+                    if (result != PackageManager.PERMISSION_GRANTED) {
+                        allGranted = false;
+                        break;
+                    }
+                }
+            } else {
+                allGranted = false;
+            }
+
+            if (allGranted) {
+                loadMedia();
+            } else {
+                Toast.makeText(this, "请在设置中开启存储权限以获取照片", Toast.LENGTH_LONG).show();
+            }
         }
     }
 }
