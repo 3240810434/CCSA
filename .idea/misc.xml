@@ -26,11 +26,13 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_repair_detail.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_repair_history.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_repair_list.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_chat.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_contact_property.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_create_vote.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_create_vote.xml " value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_fee_announcement.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_handle_payment_appeal.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_help_post_edit.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_image_preview.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_login.xml" value="0.2526041666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_login.xml " value="0.2526041666666667" />
@@ -39,6 +41,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_login.xml" value="0.2526041666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_main.xml" value="0.2526041666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_register.xml" value="0.25" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_message_list.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_my_repairs.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_notification.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_pay_property_fee.xml" value="0.24114583333333334" />
@@ -85,11 +88,15 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/image_grid_item.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_admin_repair.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_banner.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_chat_left.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_chat_right.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_comment.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_fee_bill.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_fee_bill.xml " value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_help_post.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_image_grid.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_media_grid.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_message_list.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_notification.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_payment.xml" value="0.264" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_payment_appeal.xml" value="0.24114583333333334" />

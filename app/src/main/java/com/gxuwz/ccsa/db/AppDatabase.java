@@ -44,7 +44,7 @@ import com.gxuwz.ccsa.model.Comment;
                 PostMedia.class,
                 Comment.class
         },
-        version = 8, // 升级版本号，原为7
+        version = 9, // 升级版本号，原为7
         exportSchema = false
 )
 @TypeConverters(DateConverter.class) // 关键：注册日期类型转换器
@@ -66,10 +66,11 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract RoomAreaDao roomAreaDao();
     public abstract PropertyFeeBillDao propertyFeeBillDao();
     public abstract NotificationDao notificationDao();
-
     // --- 新增：生活动态DAO ---
     public abstract PostDao postDao();
+    public abstract HelpPostDao helpPostDao();
 
+    public abstract ChatDao chatDao();
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
