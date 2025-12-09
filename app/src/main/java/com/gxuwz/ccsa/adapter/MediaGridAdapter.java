@@ -50,7 +50,6 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
                 .into(holder.ivImage);
 
         // 2. 根据类型显示/隐藏视频图标和遮罩
-        // 确保 vMask 不为空再调用
         if (holder.vMask != null && holder.ivPlay != null) {
             if (media.type == 2) { // 2代表视频
                 holder.ivPlay.setVisibility(View.VISIBLE);
@@ -66,9 +65,11 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
         if (index != -1) {
             holder.tvIndex.setVisibility(View.VISIBLE);
             holder.tvIndex.setText(String.valueOf(index + 1));
-            holder.vRing.setBackgroundResource(R.drawable.red_circle);
+            // 修改点：选中状态改为蓝色圆形背景
+            holder.vRing.setBackgroundResource(R.drawable.blue_circle);
         } else {
             holder.tvIndex.setVisibility(View.GONE);
+            // 未选中状态保持白色透明圆环
             holder.vRing.setBackgroundResource(R.drawable.circle_alarm_bg);
         }
 
@@ -113,17 +114,17 @@ public class MediaGridAdapter extends RecyclerView.Adapter<MediaGridAdapter.View
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivImage;
-        ImageView ivPlay; // 视频播放图标
-        View vRing;       // 选中圈
-        View vMask;       // 视频遮罩层 (关键修复)
-        TextView tvIndex; // 选中序号
+        ImageView ivPlay;
+        View vRing;
+        View vMask;
+        TextView tvIndex;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivImage = itemView.findViewById(R.id.iv_image);
             ivPlay = itemView.findViewById(R.id.iv_play_icon);
             vRing = itemView.findViewById(R.id.view_ring);
-            vMask = itemView.findViewById(R.id.v_mask); // 确保 ID 与 XML 一致
+            vMask = itemView.findViewById(R.id.v_mask);
             tvIndex = itemView.findViewById(R.id.tv_index);
         }
     }
