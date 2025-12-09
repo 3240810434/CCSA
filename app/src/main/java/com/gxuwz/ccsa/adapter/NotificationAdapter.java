@@ -35,7 +35,6 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // 复用 item_notification.xml 布局
         View view = LayoutInflater.from(context).inflate(R.layout.item_notification, parent, false);
         return new ViewHolder(view);
     }
@@ -50,19 +49,19 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
             // 根据类型设置图标
             if (message.getType() == UnifiedMessage.TYPE_CHAT_MESSAGE) {
-                // 如果是聊天，加载头像（如果没有头像则用默认）
+                // 聊天消息：加载用户头像
                 Glide.with(context)
                         .load(message.getAvatarUrl())
-                        .placeholder(R.drawable.ic_avatar) // 确保你有这个默认头像资源
+                        .placeholder(R.drawable.ic_avatar)
                         .circleCrop()
                         .into(holder.ivIcon);
-                // 聊天消息一般不显示红点，或者根据逻辑自行判断，这里先隐藏
-                holder.ivUnread.setVisibility(View.GONE);
+                // 隐藏未读红点（或者根据实际聊天未读状态显示）
+                if (holder.ivUnread != null) holder.ivUnread.setVisibility(View.GONE);
             } else {
-                // 如果是系统通知，显示系统图标
-                holder.ivIcon.setImageResource(R.drawable.ic_notification); // 使用系统通知图标
-                // 系统通知逻辑：这里简单处理，实际可根据 notification.isRead 判断
-                holder.ivUnread.setVisibility(View.GONE);
+                // 系统通知：显示系统铃铛图标
+                holder.ivIcon.setImageResource(R.drawable.ic_notification);
+                // 如果需要显示系统通知红点，需在 UnifiedMessage 中传递 isRead 状态
+                if (holder.ivUnread != null) holder.ivUnread.setVisibility(View.GONE);
             }
 
             holder.itemView.setOnClickListener(v -> {
@@ -84,7 +83,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivIcon; // 左侧图标/头像
+        ImageView ivIcon; // 左侧头像/图标
         TextView tvTitle;
         TextView tvContent;
         TextView tvTime;
@@ -92,19 +91,20 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // 注意：请确保 item_notification.xml 中有这些 ID
-            // 建议 item_notification.xml 左侧添加一个 ImageView id 为 iv_icon_type
-            // 这里假设复用布局，可能需要微调 layout 文件，见下文
-            ivIcon = itemView.findViewById(R.id.iv_icon_type); // 需在 layout 添加此ID
-            if (ivIcon == null) {
-                // 如果找不到，尝试找 notification 布局里原本可能存在的图片控件，或者你需要修改 layout
-                // 这里为了稳健，假设你会在 layout 加一个 ImageView
-                ivIcon = itemView.findViewById(R.id.iv_unread); // 临时替代，仅防崩
+            // 确保你的 item_notification.xml 里有这些 ID
+            // 如果 item_notification.xml 左侧没有 ImageView，请添加一个 id 为 iv_icon_type 的 ImageView
+            // 这里为了防止崩溃，尝试匹配常见 ID
+            ivIcon = itemView.findViewById(R.id.iv_icon_type);
+            // 如果布局没改，为了防崩，临时用 iv_unread 占位（建议修改 item_notification.xml 添加图片控件）
+            if (ivIcon == null && itemView.findViewById(R.id.iv_unread) instanceof ImageView) {
+                ivIcon = (ImageView) itemView.findViewById(R.id.iv_unread);
             }
 
             tvTitle = itemView.findViewById(R.id.tv_notification_title);
-            // 如果布局里没有 tv_content，显示在 title 或者 time 旁边
+            // 假设布局有内容显示区域，如果没有，复用 title
             tvContent = itemView.findViewById(R.id.tv_notification_content);
+            if (tvContent == null) tvContent = tvTitle;
+
             tvTime = itemView.findViewById(R.id.tv_notification_time);
             ivUnread = itemView.findViewById(R.id.iv_unread);
         }

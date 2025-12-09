@@ -41,7 +41,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_notification);
+        setContentView(R.layout.activity_notification); // 加载修复后的布局
 
         currentUser = (User) getIntent().getSerializableExtra("user");
         if (currentUser == null) {
@@ -57,61 +57,70 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     protected void onResume() {
         super.onResume();
-        // 每次回到页面时重新加载，以刷新最新消息
-        loadUnifiedData();
+        loadUnifiedData(); // 每次进入页面刷新数据
     }
 
     private void initViews() {
         recyclerView = findViewById(R.id.recycler_view_notifications);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // 初始化适配器
         adapter = new NotificationAdapter(this, new ArrayList<>(), this);
         recyclerView.setAdapter(adapter);
 
-        // 设置标题栏返回
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish()); // 假设你的布局有返回按钮
+        // 修复崩溃点：现在 activity_notification.xml 中已经有了 btn_back
+        View btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        } else {
+            Log.e(TAG, "未找到 btn_back，请检查 XML 布局");
+        }
     }
 
-    // 核心方法：加载并合并数据
+    // 核心功能：加载并合并 系统通知 和 聊天消息
     private void loadUnifiedData() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
                 List<UnifiedMessage> unifiedList = new ArrayList<>();
 
-                // 1. 获取系统通知 (原有逻辑)
+                // 1. 获取系统通知
                 List<Notification> systemNotifications = db.notificationDao()
                         .getByRecipientPhone(currentUser.getPhone());
-                for (Notification n : systemNotifications) {
-                    unifiedList.add(new UnifiedMessage(n));
-                }
-
-                // 2. 获取聊天会话 (类似于 MessageListActivity 的逻辑)
-                // 获取所有与我有关的消息
-                List<ChatMessage> allChatMsgs = db.chatDao().getAllMyMessages(currentUser.getId());
-                Map<Integer, ChatMessage> latestMsgMap = new HashMap<>();
-
-                // 过滤出每个会话的最新一条
-                for (ChatMessage msg : allChatMsgs) {
-                    int otherId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
-                    if (!latestMsgMap.containsKey(otherId)) {
-                        latestMsgMap.put(otherId, msg);
+                if (systemNotifications != null) {
+                    for (Notification n : systemNotifications) {
+                        unifiedList.add(new UnifiedMessage(n));
                     }
                 }
 
-                // 将最新的一条聊天转换为 UnifiedMessage
-                for (Map.Entry<Integer, ChatMessage> entry : latestMsgMap.entrySet()) {
-                    int targetId = entry.getKey();
-                    ChatMessage msg = entry.getValue();
+                // 2. 获取邻里互助聊天会话 (显示每个人最新的一条)
+                List<ChatMessage> allChatMsgs = db.chatDao().getAllMyMessages(currentUser.getId());
+                if (allChatMsgs != null) {
+                    Map<Integer, ChatMessage> latestMsgMap = new HashMap<>();
+                    for (ChatMessage msg : allChatMsgs) {
+                        // 确定聊天对象ID
+                        int otherId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
+                        // 因为 allChatMsgs 通常是按时间倒序查的，第一次遇到就是最新的
+                        if (!latestMsgMap.containsKey(otherId)) {
+                            latestMsgMap.put(otherId, msg);
+                        }
+                    }
 
-                    // 查询对方用户信息以获取名字和头像
-                    User targetUser = db.userDao().getUserById(targetId);
-                    String titleName = (targetUser != null) ? targetUser.getName() : "未知用户";
-                    String avatar = (targetUser != null) ? targetUser.getAvatar() : null;
+                    // 转换为 UnifiedMessage
+                    for (Map.Entry<Integer, ChatMessage> entry : latestMsgMap.entrySet()) {
+                        int targetId = entry.getKey();
+                        ChatMessage msg = entry.getValue();
 
-                    unifiedList.add(new UnifiedMessage(msg, titleName, targetId, avatar));
+                        // 查询对方名字和头像
+                        User targetUser = db.userDao().getUserById(targetId);
+                        String titleName = (targetUser != null) ? targetUser.getName() : "未知用户";
+                        String avatar = (targetUser != null) ? targetUser.getAvatar() : null;
+
+                        unifiedList.add(new UnifiedMessage(msg, titleName, targetId, avatar));
+                    }
                 }
 
-                // 3. 统一按时间倒序排序
+                // 3. 统一按时间倒序排序 (实现将新消息排在前面)
                 Collections.sort(unifiedList);
 
                 // 4. 更新UI
@@ -131,11 +140,11 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         });
     }
 
-    // 点击事件分发
+    // 处理点击事件：根据类型跳转
     @Override
     public void onItemClick(UnifiedMessage message) {
         if (message.getType() == UnifiedMessage.TYPE_CHAT_MESSAGE) {
-            // ---> 情况A：如果是聊天，跳转到 ChatActivity
+            // ---> 情况A：如果是邻里互助聊天，跳转到聊天页面
             Intent intent = new Intent(this, ChatActivity.class);
             intent.putExtra("currentUser", currentUser);
             intent.putExtra("targetUserId", message.getChatTargetId()); // 传递对方ID
@@ -149,7 +158,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
 
     // 显示系统通知详情
     private void showSystemNotificationDetail(Notification notification) {
-        // 标记为已读
+        // 异步标记为已读
         new Thread(() -> db.notificationDao().markAsRead(notification.getId())).start();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
