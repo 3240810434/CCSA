@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class NotificationActivity extends AppCompatActivity implements NotificationAdapter.OnItemClickListener {
+public class NotificationActivity extends AppCompatActivity implements NotificationAdapter.OnItemClickListener, NotificationAdapter.OnItemLongClickListener {
     private static final String TAG = "NotificationActivity";
     private User currentUser;
     private RecyclerView recyclerView;
@@ -41,7 +41,7 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_notification); // 加载修复后的布局
+        setContentView(R.layout.activity_notification);
 
         currentUser = (User) getIntent().getSerializableExtra("user");
         if (currentUser == null) {
@@ -57,27 +57,26 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     protected void onResume() {
         super.onResume();
-        loadUnifiedData(); // 每次进入页面刷新数据
+        // 每次页面可见时刷新数据，确保头像和名字同步最新
+        loadUnifiedData();
     }
 
     private void initViews() {
         recyclerView = findViewById(R.id.recycler_view_notifications);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // 初始化适配器
-        adapter = new NotificationAdapter(this, new ArrayList<>(), this);
+        // 初始化适配器，传入 点击监听 和 长按监听
+        adapter = new NotificationAdapter(this, new ArrayList<>(), this, this);
         recyclerView.setAdapter(adapter);
 
-        // 修复崩溃点：现在 activity_notification.xml 中已经有了 btn_back
+        // 返回按钮处理
         View btnBack = findViewById(R.id.btn_back);
         if (btnBack != null) {
             btnBack.setOnClickListener(v -> finish());
-        } else {
-            Log.e(TAG, "未找到 btn_back，请检查 XML 布局");
         }
     }
 
-    // 核心功能：加载并合并 系统通知 和 聊天消息
+    // 加载并合并 系统通知 和 聊天消息
     private void loadUnifiedData() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
@@ -93,70 +92,122 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                     }
                 }
 
-                // 2. 获取邻里互助聊天会话 (显示每个人最新的一条)
+                // 2. 获取聊天会话
+                // 此方法需确保在 DAO 中实现：SELECT * FROM chat_message WHERE senderId = :myId OR receiverId = :myId ORDER BY createTime DESC
                 List<ChatMessage> allChatMsgs = db.chatDao().getAllMyMessages(currentUser.getId());
+
                 if (allChatMsgs != null) {
                     Map<Integer, ChatMessage> latestMsgMap = new HashMap<>();
+
                     for (ChatMessage msg : allChatMsgs) {
-                        // 确定聊天对象ID
+                        // 核心修复：准确计算对方ID
+                        // 如果我是发送者，对方就是receiverId；如果我是接收者，对方就是senderId
                         int otherId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
-                        // 因为 allChatMsgs 通常是按时间倒序查的，第一次遇到就是最新的
+
+                        // 因为查询结果是按时间倒序的，所以第一次遇到的 otherId 对应的消息就是最新一条
                         if (!latestMsgMap.containsKey(otherId)) {
                             latestMsgMap.put(otherId, msg);
                         }
                     }
 
-                    // 转换为 UnifiedMessage
+                    // 将最新的一条聊天转换为 UnifiedMessage
                     for (Map.Entry<Integer, ChatMessage> entry : latestMsgMap.entrySet()) {
                         int targetId = entry.getKey();
                         ChatMessage msg = entry.getValue();
 
-                        // 查询对方名字和头像
+                        // 查询对方用户信息以获取名字和头像 (实现“绑定”功能)
                         User targetUser = db.userDao().getUserById(targetId);
-                        String titleName = (targetUser != null) ? targetUser.getName() : "未知用户";
+
+                        // 默认值处理，防止“未知用户”
+                        String titleName = (targetUser != null) ? targetUser.getName() : "邻居 (ID:" + targetId + ")";
                         String avatar = (targetUser != null) ? targetUser.getAvatar() : null;
 
                         unifiedList.add(new UnifiedMessage(msg, titleName, targetId, avatar));
                     }
                 }
 
-                // 3. 统一按时间倒序排序 (实现将新消息排在前面)
+                // 3. 统一按时间倒序排序
                 Collections.sort(unifiedList);
 
                 // 4. 更新UI
                 runOnUiThread(() -> {
-                    if (!unifiedList.isEmpty()) {
+                    if (adapter != null) {
                         adapter.updateData(unifiedList);
-                    } else {
-                        Toast.makeText(this, "暂无消息", Toast.LENGTH_SHORT).show();
+                    }
+                    if (unifiedList.isEmpty()) {
+                        // 可以选择显示空状态视图
+                        // Toast.makeText(this, "暂无消息", Toast.LENGTH_SHORT).show();
                     }
                 });
 
             } catch (Exception e) {
                 Log.e(TAG, "加载数据失败", e);
+                runOnUiThread(() -> Toast.makeText(this, "数据加载异常", Toast.LENGTH_SHORT).show());
             } finally {
                 executor.shutdown();
             }
         });
     }
 
-    // 处理点击事件：根据类型跳转
+    // 单击跳转
     @Override
     public void onItemClick(UnifiedMessage message) {
         if (message.getType() == UnifiedMessage.TYPE_CHAT_MESSAGE) {
-            // ---> 情况A：如果是邻里互助聊天，跳转到聊天页面
+            // 跳转到聊天页面
             Intent intent = new Intent(this, ChatActivity.class);
             intent.putExtra("currentUser", currentUser);
-            intent.putExtra("targetUserId", message.getChatTargetId()); // 传递对方ID
+            intent.putExtra("targetUserId", message.getChatTargetId());
             startActivity(intent);
 
         } else if (message.getType() == UnifiedMessage.TYPE_SYSTEM_NOTICE) {
-            // ---> 情况B：如果是系统通知，显示详情弹窗
+            // 显示系统通知详情
             showSystemNotificationDetail((Notification) message.getData());
         }
     }
 
-    // 显示系统通知详情
+    // 新增：长按删除功能
+    @Override
+    public void onItemLongClick(UnifiedMessage message) {
+        if (message.getType() == UnifiedMessage.TYPE_CHAT_MESSAGE) {
+            // 弹出确认删除对话框
+            new AlertDialog.Builder(this)
+                    .setTitle("删除聊天")
+                    .setMessage("确定要删除与 " + message.getTitle() + " 的所有聊天记录吗？")
+                    .setNegativeButton("取消", null)
+                    .setPositiveButton("确认", (dialog, which) -> {
+                        // 执行删除操作
+                        deleteConversation(message.getChatTargetId());
+                    })
+                    .show();
+        } else {
+            // 系统通知长按也可以做删除处理，这里暂时只做聊天的
+            Toast.makeText(this, "系统通知暂不支持删除", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // 执行数据库删除并刷新
+    private void deleteConversation(int targetId) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.execute(() -> {
+            try {
+                // 调用 DAO 删除会话 (需确保 ChatDao 中有 deleteConversation 方法)
+                db.chatDao().deleteConversation(currentUser.getId(), targetId);
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show();
+                    // 刷新列表
+                    loadUnifiedData();
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "删除失败", e);
+                runOnUiThread(() -> Toast.makeText(this, "删除失败", Toast.LENGTH_SHORT).show());
+            } finally {
+                executor.shutdown();
+            }
+        });
+    }
+
+    // 显示系统通知详情弹窗
     private void showSystemNotificationDetail(Notification notification) {
         // 异步标记为已读
         new Thread(() -> db.notificationDao().markAsRead(notification.getId())).start();

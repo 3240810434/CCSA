@@ -21,15 +21,24 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     private Context context;
     private List<UnifiedMessage> messageList;
     private OnItemClickListener listener;
+    private OnItemLongClickListener longClickListener; // 新增：长按监听器
 
+    // 点击事件接口
     public interface OnItemClickListener {
         void onItemClick(UnifiedMessage message);
     }
 
-    public NotificationAdapter(Context context, List<UnifiedMessage> messageList, OnItemClickListener listener) {
+    // 新增：长按事件接口
+    public interface OnItemLongClickListener {
+        void onItemLongClick(UnifiedMessage message);
+    }
+
+    public NotificationAdapter(Context context, List<UnifiedMessage> messageList,
+                               OnItemClickListener listener, OnItemLongClickListener longClickListener) {
         this.context = context;
         this.messageList = messageList;
         this.listener = listener;
+        this.longClickListener = longClickListener;
     }
 
     @NonNull
@@ -47,27 +56,49 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
             holder.tvContent.setText(message.getContent());
             holder.tvTime.setText(DateUtils.formatTime(message.getTime()));
 
-            // 根据类型设置图标
+            // 根据类型设置图标和头像
             if (message.getType() == UnifiedMessage.TYPE_CHAT_MESSAGE) {
                 // 聊天消息：加载用户头像
-                Glide.with(context)
-                        .load(message.getAvatarUrl())
-                        .placeholder(R.drawable.ic_avatar)
-                        .circleCrop()
-                        .into(holder.ivIcon);
-                // 隐藏未读红点（或者根据实际聊天未读状态显示）
+                // 修复：如果头像Url为空，或者加载失败，显示 R.drawable.lan (居民默认头像)
+                if (message.getAvatarUrl() != null && !message.getAvatarUrl().isEmpty()) {
+                    Glide.with(context)
+                            .load(message.getAvatarUrl())
+                            .placeholder(R.drawable.lan) // 加载中显示 lan
+                            .error(R.drawable.lan)       // 错误显示 lan
+                            .circleCrop()
+                            .into(holder.ivIcon);
+                } else {
+                    // 没有设置头像，直接显示默认 lan.jpg
+                    Glide.with(context)
+                            .load(R.drawable.lan)
+                            .circleCrop()
+                            .into(holder.ivIcon);
+                }
+
+                // 隐藏未读红点（聊天未读逻辑暂简化为隐藏）
                 if (holder.ivUnread != null) holder.ivUnread.setVisibility(View.GONE);
+
             } else {
                 // 系统通知：显示系统铃铛图标
                 holder.ivIcon.setImageResource(R.drawable.ic_notification);
-                // 如果需要显示系统通知红点，需在 UnifiedMessage 中传递 isRead 状态
+                // 这里的ImageView不用圆形裁剪，或者是系统图标
                 if (holder.ivUnread != null) holder.ivUnread.setVisibility(View.GONE);
             }
 
+            // 点击事件
             holder.itemView.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onItemClick(message);
                 }
+            });
+
+            // 新增：长按事件
+            holder.itemView.setOnLongClickListener(v -> {
+                if (longClickListener != null) {
+                    longClickListener.onItemLongClick(message);
+                    return true; // 返回true表示消费了事件，不再触发点击
+                }
+                return false;
             });
         }
     }
@@ -83,7 +114,7 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivIcon; // 左侧头像/图标
+        ImageView ivIcon;
         TextView tvTitle;
         TextView tvContent;
         TextView tvTime;
@@ -91,18 +122,24 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // 确保你的 item_notification.xml 里有这些 ID
-            // 如果 item_notification.xml 左侧没有 ImageView，请添加一个 id 为 iv_icon_type 的 ImageView
-            // 这里为了防止崩溃，尝试匹配常见 ID
+            // 确保 item_notification.xml 中有这些 ID
+            // 这里为了防止 ID 找不到导致崩溃，做了简单的兼容判断
+            // 建议您确认布局文件中左侧头像的 ID 是 iv_icon_type 或 iv_avatar
             ivIcon = itemView.findViewById(R.id.iv_icon_type);
-            // 如果布局没改，为了防崩，临时用 iv_unread 占位（建议修改 item_notification.xml 添加图片控件）
-            if (ivIcon == null && itemView.findViewById(R.id.iv_unread) instanceof ImageView) {
-                ivIcon = (ImageView) itemView.findViewById(R.id.iv_unread);
+            if (ivIcon == null) {
+                // 尝试找一下可能存在的其他ID
+                ivIcon = itemView.findViewById(R.id.iv_avatar);
+            }
+
+            // 如果实在找不到头像控件，临时使用 unread 控件防止空指针（仅作防崩处理）
+            if (ivIcon == null) {
+                View temp = itemView.findViewById(R.id.iv_unread);
+                if (temp instanceof ImageView) ivIcon = (ImageView) temp;
             }
 
             tvTitle = itemView.findViewById(R.id.tv_notification_title);
-            // 假设布局有内容显示区域，如果没有，复用 title
             tvContent = itemView.findViewById(R.id.tv_notification_content);
+            // 如果布局里没有单独的内容 view，就复用 title 或 hidden
             if (tvContent == null) tvContent = tvTitle;
 
             tvTime = itemView.findViewById(R.id.tv_notification_time);
