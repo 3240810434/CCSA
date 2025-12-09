@@ -6,13 +6,11 @@
     android:orientation="vertical"
     android:background="#F5F5F5">
 
-    <!-- Fragment 容器（用于切换所有页面内容） -->
     <FrameLayout
         android:id="@+id/fl_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
 
-    <!-- 底部导航栏 - 固定在底部 -->
     <include layout="@layout/navigation_bottom"/>
 </LinearLayout>

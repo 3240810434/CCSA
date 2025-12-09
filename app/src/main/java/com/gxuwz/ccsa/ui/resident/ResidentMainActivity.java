@@ -30,11 +30,11 @@ public class ResidentMainActivity extends AppCompatActivity implements View.OnCl
         initViews();
         initFragments();
 
-        // 默认显示服务页面（原通知页面）
+        // 默认显示第一个页面（服务/主页）
         switchFragment(0);
     }
 
-    // 提供getter方法获取当前用户
+    // 提供getter方法获取当前用户，供Fragment调用
     public User getUser() {
         return currentUser;
     }
@@ -50,7 +50,10 @@ public class ResidentMainActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void initFragments() {
-        fragmentList.add(new NotificationFragment());  // 原通知Fragment现在显示在"服务"按钮
+        // 核心修改确认：这里加载 NotificationFragment 作为第一个页面
+        // 因为你提到主界面（带轮播图和功能按钮）已经存在，通常这对应 NotificationFragment
+        // 确保不要在这里 new ServiceFragment()，因为该文件已被删除
+        fragmentList.add(new NotificationFragment());
         fragmentList.add(new DynamicFragment());
         fragmentList.add(new MineFragment());
     }
@@ -59,7 +62,7 @@ public class ResidentMainActivity extends AppCompatActivity implements View.OnCl
     public void onClick(View v) {
         int id = v.getId();
         if (id == R.id.btn_notification) {
-            switchFragment(0);  // 服务按钮对应原通知Fragment
+            switchFragment(0);  // 点击"服务"按钮显示主页 Fragment
         } else if (id == R.id.btn_dynamic) {
             switchFragment(1);
         } else if (id == R.id.btn_mine) {
@@ -72,7 +75,7 @@ public class ResidentMainActivity extends AppCompatActivity implements View.OnCl
         FragmentTransaction transaction = manager.beginTransaction();
         Fragment targetFragment = fragmentList.get(position);
 
-        // 先移除当前显示的Fragment
+        // 先隐藏当前显示的Fragment
         if (currentFragment != null) {
             transaction.hide(currentFragment);
         }
