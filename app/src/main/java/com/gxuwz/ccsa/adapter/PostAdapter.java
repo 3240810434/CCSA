@@ -131,14 +131,18 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 sideBar.setLayoutParams(sideBarParams);
                 sideBar.setElevation(10f);
 
+                // 视频点赞：保持 like / liked
                 ImageView btnLike = createSideIcon(context, post.isLiked ? R.drawable.liked : R.drawable.like);
-                ImageView btnDislike = createSideIcon(context, post.isDisliked ? R.drawable.disliked : R.drawable.dislike);
 
-                // 修改点：视频帖子使用专用评论图标 (video_comments)
+                // 视频收藏 (原点踩)：改为 favorite / favorited
+                // 注意：这里复用 isDisliked 字段存储收藏状态
+                ImageView btnFavorite = createSideIcon(context, post.isDisliked ? R.drawable.favorited : R.drawable.favorite);
+
+                // 视频评论：保持 video_comments
                 ImageView btnComment = createSideIcon(context, R.drawable.video_comments);
 
                 sideBar.addView(btnLike);
-                sideBar.addView(btnDislike);
+                sideBar.addView(btnFavorite);
                 sideBar.addView(btnComment);
 
                 relativeLayout.addView(videoView);
@@ -166,22 +170,25 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
                 videoView.setOnCompletionListener(mp -> playIcon.setVisibility(View.VISIBLE));
 
+                // 视频点赞点击事件
                 btnLike.setOnClickListener(v -> {
                     if (post.isDisliked) {
+                        // 如果已收藏，取消收藏状态（互斥逻辑可选，通常收藏和点赞不互斥，这里保持原点踩互斥逻辑供参考，或者您可以删除互斥）
                         post.isDisliked = false;
-                        btnDislike.setImageResource(R.drawable.dislike);
+                        btnFavorite.setImageResource(R.drawable.favorite);
                     }
                     post.isLiked = !post.isLiked;
                     btnLike.setImageResource(post.isLiked ? R.drawable.liked : R.drawable.like);
                 });
 
-                btnDislike.setOnClickListener(v -> {
+                // 视频收藏点击事件
+                btnFavorite.setOnClickListener(v -> {
                     if (post.isLiked) {
                         post.isLiked = false;
                         btnLike.setImageResource(R.drawable.like);
                     }
-                    post.isDisliked = !post.isDisliked;
-                    btnDislike.setImageResource(post.isDisliked ? R.drawable.disliked : R.drawable.dislike);
+                    post.isDisliked = !post.isDisliked; // 切换收藏状态
+                    btnFavorite.setImageResource(post.isDisliked ? R.drawable.favorited : R.drawable.favorite);
                 });
 
                 btnComment.setOnClickListener(v -> openDetail(post));
@@ -240,33 +247,41 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                     holder.mediaContainer.addView(gridLayout);
                 }
 
+                // 文字/图片帖子的底部按钮绑定
                 bindBottomActions(holder, post);
             }
         } else {
+            // 纯文字帖子的底部按钮绑定
             bindBottomActions(holder, post);
         }
     }
 
+    // 绑定底部互动栏 (用于 文字贴 和 图片贴)
     private void bindBottomActions(PostViewHolder holder, Post post) {
-        holder.ivLike.setImageResource(post.isLiked ? R.drawable.liked : R.drawable.like);
-        holder.ivDislike.setImageResource(post.isDisliked ? R.drawable.disliked : R.drawable.dislike);
+        // 1. 设置点赞图标：使用 like2 / liked2
+        holder.ivLike.setImageResource(post.isLiked ? R.drawable.liked2 : R.drawable.like2);
 
+        // 2. 设置收藏(原点踩)图标：使用 favorite2 / favorited2
+        holder.ivDislike.setImageResource(post.isDisliked ? R.drawable.favorited2 : R.drawable.favorite2);
+
+        // 点击点赞
         holder.layoutLike.setOnClickListener(v -> {
             if (post.isDisliked) {
                 post.isDisliked = false;
-                holder.ivDislike.setImageResource(R.drawable.dislike);
+                holder.ivDislike.setImageResource(R.drawable.favorite2);
             }
             post.isLiked = !post.isLiked;
-            holder.ivLike.setImageResource(post.isLiked ? R.drawable.liked : R.drawable.like);
+            holder.ivLike.setImageResource(post.isLiked ? R.drawable.liked2 : R.drawable.like2);
         });
 
+        // 点击收藏
         holder.layoutDislike.setOnClickListener(v -> {
             if (post.isLiked) {
                 post.isLiked = false;
-                holder.ivLike.setImageResource(R.drawable.like);
+                holder.ivLike.setImageResource(R.drawable.like2);
             }
             post.isDisliked = !post.isDisliked;
-            holder.ivDislike.setImageResource(post.isDisliked ? R.drawable.disliked : R.drawable.dislike);
+            holder.ivDislike.setImageResource(post.isDisliked ? R.drawable.favorited2 : R.drawable.favorite2);
         });
 
         holder.layoutComment.setOnClickListener(v -> openDetail(post));
