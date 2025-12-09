@@ -3,12 +3,14 @@ package com.gxuwz.ccsa.ui.resident;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -16,14 +18,14 @@ import com.gxuwz.ccsa.R;
 
 /**
  * 居民端-动态主页面
- * 包含"生活动态"和"邻里互助"两个子页面，支持滑动切换
+ * 包含"生活动态"和"邻里互助"两个子页面
+ * 优化：解决了与主页ViewPager2的滑动冲突
  */
 public class DynamicFragment extends Fragment {
 
     private TextView tvLifeDynamics;
     private TextView tvNeighborHelp;
     private ViewPager2 viewPager;
-    // private FloatingActionButton fabPublish; // 已删除
 
     // 选中和未选中的颜色
     private static final int COLOR_SELECTED = Color.parseColor("#000000"); // 黑色
@@ -41,13 +43,10 @@ public class DynamicFragment extends Fragment {
         tvLifeDynamics = view.findViewById(R.id.tv_life_dynamics);
         tvNeighborHelp = view.findViewById(R.id.tv_neighbor_help);
         viewPager = view.findViewById(R.id.view_pager_dynamic);
-        // fabPublish = view.findViewById(R.id.fab_publish); // 已删除初始化
 
         // 点击标题切换页面
         tvLifeDynamics.setOnClickListener(v -> viewPager.setCurrentItem(0));
         tvNeighborHelp.setOnClickListener(v -> viewPager.setCurrentItem(1));
-
-        // 原有的 fabPublish 点击事件已删除，因为具体的发布按钮现在都在子Fragment里
     }
 
     private void setupViewPager() {
@@ -63,18 +62,78 @@ public class DynamicFragment extends Fragment {
                 updateTabStyles(position);
             }
         });
+
+        // ================== 核心优化：解决同方向嵌套ViewPager滑动冲突 ==================
+        // 获取ViewPager2内部的RecyclerView容器
+        View child = viewPager.getChildAt(0);
+        if (child instanceof RecyclerView) {
+            child.setOnTouchListener(new View.OnTouchListener() {
+                private float startX, startY;
+
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startX = event.getX();
+                            startY = event.getY();
+                            // 初始按下时，强制禁止父容器拦截，先让子容器判断意图
+                            v.getParent().requestDisallowInterceptTouchEvent(true);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            float endX = event.getX();
+                            float endY = event.getY();
+                            float disX = Math.abs(endX - startX);
+                            float disY = Math.abs(endY - startY);
+
+                            // 如果是水平滑动 (且幅度大于垂直滑动)
+                            if (disX > disY) {
+                                int currentItem = viewPager.getCurrentItem();
+                                int itemCount = viewPager.getAdapter().getItemCount();
+
+                                if (endX < startX) {
+                                    // 用户手指向左滑 (意图：看右边的页面 -> 邻里互助)
+                                    if (currentItem < itemCount - 1) {
+                                        // 如果还有右边的页面，子容器自己处理，禁止父容器拦截
+                                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                                    } else {
+                                        // 已经是最后一页(邻里互助)，放开拦截，让父容器(主页)处理，滑向"我的"
+                                        v.getParent().requestDisallowInterceptTouchEvent(false);
+                                    }
+                                } else if (endX > startX) {
+                                    // 用户手指向右滑 (意图：看左边的页面 -> 生活动态)
+                                    if (currentItem > 0) {
+                                        // 如果还有左边的页面，子容器自己处理
+                                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                                    } else {
+                                        // 已经是第一页(生活动态)，放开拦截，让父容器(主页)处理，滑向"服务"
+                                        v.getParent().requestDisallowInterceptTouchEvent(false);
+                                    }
+                                }
+                            } else {
+                                // 如果是垂直滑动，交给父容器处理（可能有下拉刷新或外层滚动）
+                                v.getParent().requestDisallowInterceptTouchEvent(false);
+                            }
+                            break;
+                        case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_CANCEL:
+                            // 触摸结束，恢复默认
+                            v.getParent().requestDisallowInterceptTouchEvent(false);
+                            break;
+                    }
+                    return false;
+                }
+            });
+        }
     }
 
     // 根据位置更新顶部文字样式
     private void updateTabStyles(int position) {
         if (position == 0) {
-            // 选中生活动态
             tvLifeDynamics.setTextColor(COLOR_SELECTED);
             tvNeighborHelp.setTextColor(COLOR_UNSELECTED);
-            tvLifeDynamics.setTextSize(18); // 选中稍微大一点
+            tvLifeDynamics.setTextSize(18);
             tvNeighborHelp.setTextSize(17);
         } else {
-            // 选中邻里互助
             tvLifeDynamics.setTextColor(COLOR_UNSELECTED);
             tvNeighborHelp.setTextColor(COLOR_SELECTED);
             tvLifeDynamics.setTextSize(17);
@@ -82,9 +141,7 @@ public class DynamicFragment extends Fragment {
         }
     }
 
-    // 内部适配器类
     private static class DynamicPagerAdapter extends FragmentStateAdapter {
-
         public DynamicPagerAdapter(@NonNull Fragment fragment) {
             super(fragment);
         }
@@ -93,9 +150,9 @@ public class DynamicFragment extends Fragment {
         @Override
         public Fragment createFragment(int position) {
             if (position == 0) {
-                return new LifeDynamicsFragment(); // 生活动态子页面（里面自带红色发布按钮）
+                return new LifeDynamicsFragment();
             } else {
-                return new NeighborHelpFragment(); // 邻里互助子页面
+                return new NeighborHelpFragment();
             }
         }
 
