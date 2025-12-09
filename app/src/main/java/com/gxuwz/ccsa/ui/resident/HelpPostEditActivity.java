@@ -7,7 +7,6 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.gxuwz.ccsa.R;
@@ -21,10 +20,8 @@ import java.util.List;
 public class HelpPostEditActivity extends AppCompatActivity {
 
     private EditText etTitle, etContent;
-    private ImageView ivPublishBtn; // fa_bu3.png
+    private ImageView ivPublishBtn;
     private User currentUser;
-    // 简化处理：这里假设你也复用了 MediaSelectActivity 来获取媒体路径
-    // 如果没有，你需要实现一个简单的图片选择器
     private List<String> selectedMediaPaths = new ArrayList<>();
 
     @Override
@@ -33,16 +30,18 @@ public class HelpPostEditActivity extends AppCompatActivity {
         setContentView(R.layout.activity_help_post_edit);
 
         currentUser = (User) getIntent().getSerializableExtra("user");
+        // 安全检查
+        if (currentUser == null) {
+            Toast.makeText(this, "用户信息错误", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         etTitle = findViewById(R.id.et_title);
         etContent = findViewById(R.id.et_content);
         ivPublishBtn = findViewById(R.id.iv_publish_btn);
 
-        // 发布点击事件
         ivPublishBtn.setOnClickListener(v -> attemptPublish());
-
-        // TODO: 这里需要添加点击选择图片/视频的逻辑，以及展示已选缩略图的 UI
-        // 参考 PostEditActivity 的实现
     }
 
     private void attemptPublish() {
@@ -64,14 +63,29 @@ public class HelpPostEditActivity extends AppCompatActivity {
 
     private void saveToDb(String title, String content) {
         new Thread(() -> {
+            AppDatabase db = AppDatabase.getInstance(this);
+
+            // 【核心修复】：如果当前用户ID为0（通常发生在注册后直接跳转），尝试从数据库重新获取
+            if (currentUser.getId() == 0 && !TextUtils.isEmpty(currentUser.getPhone())) {
+                User dbUser = db.userDao().findByPhone(currentUser.getPhone());
+                if (dbUser != null) {
+                    currentUser = dbUser; // 更新为包含正确ID的用户对象
+                }
+            }
+
+            // 再次检查，如果还是0，说明数据有问题，拦截
+            if (currentUser.getId() == 0) {
+                runOnUiThread(() -> Toast.makeText(this, "用户状态异常，请重新登录", Toast.LENGTH_SHORT).show());
+                return;
+            }
+
             HelpPost post = new HelpPost();
-            post.userId = currentUser.getId();
+            post.userId = currentUser.getId(); // 此时 ID 应该是正确的
             post.title = title;
             post.content = content;
             post.createTime = System.currentTimeMillis();
-            post.type = selectedMediaPaths.isEmpty() ? 0 : 1; // 简化判断：0纯文，1带图
+            post.type = selectedMediaPaths.isEmpty() ? 0 : 1;
 
-            AppDatabase db = AppDatabase.getInstance(this);
             long postId = db.helpPostDao().insertPost(post);
 
             // 保存媒体
@@ -81,7 +95,7 @@ public class HelpPostEditActivity extends AppCompatActivity {
                     HelpPostMedia media = new HelpPostMedia();
                     media.helpPostId = (int) postId;
                     media.url = path;
-                    media.type = 1; // 假设是图片
+                    media.type = 1;
                     mediaList.add(media);
                 }
                 db.helpPostDao().insertMediaList(mediaList);
@@ -89,7 +103,7 @@ public class HelpPostEditActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 Toast.makeText(this, "发布成功", Toast.LENGTH_SHORT).show();
-                finish(); // 返回上一页
+                finish();
             });
         }).start();
     }

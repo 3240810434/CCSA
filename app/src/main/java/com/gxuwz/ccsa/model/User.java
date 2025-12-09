@@ -1,10 +1,11 @@
 package com.gxuwz.ccsa.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 import java.io.Serializable;
 
-@Entity(tableName = "user") // Room数据库表名
+@Entity(tableName = "user")
 public class User implements Serializable {
     @PrimaryKey(autoGenerate = true)
     private int id; // 自增主键
@@ -17,7 +18,13 @@ public class User implements Serializable {
     private String room; // 房间号
     // 新增：头像路径字段
     private String avatar;
-    // 完整的7参数构造器（匹配注册时的参数）
+
+    // 【修复1】：必须提供一个无参构造函数供 Room 使用
+    public User() {
+    }
+
+    // 【修复2】：带参构造函数标记为 Ignore，避免 Room 混淆
+    @Ignore
     public User(String name, String gender, String phone, String password,
                 String community, String building, String room) {
         this.name = name;
@@ -29,75 +36,31 @@ public class User implements Serializable {
         this.room = room;
     }
 
-    // 所有字段的Getter和Setter
-    public int getId() {
-        return id;
-    }
+    // Getter 和 Setter
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public String getGender() {
-        return gender;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
+    public String getCommunity() { return community; }
+    public void setCommunity(String community) { this.community = community; }
 
-    public String getPhone() {
-        return phone;
-    }
+    public String getBuilding() { return building; }
+    public void setBuilding(String building) { this.building = building; }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
+    public String getRoom() { return room; }
+    public void setRoom(String room) { this.room = room; }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getCommunity() {
-        return community;
-    }
-
-    public void setCommunity(String community) {
-        this.community = community;
-    }
-
-    public String getBuilding() {
-        return building;
-    }
-
-    public void setBuilding(String building) {
-        this.building = building;
-    }
-
-    public String getRoom() {
-        return room;
-    }
-
-    public void setRoom(String room) {
-        this.room = room;
-    }
-    // 新增头像的 Getter/Setter
-    public String getAvatar() {
-        return avatar;
-    }
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar; }
 }
