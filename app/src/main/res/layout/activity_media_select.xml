@@ -4,34 +4,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFFFFF"> <RelativeLayout
-    android:layout_width="match_parent"
-    android:layout_height="50dp"
-    android:paddingHorizontal="16dp"
-    android:background="#FFFFFF"
-    android:elevation="2dp"> <ImageView
-    android:id="@+id/iv_close"
-    android:layout_width="24dp"
-    android:layout_height="24dp"
-    android:src="@drawable/ic_delete"
-    android:layout_centerVertical="true"
-    app:tint="#333333"/> <TextView
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="选择照片/视频"
-    android:textColor="#333333"
-    android:textSize="18sp"
-    android:textStyle="bold"
-    android:layout_centerInParent="true"/> <TextView
-    android:id="@+id/tv_continue"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="继续"
-    android:textColor="#2196F3"
-    android:textSize="16sp"
-    android:layout_alignParentEnd="true"
-    android:layout_centerVertical="true"/>
-</RelativeLayout>
+    android:background="#FFFFFF">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:paddingHorizontal="16dp"
+        android:background="#FFFFFF"
+        android:elevation="2dp">
+
+        <ImageView
+            android:id="@+id/iv_close"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/fork"
+            android:layout_centerVertical="true"
+            app:tint="#333333"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="选择照片/视频"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_centerInParent="true"/>
+
+        <TextView
+            android:id="@+id/tv_continue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="继续"
+            android:textColor="#2196F3"
+            android:textSize="16sp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
 
     <View
         android:layout_width="match_parent"

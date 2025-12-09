@@ -7,7 +7,7 @@
     android:layout_marginBottom="10dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="2dp"
-    app:cardBackgroundColor="@color/white">
+    app:cardBackgroundColor="#D3D3D3">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -111,9 +111,9 @@
                 android:gravity="center"
                 android:background="?attr/selectableItemBackground">
                 <ImageView
-                    android:layout_width="22dp"
-                    android:layout_height="22dp"
-                    android:src="@drawable/ic_notice"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/video_comments"
                     app:tint="#666"/>
                 <TextView
                     android:id="@+id/tv_comment_count"

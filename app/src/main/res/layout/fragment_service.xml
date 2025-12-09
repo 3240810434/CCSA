@@ -2,95 +2,222 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp"
-    android:background="@color/background">
+    android:background="#F5F5F5">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <Button
+        <LinearLayout
             android:id="@+id/btn_pay_fee"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="在线缴纳物业费"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:drawableStart="@mipmap/ic_launcher"
-            android:drawablePadding="10dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:paddingStart="20dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
             android:layout_marginBottom="12dp"
-            android:textColor="@color/black"/>
+            android:backgroundTint="@color/white"
+            android:elevation="2dp">
 
-        <Button
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_pay" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="在线缴纳物业费"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:singleLine="true" />
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_arrow_right"
+                android:alpha="0.5"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btn_fee_detail"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="查看缴费明细"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:drawableStart="@mipmap/ic_launcher"
-            android:drawablePadding="10dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:paddingStart="20dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
             android:layout_marginBottom="12dp"
-            android:textColor="@color/black"/>
+            android:backgroundTint="@color/white"
+            android:elevation="2dp">
 
-        <Button
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_my_payment" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="查看缴费明细"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:singleLine="true" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_arrow_right"
+                android:alpha="0.5"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btn_fee_appeal"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="缴费异常申诉"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:drawableStart="@mipmap/ic_launcher"
-            android:drawablePadding="10dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:paddingStart="20dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
             android:layout_marginBottom="12dp"
-            android:textColor="@color/black"/>
+            android:backgroundTint="@color/white"
+            android:elevation="2dp">
 
-        <Button
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_appeal" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="缴费异常申诉"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:singleLine="true" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_arrow_right"
+                android:alpha="0.5"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btn_buy_service"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="购买专业服务"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:drawableStart="@mipmap/ic_launcher"
-            android:drawablePadding="10dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:paddingStart="20dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
             android:layout_marginBottom="12dp"
-            android:textColor="@color/black"/>
+            android:backgroundTint="@color/white"
+            android:elevation="2dp">
 
-        <Button
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_service" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="购买专业服务"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:singleLine="true" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_arrow_right"
+                android:alpha="0.5"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btn_repair"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="在线报修"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:drawableStart="@mipmap/ic_launcher"
-            android:drawablePadding="10dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:paddingStart="20dp"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
             android:layout_marginBottom="12dp"
-            android:textColor="@color/black"/>
+            android:backgroundTint="@color/white"
+            android:elevation="2dp">
 
-        <Button
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_repair" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="在线报修"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:singleLine="true" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_arrow_right"
+                android:alpha="0.5"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/btn_contact_property"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:text="联系物业管理人员"
-            android:textSize="16sp"
-            android:backgroundTint="@color/white"
-            android:drawableStart="@mipmap/ic_launcher"
-            android:drawablePadding="10dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
             android:gravity="center_vertical"
-            android:paddingStart="20dp"
-            android:textColor="@color/black"/>
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            android:backgroundTint="@color/white"
+            android:elevation="2dp">
+
+            <ImageView
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/ic_contact" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="16dp"
+                android:text="联系物业管理人员"
+                android:textColor="@color/black"
+                android:textSize="16sp"
+                android:singleLine="true" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_arrow_right"
+                android:alpha="0.5"/>
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

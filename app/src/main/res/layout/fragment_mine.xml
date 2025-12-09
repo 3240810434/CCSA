@@ -86,7 +86,7 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@drawable/ic_manage"/>
+                        android:src="@drawable/resident_edit_homepage"/>
                     <TextView
                         style="@style/MineMenuTextStyle"
                         android:text="编辑主页"/>
@@ -97,7 +97,7 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@android:drawable/ic_menu_agenda"/>
+                        android:src="@drawable/resident_my_orders_resident"/>
                     <TextView
                         style="@style/MineMenuTextStyle"
                         android:text="我的订单"/>
@@ -108,7 +108,7 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@android:drawable/ic_menu_recent_history"/>
+                        android:src="@drawable/resident_watching_history"/>
                     <TextView
                         style="@style/MineMenuTextStyle"
                         android:text="观看历史"/>
@@ -119,7 +119,7 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@drawable/ic_contact"/>
+                        android:src="@drawable/resident_changes_password"/>
                     <TextView
                         style="@style/MineMenuTextStyle"
                         android:text="更改密码"/>
