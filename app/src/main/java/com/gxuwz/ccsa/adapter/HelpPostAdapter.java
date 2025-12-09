@@ -105,4 +105,9 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
             llContact = itemView.findViewById(R.id.ll_contact);
         }
     }
+
+    public void setList(List<HelpPost> newList) {
+        this.list = newList;
+        notifyDataSetChanged();
+    }
 }
