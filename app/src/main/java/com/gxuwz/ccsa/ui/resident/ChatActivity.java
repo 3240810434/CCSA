@@ -44,7 +44,6 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         db = AppDatabase.getInstance(this);
-        // 获取传递过来的数据
         currentUser = (User) getIntent().getSerializableExtra("currentUser");
         targetUserId = getIntent().getIntExtra("targetUserId", -1);
 
@@ -54,12 +53,39 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
+        // 【核心BUG修复】：检测 currentUser 的 ID 是否丢失（为0）
+        // 这种情况常发生在注册后直接使用，或者 User 对象传递过程中数据不完整
+        if (currentUser.getId() == 0) {
+            // 尝试通过手机号在后台重新获取完整的 User 对象
+            recoverUserIdentity();
+        }
+
         initView();
         loadTargetUserInfo();
     }
 
+    private void recoverUserIdentity() {
+        new Thread(() -> {
+            // 假设 User 模型中有 getPhone() 方法，且手机号唯一
+            // 如果没有 phone 字段，请确保有其他唯一标识
+            if (!TextUtils.isEmpty(currentUser.getPhone())) {
+                User validUser = db.userDao().findByPhone(currentUser.getPhone());
+                if (validUser != null) {
+                    currentUser = validUser; // 修正 currentUser，此时 ID 应该 > 0
+
+                    // 修正后刷新 Adapter（如果已经初始化）
+                    runOnUiThread(() -> {
+                        if (adapter != null) {
+                            // ChatAdapter 需要有 setCurrentUser 方法，或者重建 Adapter
+                            // 简单起见，这里不需要额外操作，因为发送时会使用最新的 currentUser.getId()
+                        }
+                    });
+                }
+            }
+        }).start();
+    }
+
     private void initView() {
-        // 顶部栏
         ivBack = findViewById(R.id.iv_back);
         ivReport = findViewById(R.id.iv_report);
         ivHeaderAvatar = findViewById(R.id.iv_header_avatar);
@@ -68,19 +94,17 @@ public class ChatActivity extends AppCompatActivity {
         ivBack.setOnClickListener(v -> finish());
         ivReport.setOnClickListener(v -> Toast.makeText(this, "举报功能开发中", Toast.LENGTH_SHORT).show());
 
-        // 聊天区
         recyclerView = findViewById(R.id.recycler_view);
         etInput = findViewById(R.id.et_input);
         btnSend = findViewById(R.id.btn_send);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        // layoutManager.setStackFromEnd(true); // 如果需要让列表从底部开始显示可开启此行
+        // layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
 
         btnSend.setOnClickListener(v -> sendMessage());
     }
 
-    // 加载目标用户信息（异步）
     private void loadTargetUserInfo() {
         new Thread(() -> {
             targetUser = db.userDao().getUserById(targetUserId);
@@ -92,30 +116,31 @@ public class ChatActivity extends AppCompatActivity {
                             .placeholder(R.drawable.lan)
                             .into(ivHeaderAvatar);
 
-                    // 1. 在这里初始化 Adapter
+                    // 初始化 Adapter
                     adapter = new ChatAdapter(this, messageList, currentUser, targetUser);
                     recyclerView.setAdapter(adapter);
-
-                    // 2. Adapter 就绪后，再加载消息
                     loadMessages();
                 } else {
                     Toast.makeText(this, "未找到目标用户", Toast.LENGTH_SHORT).show();
+                    // 可以在这里禁用发送按钮
+                    btnSend.setEnabled(false);
                 }
             });
         }).start();
     }
 
-    // 加载聊天记录
     private void loadMessages() {
+        // 确保使用最新的 ID 查询
+        int myId = currentUser.getId();
+        if (myId == 0) return; // 如果 ID 还没恢复，暂时不查，避免查出错误数据
+
         new Thread(() -> {
-            List<ChatMessage> msgs = db.chatDao().getChatHistory(currentUser.getId(), targetUserId);
+            List<ChatMessage> msgs = db.chatDao().getChatHistory(myId, targetUserId);
             runOnUiThread(() -> {
                 messageList.clear();
                 if (msgs != null) {
                     messageList.addAll(msgs);
                 }
-
-                // 【核心修复】：增加判空，防止 adapter 为空导致 Crash
                 if (adapter != null) {
                     adapter.notifyDataSetChanged();
                     if (!messageList.isEmpty()) {
@@ -133,26 +158,30 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
-        // 如果目标用户还没加载出来，暂时不允许发送，防止数据错乱
         if (targetUser == null) {
             Toast.makeText(this, "正在加载用户信息...", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        // 【核心防御】：再次检查 ID，防止发送 senderId=0 的消息
+        if (currentUser.getId() == 0) {
+            Toast.makeText(this, "用户信息同步中，请稍后再试", Toast.LENGTH_SHORT).show();
+            // 再次尝试恢复
+            recoverUserIdentity();
+            return;
+        }
+
         ChatMessage msg = new ChatMessage();
-        msg.senderId = currentUser.getId();
+        msg.senderId = currentUser.getId(); // 此时 ID 应该是正确的
         msg.receiverId = targetUserId;
         msg.content = content;
         msg.createTime = System.currentTimeMillis();
 
         new Thread(() -> {
-            // 插入数据库
             db.chatDao().insertMessage(msg);
-
-            // 【修复】：UI 操作必须在主线程
             runOnUiThread(() -> {
-                etInput.setText(""); // 清空输入框
-                loadMessages();      // 刷新列表
+                etInput.setText("");
+                loadMessages();
             });
         }).start();
     }

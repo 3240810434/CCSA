@@ -29,9 +29,8 @@ public class NeighborHelpFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_neighbor_help, container, false);
 
-        if (getActivity() instanceof ResidentMainActivity) {
-            currentUser = ((ResidentMainActivity) getActivity()).getUser();
-        }
+        // 初始化时获取用户
+        updateCurrentUser();
 
         recyclerView = view.findViewById(R.id.recycler_view);
         ivPublish = view.findViewById(R.id.iv_publish);
@@ -43,7 +42,7 @@ public class NeighborHelpFragment extends Fragment {
         if (ivPublish != null) {
             ivPublish.setOnClickListener(v -> {
                 Intent intent = new Intent(getActivity(), HelpPostEditActivity.class);
-                intent.putExtra("user", currentUser);
+                intent.putExtra("user", currentUser); // 传递最新的 User
                 startActivity(intent);
             });
         }
@@ -54,7 +53,29 @@ public class NeighborHelpFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        // 每次恢复显示时刷新数据和用户信息
+        updateCurrentUser();
         loadData();
+    }
+
+    // 【关键修复】处理 Fragment 隐藏/显示时的刷新（解决 Tab 切换不走 onResume 的问题）
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) {
+            updateCurrentUser();
+            loadData();
+        }
+    }
+
+    // 更新当前用户信息，并同步给 Adapter
+    private void updateCurrentUser() {
+        if (getActivity() instanceof ResidentMainActivity) {
+            currentUser = ((ResidentMainActivity) getActivity()).getUser();
+            if (adapter != null) {
+                adapter.setCurrentUser(currentUser);
+            }
+        }
     }
 
     private void loadData() {
@@ -66,15 +87,14 @@ public class NeighborHelpFragment extends Fragment {
                 // 加载媒体
                 p.mediaList = db.helpPostDao().getMediaForPost(p.id);
 
-                // 【关键】：UserDao 查询
+                // 【关键】：每次都重新根据 userId 查询最新的用户信息（头像、昵称）
+                // 这样即使用户修改了资料，帖子列表也会同步更新
                 User u = db.userDao().getUserById(p.userId);
                 if (u != null) {
                     p.userName = u.getName();
                     p.userAvatar = u.getAvatar();
                 } else {
-                    // 如果 userId 为 0 或用户被删，会走进这里
                     p.userName = "未知用户";
-                    // p.userAvatar 保持为 null，Adapter 会自动处理显示默认图
                 }
             }
 
