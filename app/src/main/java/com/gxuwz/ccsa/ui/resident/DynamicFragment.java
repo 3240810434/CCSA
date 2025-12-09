@@ -19,7 +19,7 @@ import com.gxuwz.ccsa.R;
 /**
  * 居民端-动态主页面
  * 包含"生活动态"和"邻里互助"两个子页面
- * 优化：解决了与主页ViewPager2的滑动冲突
+ * 优化：完美解决了与主页ViewPager2的滑动冲突
  */
 public class DynamicFragment extends Fragment {
 
@@ -102,7 +102,7 @@ public class DynamicFragment extends Fragment {
                                 } else if (endX > startX) {
                                     // 用户手指向右滑 (意图：看左边的页面 -> 生活动态)
                                     if (currentItem > 0) {
-                                        // 如果还有左边的页面，子容器自己处理
+                                        // 如果还有左边的页面，子容器自己处理，禁止父容器拦截
                                         v.getParent().requestDisallowInterceptTouchEvent(true);
                                     } else {
                                         // 已经是第一页(生活动态)，放开拦截，让父容器(主页)处理，滑向"服务"
@@ -110,8 +110,11 @@ public class DynamicFragment extends Fragment {
                                     }
                                 }
                             } else {
-                                // 如果是垂直滑动，交给父容器处理（可能有下拉刷新或外层滚动）
-                                v.getParent().requestDisallowInterceptTouchEvent(false);
+                                // 【核心修改点】
+                                // 如果是垂直滑动（或斜滑），继续禁止父容器拦截！
+                                // 这样可以防止斜着滑时，外层横向ViewPager意外触发翻页。
+                                // 同时因为外层是横向的，内部的列表垂直滚动不会受到影响。
+                                v.getParent().requestDisallowInterceptTouchEvent(true);
                             }
                             break;
                         case MotionEvent.ACTION_UP:
