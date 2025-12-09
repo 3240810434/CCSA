@@ -36,7 +36,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/tv_user_name"
+                    android:id="@+id/tv_author_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="用户名称"
@@ -75,11 +75,12 @@
             android:textColor="#666666"
             android:textSize="15sp" />
 
-        <FrameLayout
-            android:id="@+id/media_container"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_media"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp" />
+            android:layout_marginTop="10dp"
+            android:overScrollMode="never" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -88,7 +89,7 @@
             android:gravity="end">
 
             <LinearLayout
-                android:id="@+id/layout_contact"
+                android:id="@+id/ll_contact"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"

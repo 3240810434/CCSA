@@ -16,7 +16,6 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.HelpPost;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.ui.resident.ChatActivity;
-import com.gxuwz.ccsa.ui.resident.VideoFullScreenActivity;
 import com.gxuwz.ccsa.util.DateUtils;
 import java.util.List;
 
@@ -43,39 +42,35 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         HelpPost post = list.get(position);
 
-        // 1. 设置基本信息
+        // 1. 设置文本内容
         holder.tvTitle.setText(post.title);
         holder.tvContent.setText(post.content);
         holder.tvAuthor.setText(post.userName);
-        holder.tvTime.setText(DateUtils.formatTime(post.createTime)); // 假设你有这个工具类
+        holder.tvTime.setText(DateUtils.formatTime(post.createTime));
 
-        // 头像加载
+        // 2. 加载头像
         Glide.with(context)
                 .load(post.userAvatar)
-                .placeholder(R.drawable.ic_avatar) // 默认头像
+                .placeholder(R.drawable.ic_avatar)
                 .circleCrop()
                 .into(holder.ivAvatar);
 
-        // 2. 处理媒体展示 (复用 PostAdapter 的逻辑，这里简化展示)
-        if (post.type == 0 || post.mediaList == null || post.mediaList.isEmpty()) {
+        // 3. 处理媒体展示 (图片/视频)
+        if (post.mediaList == null || post.mediaList.isEmpty()) {
             holder.rvMedia.setVisibility(View.GONE);
         } else {
             holder.rvMedia.setVisibility(View.VISIBLE);
-            // 这里建议复用 ImageGridAdapter 或 MediaGridAdapter
-            // 简单起见，这里假设你有一个通用的 GridAdapter
-            MediaGridAdapter mediaAdapter = new MediaGridAdapter(context, post.mediaList);
+            // 关键修改：使用 HelpPostMediaAdapter
+            HelpPostMediaAdapter mediaAdapter = new HelpPostMediaAdapter(context, post.mediaList);
             holder.rvMedia.setLayoutManager(new GridLayoutManager(context, 3));
             holder.rvMedia.setAdapter(mediaAdapter);
-
-            // 点击图片/视频的逻辑通常在 MediaGridAdapter 内部处理
         }
 
-        // 3. 核心逻辑：联系按钮
+        // 4. 联系按钮逻辑
         if (currentUser != null && post.userId == currentUser.getId()) {
-            // 如果是自己发布的，隐藏联系按钮
+            // 自己发布的帖子，隐藏联系按钮
             holder.llContact.setVisibility(View.GONE);
         } else {
-            // 如果是别人发布的，显示联系按钮
             holder.llContact.setVisibility(View.VISIBLE);
             holder.llContact.setOnClickListener(v -> {
                 Intent intent = new Intent(context, ChatActivity.class);
@@ -95,17 +90,18 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
         ImageView ivAvatar;
         TextView tvAuthor, tvTime, tvTitle, tvContent;
         RecyclerView rvMedia;
-        LinearLayout llContact; // 包含图标和文字的布局
+        LinearLayout llContact;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
+            // 绑定 XML 中修正后的 ID
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
-            tvAuthor = itemView.findViewById(R.id.tv_author_name);
+            tvAuthor = itemView.findViewById(R.id.tv_author_name); // 对应 xml id: tv_author_name
             tvTime = itemView.findViewById(R.id.tv_time);
             tvTitle = itemView.findViewById(R.id.tv_title);
             tvContent = itemView.findViewById(R.id.tv_content);
-            rvMedia = itemView.findViewById(R.id.rv_media);
-            llContact = itemView.findViewById(R.id.ll_contact); // 对应 item_help_post.xml 中的联系区域
+            rvMedia = itemView.findViewById(R.id.rv_media);       // 对应 xml id: rv_media
+            llContact = itemView.findViewById(R.id.ll_contact);   // 对应 xml id: ll_contact
         }
     }
 }
