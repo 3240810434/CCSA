@@ -2,26 +2,26 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.ImageView;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.HelpPost;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.ui.resident.ChatActivity;
+import com.gxuwz.ccsa.ui.resident.VideoFullScreenActivity;
 import com.gxuwz.ccsa.util.DateUtils;
 import java.util.List;
 
 public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHolder> {
+
     private Context context;
     private List<HelpPost> list;
     private User currentUser;
@@ -43,36 +43,41 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         HelpPost post = list.get(position);
 
-        // 1. 设置用户信息
-        holder.tvName.setText(post.userName);
-        holder.tvTime.setText(DateUtils.getRelativeTime(post.createTime));
+        // 1. 设置基本信息
+        holder.tvTitle.setText(post.title);
+        holder.tvContent.setText(post.content);
+        holder.tvAuthor.setText(post.userName);
+        holder.tvTime.setText(DateUtils.formatTime(post.createTime)); // 假设你有这个工具类
+
+        // 头像加载
         Glide.with(context)
                 .load(post.userAvatar)
-                .placeholder(R.drawable.lan) // 默认头像 lan.png
-                .error(R.drawable.lan)
-                .apply(RequestOptions.bitmapTransform(new RoundedCorners(100)))
+                .placeholder(R.drawable.ic_avatar) // 默认头像
+                .circleCrop()
                 .into(holder.ivAvatar);
 
-        // 2. 设置内容
-        holder.tvTitle.setText(post.title); // 粗体标题
-        holder.tvContent.setText(post.content);
-
-        // 3. 处理媒体显示 (简化逻辑，详细图片/视频显示代码请参考 PostAdapter 复用)
-        holder.mediaContainer.removeAllViews();
-        // TODO: 这里应直接复制 PostAdapter 中关于 mediaList (GridView/VideoView) 的展示逻辑
-        // 为节省篇幅，此处省略具体的 addView 代码，请务必将 PostAdapter 的相关代码复制过来
-        // 注意将 post.mediaList 类型改为 List<HelpPostMedia>
-
-        // 4. 联系按钮逻辑
-        boolean isMe = (currentUser != null && currentUser.getId() == post.userId);
-        if (isMe) {
-            // 本人发布的帖子，置灰不可点
-            holder.layoutContact.setAlpha(0.5f);
-            holder.layoutContact.setOnClickListener(null);
+        // 2. 处理媒体展示 (复用 PostAdapter 的逻辑，这里简化展示)
+        if (post.type == 0 || post.mediaList == null || post.mediaList.isEmpty()) {
+            holder.rvMedia.setVisibility(View.GONE);
         } else {
-            // 他人帖子，可点击
-            holder.layoutContact.setAlpha(1.0f);
-            holder.layoutContact.setOnClickListener(v -> {
+            holder.rvMedia.setVisibility(View.VISIBLE);
+            // 这里建议复用 ImageGridAdapter 或 MediaGridAdapter
+            // 简单起见，这里假设你有一个通用的 GridAdapter
+            MediaGridAdapter mediaAdapter = new MediaGridAdapter(context, post.mediaList);
+            holder.rvMedia.setLayoutManager(new GridLayoutManager(context, 3));
+            holder.rvMedia.setAdapter(mediaAdapter);
+
+            // 点击图片/视频的逻辑通常在 MediaGridAdapter 内部处理
+        }
+
+        // 3. 核心逻辑：联系按钮
+        if (currentUser != null && post.userId == currentUser.getId()) {
+            // 如果是自己发布的，隐藏联系按钮
+            holder.llContact.setVisibility(View.GONE);
+        } else {
+            // 如果是别人发布的，显示联系按钮
+            holder.llContact.setVisibility(View.VISIBLE);
+            holder.llContact.setOnClickListener(v -> {
                 Intent intent = new Intent(context, ChatActivity.class);
                 intent.putExtra("targetUserId", post.userId);
                 intent.putExtra("currentUser", currentUser);
@@ -83,23 +88,24 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return list == null ? 0 : list.size();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView ivAvatar;
-        TextView tvName, tvTime, tvTitle, tvContent;
-        LinearLayout mediaContainer, layoutContact;
+        TextView tvAuthor, tvTime, tvTitle, tvContent;
+        RecyclerView rvMedia;
+        LinearLayout llContact; // 包含图标和文字的布局
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
-            tvName = itemView.findViewById(R.id.tv_user_name);
+            tvAuthor = itemView.findViewById(R.id.tv_author_name);
             tvTime = itemView.findViewById(R.id.tv_time);
             tvTitle = itemView.findViewById(R.id.tv_title);
             tvContent = itemView.findViewById(R.id.tv_content);
-            mediaContainer = itemView.findViewById(R.id.media_container);
-            layoutContact = itemView.findViewById(R.id.layout_contact);
+            rvMedia = itemView.findViewById(R.id.rv_media);
+            llContact = itemView.findViewById(R.id.ll_contact); // 对应 item_help_post.xml 中的联系区域
         }
     }
 }

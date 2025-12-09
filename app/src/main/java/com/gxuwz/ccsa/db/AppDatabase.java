@@ -23,6 +23,10 @@ import com.gxuwz.ccsa.model.Post;
 import com.gxuwz.ccsa.model.PostMedia;
 import com.gxuwz.ccsa.model.Comment;
 
+import com.gxuwz.ccsa.model.ChatMessage;
+import com.gxuwz.ccsa.model.HelpPost;
+import com.gxuwz.ccsa.model.HelpPostMedia;
+
 // 添加TypeConverters注解注册日期转换器
 @Database(
         entities = {
@@ -42,9 +46,13 @@ import com.gxuwz.ccsa.model.Comment;
                 // --- 新增实体 ---
                 Post.class,
                 PostMedia.class,
-                Comment.class
+                Comment.class,
+                ChatMessage.class,
+                HelpPost.class,
+                HelpPostMedia.class
+
         },
-        version = 9, // 升级版本号，原为7
+        version = 10, // 升级版本号，原为7
         exportSchema = false
 )
 @TypeConverters(DateConverter.class) // 关键：注册日期类型转换器
@@ -69,8 +77,8 @@ public abstract class AppDatabase extends RoomDatabase {
     // --- 新增：生活动态DAO ---
     public abstract PostDao postDao();
     public abstract HelpPostDao helpPostDao();
-
     public abstract ChatDao chatDao();
+
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
             synchronized (AppDatabase.class) {
