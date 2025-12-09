@@ -1,11 +1,14 @@
 package com.gxuwz.ccsa.ui.resident;
 
+import android.content.Intent;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -17,6 +20,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.CommentAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
@@ -29,16 +34,26 @@ import java.util.List;
 
 public class PostDetailActivity extends AppCompatActivity {
     private Post post;
-    private User currentUser; // 当前登录用户
+    private User currentUser;
     private RecyclerView rvComments;
     private CommentAdapter adapter;
     private List<Comment> commentList = new ArrayList<>();
     private EditText etComment;
 
+    // Body Views
     private TextView tvName, tvContent;
     private ImageView ivAvatar, ivBack;
+    private LinearLayout llBodyUserInfo;
+
+    // Header Views (For Video)
+    private LinearLayout llHeaderUserInfo;
+    private ImageView ivHeaderAvatar;
+    private TextView tvHeaderName;
+
     private ViewPager2 viewPager;
     private VideoView videoView;
+    private FrameLayout videoContainer;
+    private ImageView btnFullScreen;
     private LinearLayout indicatorContainer;
 
     @Override
@@ -47,7 +62,6 @@ public class PostDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post_detail_custom);
 
         post = (Post) getIntent().getSerializableExtra("post");
-        // 获取传递过来的当前用户
         currentUser = (User) getIntent().getSerializableExtra("user");
 
         initViews();
@@ -61,12 +75,24 @@ public class PostDetailActivity extends AppCompatActivity {
         etComment = findViewById(R.id.et_comment);
         Button btnSend = findViewById(R.id.btn_send);
 
+        // Body User Info
+        llBodyUserInfo = findViewById(R.id.ll_user_info_body);
         tvName = findViewById(R.id.detail_name);
         tvContent = findViewById(R.id.detail_content);
         ivAvatar = findViewById(R.id.detail_avatar);
 
+        // Header User Info
+        llHeaderUserInfo = findViewById(R.id.ll_header_user_info);
+        ivHeaderAvatar = findViewById(R.id.header_avatar);
+        tvHeaderName = findViewById(R.id.header_name);
+
         viewPager = findViewById(R.id.view_pager_images);
+
+        // Video Views
+        videoContainer = findViewById(R.id.video_container);
         videoView = findViewById(R.id.detail_video_view);
+        btnFullScreen = findViewById(R.id.btn_fullscreen);
+
         indicatorContainer = findViewById(R.id.indicator_container);
 
         ivBack.setOnClickListener(v -> finish());
@@ -84,15 +110,28 @@ public class PostDetailActivity extends AppCompatActivity {
     private void setupPostContent() {
         if (post == null) return;
 
-        tvName.setText(post.userName);
+        // 基础内容
         tvContent.setText(post.content);
 
-        // 加载帖子发布者的头像
-        Glide.with(this)
-                .load(post.userAvatar)
-                .placeholder(R.drawable.lan)
-                .error(R.drawable.lan)
-                .into(ivAvatar);
+        // 加载头像逻辑
+        RequestOptions options = RequestOptions.bitmapTransform(new RoundedCorners(100));
+
+        // 1.1 根据帖子类型决定用户信息显示位置
+        if (post.type == 2) {
+            // === 视频帖子：用户信息在右上角 ===
+            llBodyUserInfo.setVisibility(View.GONE);
+            llHeaderUserInfo.setVisibility(View.VISIBLE);
+
+            tvHeaderName.setText(post.userName);
+            Glide.with(this).load(post.userAvatar).apply(options).into(ivHeaderAvatar);
+        } else {
+            // === 其他帖子：用户信息在内容上方 ===
+            llHeaderUserInfo.setVisibility(View.GONE);
+            llBodyUserInfo.setVisibility(View.VISIBLE);
+
+            tvName.setText(post.userName);
+            Glide.with(this).load(post.userAvatar).apply(options).into(ivAvatar);
+        }
 
         // 媒体处理
         if (post.mediaList != null && !post.mediaList.isEmpty()) {
@@ -100,21 +139,40 @@ public class PostDetailActivity extends AppCompatActivity {
                 // === 视频 ===
                 viewPager.setVisibility(View.GONE);
                 indicatorContainer.setVisibility(View.GONE);
-                videoView.setVisibility(View.VISIBLE);
+                videoContainer.setVisibility(View.VISIBLE);
 
-                videoView.setVideoPath(post.mediaList.get(0).url);
-                videoView.start();
+                String videoUrl = post.mediaList.get(0).url;
+                videoView.setVideoPath(videoUrl);
+
+                // 1.2 视频居中显示，准备好后开始播放
+                videoView.setOnPreparedListener(mp -> {
+                    mp.setLooping(true);
+                    mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT);
+                    videoView.start();
+                });
+
                 // 点击暂停/播放
                 videoView.setOnClickListener(v -> {
                     if (videoView.isPlaying()) videoView.pause();
                     else videoView.start();
                 });
+
+                // 1.2 点击全屏图标
+                btnFullScreen.setOnClickListener(v -> {
+                    Intent intent = new Intent(this, VideoFullScreenActivity.class);
+                    intent.putExtra("video_url", videoUrl);
+                    startActivity(intent);
+                });
+
             } else {
                 // === 图片 ===
-                videoView.setVisibility(View.GONE);
+                videoContainer.setVisibility(View.GONE);
                 viewPager.setVisibility(View.VISIBLE);
+
+                // 1.4 传递 mediaList 用于点击放大
                 ImagePagerAdapter imageAdapter = new ImagePagerAdapter(post.mediaList);
                 viewPager.setAdapter(imageAdapter);
+
                 setupIndicators(post.mediaList.size());
                 viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
                     @Override
@@ -126,7 +184,7 @@ public class PostDetailActivity extends AppCompatActivity {
             }
         } else {
             viewPager.setVisibility(View.GONE);
-            videoView.setVisibility(View.GONE);
+            videoContainer.setVisibility(View.GONE);
             indicatorContainer.setVisibility(View.GONE);
         }
     }
@@ -168,8 +226,6 @@ public class PostDetailActivity extends AppCompatActivity {
         new Thread(() -> {
             AppDatabase db = AppDatabase.getInstance(this);
             List<Comment> comments = db.postDao().getCommentsForPost(post.id);
-
-            // 关键：同步评论用户的最新头像和昵称
             for (Comment c : comments) {
                 User u = db.userDao().getUserById(c.userId);
                 if (u != null) {
@@ -177,7 +233,6 @@ public class PostDetailActivity extends AppCompatActivity {
                     c.userAvatar = u.getAvatar();
                 }
             }
-
             runOnUiThread(() -> {
                 commentList.clear();
                 commentList.addAll(comments);
@@ -187,27 +242,23 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void sendComment(String content) {
-        if (post == null) return;
-        if (currentUser == null) {
-            Toast.makeText(this, "用户未登录，无法评论", Toast.LENGTH_SHORT).show();
+        if (post == null || currentUser == null) {
+            Toast.makeText(this, currentUser == null ? "请先登录" : "数据错误", Toast.LENGTH_SHORT).show();
             return;
         }
-
         new Thread(() -> {
             Comment comment = new Comment();
             comment.postId = post.id;
             comment.userId = currentUser.getId();
             comment.userName = currentUser.getName();
-            comment.userAvatar = currentUser.getAvatar(); // 使用当前页面显示的头像
+            comment.userAvatar = currentUser.getAvatar();
             comment.content = content;
             comment.createTime = System.currentTimeMillis();
-
             AppDatabase.getInstance(this).postDao().insertComment(comment);
-
             runOnUiThread(() -> {
                 etComment.setText("");
                 Toast.makeText(this, "评论成功", Toast.LENGTH_SHORT).show();
-                loadComments(); // 重新加载以显示新评论
+                loadComments();
             });
         }).start();
     }
@@ -215,6 +266,7 @@ public class PostDetailActivity extends AppCompatActivity {
     class ImagePagerAdapter extends RecyclerView.Adapter<ImagePagerAdapter.ImageViewHolder> {
         private List<PostMedia> mediaList;
         public ImagePagerAdapter(List<PostMedia> mediaList) { this.mediaList = mediaList; }
+
         @NonNull @Override
         public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             ImageView imageView = new ImageView(parent.getContext());
@@ -222,12 +274,26 @@ public class PostDetailActivity extends AppCompatActivity {
             imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
             return new ImageViewHolder(imageView);
         }
+
         @Override
         public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
             Glide.with(holder.imageView.getContext()).load(mediaList.get(position).url).into(holder.imageView);
+
+            // 1.4 点击图片放大 (跳转至 ImagePreviewActivity)
+            holder.imageView.setOnClickListener(v -> {
+                ArrayList<String> urls = new ArrayList<>();
+                for (PostMedia m : mediaList) urls.add(m.url);
+
+                Intent intent = new Intent(PostDetailActivity.this, ImagePreviewActivity.class);
+                intent.putStringArrayListExtra("images", urls);
+                intent.putExtra("position", position);
+                startActivity(intent);
+            });
         }
+
         @Override
         public int getItemCount() { return mediaList.size(); }
+
         class ImageViewHolder extends RecyclerView.ViewHolder {
             ImageView imageView;
             public ImageViewHolder(@NonNull View itemView) { super(itemView); this.imageView = (ImageView) itemView; }

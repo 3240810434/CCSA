@@ -10,6 +10,7 @@
         android:layout_height="50dp"
         android:background="@color/white"
         android:elevation="2dp">
+
         <ImageView
             android:id="@+id/iv_back"
             android:layout_width="40dp"
@@ -17,6 +18,7 @@
             android:padding="10dp"
             android:src="@drawable/ic_arrow_right"
             android:rotation="180"/>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -24,6 +26,31 @@
             android:textSize="18sp"
             android:textColor="#333"
             android:layout_centerInParent="true"/>
+
+        <LinearLayout
+            android:id="@+id/ll_header_user_info"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:gravity="center_vertical"
+            android:paddingEnd="16dp"
+            android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/header_avatar"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/lan"/>
+
+            <TextView
+                android:id="@+id/header_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name"
+                android:textColor="#333"
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
     </RelativeLayout>
 
     <LinearLayout
@@ -78,6 +105,7 @@
                 android:layout_marginBottom="10dp">
 
                 <LinearLayout
+                    android:id="@+id/ll_user_info_body"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
@@ -117,11 +145,29 @@
                         android:layout_height="300dp"
                         android:visibility="gone"/>
 
-                    <VideoView
-                        android:id="@+id/detail_video_view"
+                    <FrameLayout
+                        android:id="@+id/video_container"
                         android:layout_width="match_parent"
-                        android:layout_height="300dp"
-                        android:visibility="gone"/>
+                        android:layout_height="400dp"
+                        android:background="#000000"
+                        android:visibility="gone">
+
+                        <VideoView
+                            android:id="@+id/detail_video_view"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"/>
+
+                        <ImageView
+                            android:id="@+id/btn_fullscreen"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_gravity="bottom|end"
+                            android:layout_margin="16dp"
+                            android:src="@drawable/full_creen"
+                            android:background="#4D000000"
+                            android:padding="4dp"/>
+                    </FrameLayout>
                 </FrameLayout>
 
                 <LinearLayout
