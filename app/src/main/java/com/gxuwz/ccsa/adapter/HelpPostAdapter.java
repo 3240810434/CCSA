@@ -42,35 +42,37 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         HelpPost post = list.get(position);
 
-        // 1. 设置文本内容
         holder.tvTitle.setText(post.title);
         holder.tvContent.setText(post.content);
-
-        // 修复：确保显示正确的用户名，如果为空则显示默认
         holder.tvAuthor.setText(post.userName != null ? post.userName : "未知邻居");
         holder.tvTime.setText(DateUtils.formatTime(post.createTime));
 
-        // 2. 加载头像 (核心修复：使用 lan 作为默认占位图)
         Glide.with(context)
-                .load(post.userAvatar) // 如果 post.userAvatar 为 null，Glide 会自动加载 placeholder
-                .placeholder(R.drawable.lan) // 加载中/为空时显示 lan.png
-                .error(R.drawable.lan)       // 加载失败时显示 lan.png
+                .load(post.userAvatar)
+                .placeholder(R.drawable.lan)
+                .error(R.drawable.lan)
                 .circleCrop()
                 .into(holder.ivAvatar);
 
-        // 3. 处理媒体展示 (图片/视频)
+        // 处理媒体展示
         if (post.mediaList == null || post.mediaList.isEmpty()) {
             holder.rvMedia.setVisibility(View.GONE);
         } else {
             holder.rvMedia.setVisibility(View.VISIBLE);
             HelpPostMediaAdapter mediaAdapter = new HelpPostMediaAdapter(context, post.mediaList);
-            holder.rvMedia.setLayoutManager(new GridLayoutManager(context, 3));
+
+            // 优化：如果是视频 (type=2)，使用 1 列显示大图；如果是图片，使用 3 列网格
+            // 假设 mediaList 中的元素类型一致
+            int spanCount = 3;
+            if (post.mediaList.get(0).type == 2) {
+                spanCount = 1;
+            }
+            holder.rvMedia.setLayoutManager(new GridLayoutManager(context, spanCount));
             holder.rvMedia.setAdapter(mediaAdapter);
         }
 
-        // 4. 联系按钮逻辑
+        // 联系按钮
         if (currentUser != null && post.userId == currentUser.getId()) {
-            // 自己发布的帖子，隐藏联系按钮
             holder.llContact.setVisibility(View.GONE);
         } else {
             holder.llContact.setVisibility(View.VISIBLE);

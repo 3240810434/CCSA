@@ -1,13 +1,14 @@
 package com.gxuwz.ccsa.ui.resident;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build; // 需要导入 Build
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -36,8 +37,8 @@ public class MediaSelectActivity extends AppCompatActivity {
     private List<PostMedia> allMedia = new ArrayList<>();
     private List<PostMedia> selectedMedia = new ArrayList<>();
     private User currentUser;
+    private boolean isHelpPost = false; // 标记是否来自求助帖页面
 
-    // 临时内部类，用于排序
     private static class MediaItem {
         long id;
         Uri uri;
@@ -57,54 +58,78 @@ public class MediaSelectActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_media_select);
 
-        // 接收用户信息
         currentUser = (User) getIntent().getSerializableExtra("user");
+        isHelpPost = getIntent().getBooleanExtra("is_help_post", false);
 
-        // 初始化视图
         recyclerView = findViewById(R.id.recycler_view);
         btnContinue = findViewById(R.id.tv_continue);
         findViewById(R.id.iv_close).setOnClickListener(v -> finish());
 
-        // 设置列表
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
         adapter = new MediaGridAdapter(this, allMedia);
         recyclerView.setAdapter(adapter);
 
-        // 点击继续
-        btnContinue.setOnClickListener(v -> {
-            selectedMedia = adapter.getSelectedItems();
-            Intent intent = new Intent(MediaSelectActivity.this, PostEditActivity.class);
-            intent.putExtra("selected_media", (Serializable) selectedMedia);
-            // 传递用户信息到编辑页
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
-            // 关键：关闭当前页面，这样PostEditActivity关闭后会直接回到LifeDynamicsFragment
-            finish();
-        });
+        btnContinue.setOnClickListener(v -> handleContinue());
 
         checkPermissionAndLoad();
     }
 
-    // ============ 修改重点：适配 Android 13+ 权限 ============
+    private void handleContinue() {
+        selectedMedia = adapter.getSelectedItems();
+
+        if (selectedMedia.isEmpty()) {
+            Toast.makeText(this, "请先选择图片或视频", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // === 校验逻辑：图片最多9张，视频只能1个，且不可混选 ===
+        int imageCount = 0;
+        int videoCount = 0;
+        for (PostMedia m : selectedMedia) {
+            if (m.type == 2) videoCount++; // 假设 2 是视频
+            else imageCount++;             // 假设 1 是图片
+        }
+
+        if (videoCount > 0 && imageCount > 0) {
+            Toast.makeText(this, "不能同时选择图片和视频", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (videoCount > 1) {
+            Toast.makeText(this, "视频最多只能选择 1 个", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (imageCount > 9) {
+            Toast.makeText(this, "图片最多只能选择 9 张", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // ====================================================
+
+        if (isHelpPost) {
+            // 如果是求助帖，返回数据给 HelpPostEditActivity
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("selected_media", (Serializable) selectedMedia);
+            setResult(Activity.RESULT_OK, resultIntent);
+            finish();
+        } else {
+            // 原有的生活动态逻辑，跳转到 PostEditActivity
+            Intent intent = new Intent(MediaSelectActivity.this, PostEditActivity.class);
+            intent.putExtra("selected_media", (Serializable) selectedMedia);
+            intent.putExtra("user", currentUser);
+            startActivity(intent);
+            finish();
+        }
+    }
+
     private void checkPermissionAndLoad() {
         List<String> permissionsToRequest = new ArrayList<>();
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13 (API 33) 及以上：申请细分媒体权限
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES)
-                    != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED)
                 permissionsToRequest.add(Manifest.permission.READ_MEDIA_IMAGES);
-            }
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO)
-                    != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_VIDEO) != PackageManager.PERMISSION_GRANTED)
                 permissionsToRequest.add(Manifest.permission.READ_MEDIA_VIDEO);
-            }
         } else {
-            // Android 12 及以下：申请旧版存储权限
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
                 permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-            }
         }
 
         if (!permissionsToRequest.isEmpty()) {
@@ -113,19 +138,14 @@ public class MediaSelectActivity extends AppCompatActivity {
             loadMedia();
         }
     }
-    // =======================================================
 
     private void loadMedia() {
         new Thread(() -> {
             List<MediaItem> tempItems = new ArrayList<>();
             ContentResolver contentResolver = getContentResolver();
-
-            // 1. 查询图片
-            try (Cursor cursor = contentResolver.query(
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+            try (Cursor cursor = contentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     new String[]{MediaStore.Images.Media._ID, MediaStore.Images.Media.DATE_ADDED},
                     null, null, MediaStore.Images.Media.DATE_ADDED + " DESC")) {
-
                 if (cursor != null) {
                     while (cursor.moveToNext()) {
                         long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Images.Media._ID));
@@ -134,16 +154,11 @@ public class MediaSelectActivity extends AppCompatActivity {
                         tempItems.add(new MediaItem(id, uri, date, 1));
                     }
                 }
-            } catch (Exception e) {
-                Log.e("MediaSelect", "Error loading images", e);
-            }
+            } catch (Exception e) { Log.e("MediaSelect", "Error", e); }
 
-            // 2. 查询视频
-            try (Cursor cursor = contentResolver.query(
-                    MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+            try (Cursor cursor = contentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                     new String[]{MediaStore.Video.Media._ID, MediaStore.Video.Media.DATE_ADDED},
                     null, null, MediaStore.Video.Media.DATE_ADDED + " DESC")) {
-
                 if (cursor != null) {
                     while (cursor.moveToNext()) {
                         long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID));
@@ -152,12 +167,9 @@ public class MediaSelectActivity extends AppCompatActivity {
                         tempItems.add(new MediaItem(id, uri, date, 2));
                     }
                 }
-            } catch (Exception e) {
-                Log.e("MediaSelect", "Error loading videos", e);
-            }
+            } catch (Exception e) { Log.e("MediaSelect", "Error", e); }
 
             Collections.sort(tempItems, (o1, o2) -> Long.compare(o2.dateAdded, o1.dateAdded));
-
             List<PostMedia> finalList = new ArrayList<>();
             for (MediaItem item : tempItems) {
                 PostMedia m = new PostMedia();
@@ -166,16 +178,10 @@ public class MediaSelectActivity extends AppCompatActivity {
                 finalList.add(m);
                 if (finalList.size() > 1000) break;
             }
-
             runOnUiThread(() -> {
                 allMedia.clear();
                 allMedia.addAll(finalList);
                 adapter.notifyDataSetChanged();
-                if (allMedia.isEmpty()) {
-                    // 如果权限获取了但还是没图，可能是相册真没图，或者权限被永久拒绝了
-                    // 可以在这里提示更详细的信息，但在 loadMedia 调用前权限已检查
-                    Toast.makeText(this, "未扫描到媒体文件", Toast.LENGTH_SHORT).show();
-                }
             });
         }).start();
     }
@@ -184,23 +190,8 @@ public class MediaSelectActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == 100) {
-            boolean allGranted = true;
-            if (grantResults.length > 0) {
-                for (int result : grantResults) {
-                    if (result != PackageManager.PERMISSION_GRANTED) {
-                        allGranted = false;
-                        break;
-                    }
-                }
-            } else {
-                allGranted = false;
-            }
-
-            if (allGranted) {
-                loadMedia();
-            } else {
-                Toast.makeText(this, "请在设置中开启存储权限以获取照片", Toast.LENGTH_LONG).show();
-            }
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) loadMedia();
+            else Toast.makeText(this, "请开启权限", Toast.LENGTH_SHORT).show();
         }
     }
 }

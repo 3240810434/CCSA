@@ -15,16 +15,17 @@
             android:layout_width="24dp"
             android:layout_height="24dp"
             android:layout_centerVertical="true"
-            android:onClick="finish"
             android:src="@drawable/ic_arrow_right"
-            android:rotation="180" /> <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="发布求助"
-        android:textColor="#333333"
-        android:textSize="18sp"
-        android:textStyle="bold" />
+            android:rotation="180" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="发布求助"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
         <ImageView
             android:id="@+id/iv_publish_btn"
@@ -42,16 +43,33 @@
         android:layout_height="1dp"
         android:background="#EEEEEE" />
 
-    <EditText
-        android:id="@+id/et_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@null"
-        android:hint="请输入标题 (必填)"
-        android:padding="15dp"
-        android:textColor="#333333"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="15dp">
+
+        <EditText
+            android:id="@+id/et_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@null"
+            android:hint="请输入标题 (必填)"
+            android:paddingVertical="15dp"
+            android:textColor="#333333"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/iv_album"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/photo_album"
+            android:padding="4dp"
+            android:layout_marginStart="10dp"/>
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"
@@ -66,9 +84,16 @@
         android:layout_weight="1"
         android:background="@null"
         android:gravity="top"
-        android:hint="描述您的困难..."
+        android:hint="输入详情"
         android:padding="15dp"
         android:textColor="#333333"
         android:textSize="15sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_media_preview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:visibility="gone" />
 
 </LinearLayout>
