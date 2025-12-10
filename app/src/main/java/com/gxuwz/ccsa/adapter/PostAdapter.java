@@ -48,6 +48,13 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         screenHeight = dm.heightPixels;
     }
 
+    // 【新增】允许外部更新 CurrentUser，确保身份信息最新
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+        // 刷新列表以防有依赖 currentUser 状态的 UI 需要更新
+        notifyDataSetChanged();
+    }
+
     @NonNull
     @Override
     public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -59,6 +66,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
         Post post = list.get(position);
 
+        // 使用 Fragment 中已更新的 userName 和 userAvatar 进行显示
         holder.tvName.setText(post.userName);
         holder.tvTime.setText(DateUtils.getRelativeTime(post.createTime));
         holder.tvCommentCount.setText(post.commentCount > 0 ? String.valueOf(post.commentCount) : "评论");
@@ -131,14 +139,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 sideBar.setLayoutParams(sideBarParams);
                 sideBar.setElevation(10f);
 
-                // 视频点赞：保持 like / liked
                 ImageView btnLike = createSideIcon(context, post.isLiked ? R.drawable.liked : R.drawable.like);
-
-                // 视频收藏 (原点踩)：改为 favorite / favorited
-                // 注意：这里复用 isDisliked 字段存储收藏状态
                 ImageView btnFavorite = createSideIcon(context, post.isDisliked ? R.drawable.favorited : R.drawable.favorite);
-
-                // 视频评论：保持 video_comments
                 ImageView btnComment = createSideIcon(context, R.drawable.video_comments);
 
                 sideBar.addView(btnLike);
@@ -170,10 +172,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
                 videoView.setOnCompletionListener(mp -> playIcon.setVisibility(View.VISIBLE));
 
-                // 视频点赞点击事件
                 btnLike.setOnClickListener(v -> {
                     if (post.isDisliked) {
-                        // 如果已收藏，取消收藏状态（互斥逻辑可选，通常收藏和点赞不互斥，这里保持原点踩互斥逻辑供参考，或者您可以删除互斥）
                         post.isDisliked = false;
                         btnFavorite.setImageResource(R.drawable.favorite);
                     }
@@ -181,20 +181,18 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                     btnLike.setImageResource(post.isLiked ? R.drawable.liked : R.drawable.like);
                 });
 
-                // 视频收藏点击事件
                 btnFavorite.setOnClickListener(v -> {
                     if (post.isLiked) {
                         post.isLiked = false;
                         btnLike.setImageResource(R.drawable.like);
                     }
-                    post.isDisliked = !post.isDisliked; // 切换收藏状态
+                    post.isDisliked = !post.isDisliked;
                     btnFavorite.setImageResource(post.isDisliked ? R.drawable.favorited : R.drawable.favorite);
                 });
 
                 btnComment.setOnClickListener(v -> openDetail(post));
 
             } else {
-                // 普通图片帖逻辑不变
                 int imgCount = post.mediaList.size();
                 ArrayList<String> imgUrls = new ArrayList<>();
                 for(int k=0; k<imgCount; k++) imgUrls.add(post.mediaList.get(k).url);
@@ -246,25 +244,17 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                     }
                     holder.mediaContainer.addView(gridLayout);
                 }
-
-                // 文字/图片帖子的底部按钮绑定
                 bindBottomActions(holder, post);
             }
         } else {
-            // 纯文字帖子的底部按钮绑定
             bindBottomActions(holder, post);
         }
     }
 
-    // 绑定底部互动栏 (用于 文字贴 和 图片贴)
     private void bindBottomActions(PostViewHolder holder, Post post) {
-        // 1. 设置点赞图标：使用 like2 / liked2
         holder.ivLike.setImageResource(post.isLiked ? R.drawable.liked2 : R.drawable.like2);
-
-        // 2. 设置收藏(原点踩)图标：使用 favorite2 / favorited2
         holder.ivDislike.setImageResource(post.isDisliked ? R.drawable.favorited2 : R.drawable.favorite2);
 
-        // 点击点赞
         holder.layoutLike.setOnClickListener(v -> {
             if (post.isDisliked) {
                 post.isDisliked = false;
@@ -274,7 +264,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             holder.ivLike.setImageResource(post.isLiked ? R.drawable.liked2 : R.drawable.like2);
         });
 
-        // 点击收藏
         holder.layoutDislike.setOnClickListener(v -> {
             if (post.isLiked) {
                 post.isLiked = false;
@@ -290,6 +279,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     private void openDetail(Post post) {
         Intent intent = new Intent(context, PostDetailActivity.class);
         intent.putExtra("post", post);
+        // 传递最新的 currentUser
         if (currentUser != null) {
             intent.putExtra("user", currentUser);
         }
