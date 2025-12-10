@@ -15,7 +15,7 @@ public class Merchant implements Serializable {
     private String gender; // 性别
     private String phone; // 手机号（登录账号）
     private String password; // 密码
-
+    private String avatar; // 新增字段
     // 构造方法
     public Merchant(String community, String merchantName, String contactName,
                     String gender, String phone, String password) {
@@ -48,4 +48,8 @@ public class Merchant implements Serializable {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    // Getter 和 Setter
+    public String getAvatar() { return avatar; }
+    public void setAvatar(String avatar) { this.avatar = avatar;}
 }

@@ -1,18 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F5F5F5"
+    android:scrollbars="none">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="商家我的页面"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:layout_marginBottom="12dp"
+            android:paddingBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="20dp"
+                android:gravity="center_vertical">
+
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cv_avatar"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    app:cardCornerRadius="40dp"
+                    app:cardElevation="0dp"
+                    android:layout_marginEnd="16dp">
+
+                    <ImageView
+                        android:id="@+id/iv_avatar"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/merchant_picture"
+                        android:scaleType="centerCrop"/>
+                </androidx.cardview.widget.CardView>
+
+                <TextView
+                    android:id="@+id/tv_merchant_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="商家名称"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#333333"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#F0F0F0"
+                android:layout_marginBottom="16dp"
+                android:layout_marginHorizontal="20dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="false">
+
+                <LinearLayout
+                    android:id="@+id/btn_edit_homepage"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/business_editor_homepage"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="编辑主页"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_qualification"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/merchant_qualification"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="商家资质"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/btn_change_password"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/merchant_change_password"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="更改密码"/>
+                </LinearLayout>
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
