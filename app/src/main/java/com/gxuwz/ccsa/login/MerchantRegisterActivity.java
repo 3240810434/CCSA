@@ -26,8 +26,6 @@ public class MerchantRegisterActivity extends AppCompatActivity {
     private RadioGroup rgGender;
     private EditText etPhone;
     private EditText etPassword;
-    private EditText etVerificationCode;
-    private TextView tvGetCode;
     private Button btnRegister;
 
     private AppDatabase db;
@@ -63,8 +61,6 @@ public class MerchantRegisterActivity extends AppCompatActivity {
         rgGender = findViewById(R.id.rg_gender);
         etPhone = findViewById(R.id.et_phone);
         etPassword = findViewById(R.id.et_password);
-        etVerificationCode = findViewById(R.id.et_verification_code);
-        tvGetCode = findViewById(R.id.tv_get_code);
         btnRegister = findViewById(R.id.btn_register);
 
         rgGender.check(R.id.rb_male);
@@ -78,16 +74,6 @@ public class MerchantRegisterActivity extends AppCompatActivity {
         rgGender.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rb_male) gender = "男";
             else gender = "女";
-        });
-
-        // 获取验证码
-        tvGetCode.setOnClickListener(v -> {
-            String phone = etPhone.getText().toString().trim();
-            if (phone.isEmpty()) {
-                Toast.makeText(this, "请输入手机号", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            Toast.makeText(this, "验证码已发送（默认1234）", Toast.LENGTH_SHORT).show();
         });
 
         // 注册按钮
@@ -134,7 +120,6 @@ public class MerchantRegisterActivity extends AppCompatActivity {
         String contactName = etContactName.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-        String code = etVerificationCode.getText().toString().trim();
 
         // 校验
         if (selectedCommunityList.isEmpty()) {
@@ -142,14 +127,8 @@ public class MerchantRegisterActivity extends AppCompatActivity {
             return;
         }
         if (merchantName.isEmpty() || contactName.isEmpty() || phone.isEmpty() ||
-                password.isEmpty() || code.isEmpty()) {
+                password.isEmpty()) {
             Toast.makeText(this, "请填写完整信息", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 验证码校验
-        if (!"1234".equals(code)) {
-            Toast.makeText(this, "验证码错误", Toast.LENGTH_SHORT).show();
             return;
         }
 
