@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="65dp"
+    android:layout_height="47dp"
     android:orientation="horizontal"
     android:background="@android:color/white"
-    android:elevation="8dp"
-    android:paddingTop="10dp">
+    android:elevation="2dp"
+    android:paddingTop="2dp">
 
     <Button
         android:id="@+id/btn_notification"
@@ -25,11 +25,11 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:background="?attr/selectableItemBackground"
-        android:text="动态"
-        android:textSize="16sp"
         android:gravity="center"
         android:paddingTop="5dp"
-        android:textColor="@android:color/black"/>
+        android:text="动态"
+        android:textColor="@android:color/black"
+        android:textSize="16sp" />
 
     <Button
         android:id="@+id/btn_mine"
