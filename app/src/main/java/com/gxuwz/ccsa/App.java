@@ -16,8 +16,8 @@ public class App extends Application {
 
     // 初始化默认管理员账号
     private void initDefaultAdmin() {
-        if (db.adminDao().findByAccount("123") == null) {
-            Admin defaultAdmin = new Admin("123", "123", "悦景小区");
+        if (db.adminDao().findByAccount("1") == null) {
+            Admin defaultAdmin = new Admin("1", "1", "悦景小区");
             db.adminDao().insert(defaultAdmin);
         }
     }

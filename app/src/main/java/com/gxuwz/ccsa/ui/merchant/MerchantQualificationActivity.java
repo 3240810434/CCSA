@@ -24,6 +24,7 @@ import java.util.concurrent.Executors;
 public class MerchantQualificationActivity extends AppCompatActivity {
 
     private Merchant currentMerchant;
+    private int merchantId; // 新增：只保存ID，用于查询最新数据
     private TextView tvStatusText;
     private ImageView ivStatusIcon;
     private ImageView ivIdFront, ivIdBack, ivLicense;
@@ -41,12 +42,44 @@ public class MerchantQualificationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_merchant_qualification);
         setTitle("商家资质");
 
-        // 获取传递过来的商家对象
-        currentMerchant = (Merchant) getIntent().getSerializableExtra("merchant");
+        // 从 Intent 中获取商家对象，但主要为了获取 ID
+        Merchant tempMerchant = (Merchant) getIntent().getSerializableExtra("merchant");
+        if (tempMerchant != null) {
+            merchantId = tempMerchant.getId();
+            currentMerchant = tempMerchant; // 暂时赋值，避免空指针，onResume 会覆盖它
+        }
 
         initViews();
         setupImagePicker();
-        refreshUI(); // 根据状态刷新UI
+        // 注意：这里不再调用 refreshUI，改为在 onResume 中加载最新数据后刷新
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 关键修复：每次页面显示时，从数据库重新加载最新的商家信息
+        loadMerchantData();
+    }
+
+    private void loadMerchantData() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            // 从数据库查询最新的 Merchant 对象
+            Merchant freshMerchant = AppDatabase.getInstance(this).merchantDao().findById(merchantId);
+            runOnUiThread(() -> {
+                if (freshMerchant != null) {
+                    currentMerchant = freshMerchant;
+                    // 恢复图片 URI 变量，防止提交时为空
+                    if (currentMerchant.getIdCardFrontUri() != null) uriIdFront = Uri.parse(currentMerchant.getIdCardFrontUri());
+                    if (currentMerchant.getIdCardBackUri() != null) uriIdBack = Uri.parse(currentMerchant.getIdCardBackUri());
+                    if (currentMerchant.getLicenseUri() != null) uriLicense = Uri.parse(currentMerchant.getLicenseUri());
+
+                    refreshUI(); // 用最新数据刷新 UI
+                } else {
+                    Toast.makeText(this, "商家信息加载失败", Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+            });
+        });
     }
 
     private void initViews() {
@@ -84,8 +117,11 @@ public class MerchantQualificationActivity extends AppCompatActivity {
     }
 
     private void pickImage(int type) {
-        // 如果处于锁定状态，禁止点击
-        if (currentMerchant.getQualificationStatus() == 1) return;
+        // 双重保险：如果处于审核中(1)或已认证(2)，禁止点击
+        if (currentMerchant != null &&
+                (currentMerchant.getQualificationStatus() == 1 || currentMerchant.getQualificationStatus() == 2)) {
+            return;
+        }
 
         currentUploadType = type;
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -119,10 +155,19 @@ public class MerchantQualificationActivity extends AppCompatActivity {
 
         int status = currentMerchant.getQualificationStatus();
 
-        // 加载已存在的图片
-        if (currentMerchant.getIdCardFrontUri() != null) displayImage(Uri.parse(currentMerchant.getIdCardFrontUri()), 0);
-        if (currentMerchant.getIdCardBackUri() != null) displayImage(Uri.parse(currentMerchant.getIdCardBackUri()), 1);
-        if (currentMerchant.getLicenseUri() != null) displayImage(Uri.parse(currentMerchant.getLicenseUri()), 2);
+        // 加载显示的图片
+        if (currentMerchant.getIdCardFrontUri() != null) {
+            ivIdFront.setImageURI(Uri.parse(currentMerchant.getIdCardFrontUri()));
+            ivIdFront.setPadding(0,0,0,0);
+        }
+        if (currentMerchant.getIdCardBackUri() != null) {
+            ivIdBack.setImageURI(Uri.parse(currentMerchant.getIdCardBackUri()));
+            ivIdBack.setPadding(0,0,0,0);
+        }
+        if (currentMerchant.getLicenseUri() != null) {
+            ivLicense.setImageURI(Uri.parse(currentMerchant.getLicenseUri()));
+            ivLicense.setPadding(0,0,0,0);
+        }
 
         switch (status) {
             case 0: // 未认证
@@ -132,22 +177,23 @@ public class MerchantQualificationActivity extends AppCompatActivity {
                 setInputsEnabled(true);
                 break;
             case 1: // 审核中
-                tvStatusText.setText("未认证"); // 保持顶部不变，但中间显示遮罩
-                ivStatusIcon.setImageResource(R.drawable.warn);
-                layoutOverlay.setVisibility(View.VISIBLE);
-                setInputsEnabled(false);
+                tvStatusText.setText("审核中"); // 修改文案更明确
+                ivStatusIcon.setImageResource(R.drawable.hourglass); // 建议换个图标，如果没有就用warn
+                layoutOverlay.setVisibility(View.VISIBLE); // 显示遮罩层
+                setInputsEnabled(false); // 禁用输入
                 break;
             case 2: // 已认证
                 tvStatusText.setText("已认证资质");
                 ivStatusIcon.setImageResource(R.drawable.shield);
                 layoutOverlay.setVisibility(View.GONE);
-                setInputsEnabled(true); // 解锁，允许重新修改提交
+                setInputsEnabled(false); // 已认证通常不允许随意修改，或者允许修改但需重新审核
+                btnSubmit.setVisibility(View.GONE); // 隐藏提交按钮
                 break;
             case 3: // 未通过
                 tvStatusText.setText("未通过审核");
                 ivStatusIcon.setImageResource(R.drawable.warn);
                 layoutOverlay.setVisibility(View.GONE);
-                setInputsEnabled(true); // 解锁，允许重新提交
+                setInputsEnabled(true); // 允许修改重新提交
                 break;
         }
     }
@@ -159,8 +205,10 @@ public class MerchantQualificationActivity extends AppCompatActivity {
         btnSubmit.setEnabled(enabled);
         if (!enabled) {
             btnSubmit.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+            btnSubmit.setText("审核中 / 已锁定");
         } else {
             btnSubmit.setBackgroundResource(R.drawable.button_blue);
+            btnSubmit.setText("提交审核");
         }
     }
 
@@ -170,7 +218,7 @@ public class MerchantQualificationActivity extends AppCompatActivity {
             return;
         }
 
-        // 更新对象
+        // 更新对象属性
         currentMerchant.setIdCardFrontUri(uriIdFront.toString());
         currentMerchant.setIdCardBackUri(uriIdBack.toString());
         currentMerchant.setLicenseUri(uriLicense.toString());
@@ -181,7 +229,8 @@ public class MerchantQualificationActivity extends AppCompatActivity {
             AppDatabase.getInstance(this).merchantDao().update(currentMerchant);
             runOnUiThread(() -> {
                 Toast.makeText(this, "提交成功，请等待审核", Toast.LENGTH_SHORT).show();
-                refreshUI(); // 刷新界面状态，显示遮罩
+                // 提交后刷新本地数据和UI，确保状态同步
+                loadMerchantData();
             });
         });
     }
