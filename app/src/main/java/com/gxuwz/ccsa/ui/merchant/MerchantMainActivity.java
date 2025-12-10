@@ -2,7 +2,6 @@ package com.gxuwz.ccsa.ui.merchant;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView; // 也可以删掉这个导入，或者保留
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -14,7 +13,7 @@ import com.gxuwz.ccsa.model.Merchant;
 public class MerchantMainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private ViewPager2 viewPager;
-    // 【修改点1】将类型从 TextView 改为 View，因为它们现在是 LinearLayout 容器
+    // 底部导航按钮 (注意：XML中需保证这些ID存在)
     private View btnStore, btnMessage, btnProfile;
     private Merchant currentMerchant;
 
@@ -23,6 +22,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_merchant_main);
 
+        // 获取登录/注册传递过来的商家信息
         if (getIntent().hasExtra("merchant")) {
             currentMerchant = (Merchant) getIntent().getSerializableExtra("merchant");
         }
@@ -34,12 +34,11 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
     private void initViews() {
         viewPager = findViewById(R.id.view_pager_merchant);
 
-        // 绑定底部导航按钮（容器）
+        // 绑定底部导航栏的点击区域 (id 需与 merchant_navigation_bottom.xml 一致)
         btnStore = findViewById(R.id.btn_store);
         btnMessage = findViewById(R.id.btn_message);
         btnProfile = findViewById(R.id.btn_profile);
 
-        // 设置点击监听
         btnStore.setOnClickListener(this);
         btnMessage.setOnClickListener(this);
         btnProfile.setOnClickListener(this);
@@ -52,6 +51,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             public Fragment createFragment(int position) {
                 switch (position) {
                     case 0:
+                        // 首页展示店铺 Fragment
                         return new MerchantStoreFragment();
                     case 1:
                         return new MerchantMessageFragment();
@@ -66,6 +66,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             }
         });
 
+        // 页面切换回调
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -74,7 +75,9 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             }
         });
 
+        // 设置预加载页面数量，防止频繁销毁重建
         viewPager.setOffscreenPageLimit(3);
+        // 默认选中第一页
         updateBottomNavState(0);
     }
 
@@ -91,24 +94,25 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void updateBottomNavState(int position) {
-        // 【修改点2】setSelected 方法在 View 类中就有，所以这里直接调用即可
-        btnStore.setSelected(false);
-        btnMessage.setSelected(false);
-        btnProfile.setSelected(false);
+        // 更新底部导航选中状态
+        if (btnStore != null) btnStore.setSelected(false);
+        if (btnMessage != null) btnMessage.setSelected(false);
+        if (btnProfile != null) btnProfile.setSelected(false);
 
         switch (position) {
             case 0:
-                btnStore.setSelected(true);
+                if (btnStore != null) btnStore.setSelected(true);
                 break;
             case 1:
-                btnMessage.setSelected(true);
+                if (btnMessage != null) btnMessage.setSelected(true);
                 break;
             case 2:
-                btnProfile.setSelected(true);
+                if (btnProfile != null) btnProfile.setSelected(true);
                 break;
         }
     }
 
+    // 供 Fragment 调用的公共方法
     public Merchant getCurrentMerchant() {
         return currentMerchant;
     }
