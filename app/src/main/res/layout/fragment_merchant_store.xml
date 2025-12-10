@@ -209,11 +209,13 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:padding="8dp">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/new_product"
-                        android:scaleType="fitCenter"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@android:color/black"/>
 
                     <TextView
                         android:layout_width="wrap_content"
