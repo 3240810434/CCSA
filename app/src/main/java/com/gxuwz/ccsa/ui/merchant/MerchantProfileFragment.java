@@ -1,4 +1,3 @@
-// 文件路径：app/src/main/java/com/gxuwz/ccsa/ui/merchant/MerchantProfileFragment.java
 package com.gxuwz.ccsa.ui.merchant;
 
 import android.app.Activity;
@@ -28,6 +27,10 @@ import com.gxuwz.ccsa.model.Merchant;
 
 import java.util.concurrent.Executors;
 
+// 假设 MerchantQualificationActivity 在同一个包或已正确导入
+// 如果不在同一个包，请根据实际路径 import
+// import com.gxuwz.ccsa.ui.merchant.MerchantQualificationActivity;
+
 public class MerchantProfileFragment extends Fragment {
 
     private ImageView ivAvatar;
@@ -56,11 +59,7 @@ public class MerchantProfileFragment extends Fragment {
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                            // 2. 记录选择的URI，并刷新对话框中的预览（如果对话框还开着）
-                            // 这里简化处理：直接更新当前Fragment的UI，实际保存逻辑在对话框的“保存”按钮中
-                            // 但为了用户体验，我们通常在对话框里更新。
-                            // 由于对话框是临时创建的，这里我们采用类似 MineFragment 的逻辑：
-                            // 选中图片后直接更新UI并准备保存
+                            // 2. 更新UI预览
                             updateAvatarUI(imageUri.toString());
                         }
                     }
@@ -85,6 +84,31 @@ public class MerchantProfileFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        // 页面恢复可见时（例如从资质页面返回），刷新数据
+        if (currentMerchant != null) {
+            Executors.newSingleThreadExecutor().execute(() -> {
+                // 从数据库重新获取最新的 Merchant 信息
+                // 注意：这里假设 Merchant 类有 getId() 方法
+                Merchant updated = AppDatabase.getInstance(getContext())
+                        .merchantDao()
+                        .findById(currentMerchant.getId());
+
+                if (updated != null) {
+                    currentMerchant = updated;
+                    // 如果需要在主线程更新UI（例如状态变更显示），请在此处 runOnUiThread
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            loadMerchantData(); // 重新加载数据显示
+                        });
+                    }
+                }
+            });
+        }
+    }
+
     private void initViews(View view) {
         ivAvatar = view.findViewById(R.id.iv_avatar);
         tvMerchantName = view.findViewById(R.id.tv_merchant_name);
@@ -97,32 +121,30 @@ public class MerchantProfileFragment extends Fragment {
         // 点击头像也可以编辑
         view.findViewById(R.id.cv_avatar).setOnClickListener(editProfileListener);
 
-        // 功能暂未开放的按钮
-        View.OnClickListener notImplListener = v ->
-                Toast.makeText(getContext(), "功能暂未开放", Toast.LENGTH_SHORT).show();
-        view.findViewById(R.id.btn_qualification).setOnClickListener(notImplListener);
-        view.findViewById(R.id.btn_change_password).setOnClickListener(notImplListener);
+        // --- 新增：点击商家资质按钮跳转逻辑 ---
+        view.findViewById(R.id.btn_qualification).setOnClickListener(v -> {
+            if (currentMerchant != null) {
+                // 跳转到资质认证页面，传递 currentMerchant 对象
+                Intent intent = new Intent(getContext(), MerchantQualificationActivity.class);
+                intent.putExtra("merchant", currentMerchant);
+                startActivity(intent);
+            } else {
+                Toast.makeText(getContext(), "无法获取商家信息", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // 修改密码按钮（功能暂未开放）
+        view.findViewById(R.id.btn_change_password).setOnClickListener(v ->
+                Toast.makeText(getContext(), "功能暂未开放", Toast.LENGTH_SHORT).show());
     }
 
     private void loadMerchantData() {
         if (currentMerchant != null) {
             tvMerchantName.setText(currentMerchant.getMerchantName());
 
-            // 加载头像
-            // 这里我们假设 Merchant 模型中没有 avatar 字段（根据提供的代码），如果需要保存头像，
-            // 您可能需要在 Merchant.java 中添加 private String avatar; 及其 getter/setter。
-            // *假如目前没有字段，我们暂时无法从数据库加载自定义头像，只能显示默认。*
-            // *为了代码完整性，我假设您会去 Merchant.java 添加该字段。*
-            // *如果没有添加，下面的代码在 getAvatar() 处会报错，请注意。*
-
-            // 既然题目要求实现“更换头像”，我这里假设您已经在 Merchant 类中加了 avatar 字段。
-            // 如果 Merchant 类确实没法改，那这个功能只能是“演示性”的（刷新后丢失）。
-
-            // 这是一个演示性的实现，假设 Merchant 类有 getAvatar/setAvatar 方法
-            // 如果没有，请在 Merchant.java 中添加： private String avatar; 以及对应的 get/set
+            // 加载头像逻辑 (保留源码原有逻辑)
             try {
-                // 使用反射或者假设方法存在。在实际代码中，请直接调用 currentMerchant.getAvatar()
-                // 这里为了不报错，我先写成注释逻辑，您需要手动去Model加字段
+                // 如果 Merchant 类中有 getAvatar() 方法，请取消注释并使用
                 // String avatarUri = currentMerchant.getAvatar();
                 // if (avatarUri != null && !avatarUri.isEmpty()) {
                 //    ivAvatar.setImageURI(Uri.parse(avatarUri));
@@ -167,8 +189,6 @@ public class MerchantProfileFragment extends Fragment {
 
         builder.setPositiveButton("保存", (dialog, which) -> {
             String newName = etName.getText().toString().trim();
-            // 如果选择了新图片，tempSelectedImageUri 会被赋值
-            // 這裡簡化逻辑：如果在打开相册回调里已经更新了 UI 和 tempUri
 
             if (currentMerchant != null) {
                 boolean isChanged = false;
@@ -180,11 +200,10 @@ public class MerchantProfileFragment extends Fragment {
                 }
 
                 if (tempSelectedImageUri != null) {
-                    // 同样，需要在 Merchant.java 添加 avatar 字段
+                    // 如需保存头像，请在 Merchant.java 添加 avatar 字段并在此处赋值
                     // currentMerchant.setAvatar(tempSelectedImageUri.toString());
                     // ivAvatar.setImageURI(tempSelectedImageUri);
                     isChanged = true;
-                    // 重置临时变量
                     tempSelectedImageUri = null;
                 }
 
@@ -207,15 +226,6 @@ public class MerchantProfileFragment extends Fragment {
     private void updateAvatarUI(String uriString) {
         tempSelectedImageUri = Uri.parse(uriString);
         ivAvatar.setImageURI(tempSelectedImageUri);
-        // 注意：这里只是更新了UI预览，真正的保存到了DB是在点击对话框“保存”时
-        // 但为了防止用户选了图但取消对话框导致主界面UI变了但数据没变，
-        // 严谨的做法是在对话框里预览。
-        // 为了简化模仿 MineFragment (它是在回调里直接 updateAvatar 并 saveToDb)，
-        // 我们这里也采用直接保存的策略：
-
-        // 如果想模仿 MineFragment 的行为（选图即保存）：
-        // currentMerchant.setAvatar(uriString); // 需在Model中添加字段
-        // saveMerchantToDb();
     }
 
     private void saveMerchantToDb() {

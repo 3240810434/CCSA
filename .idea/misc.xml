@@ -38,6 +38,8 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_login.xml " value="0.2526041666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_main.xml" value="0.23802083333333332" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_media_select.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_audit_detail.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_audit_list.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_login.xml" value="0.2526041666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_main.xml" value="0.25" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_qualification.xml" value="0.24114583333333334" />
@@ -101,6 +103,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_help_post.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_image_grid.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_media_grid.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_merchant_audit.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_message_list.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_notification.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_payment.xml" value="0.264" />

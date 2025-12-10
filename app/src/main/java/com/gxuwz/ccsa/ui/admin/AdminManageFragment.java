@@ -11,6 +11,8 @@ import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 
 import com.gxuwz.ccsa.R;
+// 确保导入了 MerchantAuditListActivity，如果包名不同请自行调整
+// import com.gxuwz.ccsa.ui.admin.MerchantAuditListActivity;
 
 public class AdminManageFragment extends Fragment {
 
@@ -138,11 +140,17 @@ public class AdminManageFragment extends Fragment {
             startActivity(intent);
         });
 
-        // --- 以下为原代码中未实现逻辑的按钮，添加提示 ---
+        // --- 新增/修改：商家审核跳转逻辑 ---
+        setListener(btnMerchantAudit, v -> {
+            Intent intent = new Intent(requireActivity(), MerchantAuditListActivity.class);
+            startActivity(intent);
+        });
+
+        // --- 以下为原代码中未实现逻辑的按钮，保持提示 ---
 
         setListener(btnPublishNotice, v -> showToast("发布通知功能开发中"));
         setListener(btnMerchantList, v -> showToast("商家列表功能开发中"));
-        setListener(btnMerchantAudit, v -> showToast("商家审核功能开发中"));
+        // btnMerchantAudit 已上方实现
         setListener(btnLifeDynamics, v -> showToast("生活动态功能开发中"));
         setListener(btnNeighborHelp, v -> showToast("邻里互助功能开发中"));
     }

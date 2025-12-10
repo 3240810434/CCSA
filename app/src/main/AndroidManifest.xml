@@ -41,6 +41,11 @@
         <activity android:name=".ui.admin.AdminMainActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.MerchantMainActivity" android:exported="false"/>
 
+        <activity android:name=".ui.merchant.MerchantQualificationActivity" android:exported="false"/>
+
+        <activity android:name=".ui.admin.MerchantAuditListActivity" android:exported="false"/>
+
+        <activity android:name=".ui.admin.MerchantAuditDetailActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PayPropertyFeeActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PaymentDetailActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PaymentAppealActivity" android:exported="false"/>
