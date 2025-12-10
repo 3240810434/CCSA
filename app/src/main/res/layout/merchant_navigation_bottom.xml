@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="47dp"
+    android:layout_height="56dp"
     android:orientation="horizontal"
     android:background="#FFFFFF"
-    android:elevation="8dp">
+    android:elevation="8dp"
+    android:paddingBottom="2dp">
 
     <TextView
         android:id="@+id/btn_store"
@@ -15,11 +16,12 @@
         android:text="店铺"
         android:textSize="12sp"
         android:textColor="@color/nav_text_color"
-        android:drawableTop="@drawable/ic_business1"
+        android:drawableTop="@drawable/merchant_navigation_shop"
         android:drawablePadding="2dp"
-        android:paddingTop="5dp"
+        android:paddingTop="6dp"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"/>
 
     <TextView
         android:id="@+id/btn_message"
@@ -30,11 +32,12 @@
         android:text="消息"
         android:textSize="12sp"
         android:textColor="@color/nav_text_color"
-        android:drawableTop="@drawable/ic_notification"
+        android:drawableTop="@drawable/merchant_navigation_message"
         android:drawablePadding="2dp"
-        android:paddingTop="5dp"
+        android:paddingTop="6dp"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"/>
 
     <TextView
         android:id="@+id/btn_profile"
@@ -45,10 +48,11 @@
         android:text="我的"
         android:textSize="12sp"
         android:textColor="@color/nav_text_color"
-        android:drawableTop="@drawable/ic_mine"
+        android:drawableTop="@drawable/merchant_navigation_my"
         android:drawablePadding="2dp"
-        android:paddingTop="5dp"
+        android:paddingTop="6dp"
         android:clickable="true"
-        android:focusable="true"/>
+        android:focusable="true"
+        android:background="?android:attr/selectableItemBackground"/>
 
 </LinearLayout>

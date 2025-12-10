@@ -33,6 +33,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
 
     private void initViews() {
         viewPager = findViewById(R.id.view_pager_merchant);
+
         // 绑定底部导航按钮
         btnStore = findViewById(R.id.btn_store);
         btnMessage = findViewById(R.id.btn_message);
@@ -95,10 +96,10 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
     }
 
     /**
-     * 更新底部导航栏的选中状态（改变图标颜色或文字颜色）
+     * 更新底部导航栏的选中状态（改变文字颜色，如果有图标选择器也会改变图标状态）
      */
     private void updateBottomNavState(int position) {
-        // 重置所有按钮选中状态 (依赖 selector_nav_text_color 或类似的 selector)
+        // 重置所有按钮选中状态
         btnStore.setSelected(false);
         btnMessage.setSelected(false);
         btnProfile.setSelected(false);
