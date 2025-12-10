@@ -2,7 +2,7 @@ package com.gxuwz.ccsa.ui.merchant;
 
 import android.os.Bundle;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.TextView; // 也可以删掉这个导入，或者保留
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -14,7 +14,8 @@ import com.gxuwz.ccsa.model.Merchant;
 public class MerchantMainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private ViewPager2 viewPager;
-    private TextView btnStore, btnMessage, btnProfile;
+    // 【修改点1】将类型从 TextView 改为 View，因为它们现在是 LinearLayout 容器
+    private View btnStore, btnMessage, btnProfile;
     private Merchant currentMerchant;
 
     @Override
@@ -22,7 +23,6 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_merchant_main);
 
-        // 获取登录/注册传递的商家信息
         if (getIntent().hasExtra("merchant")) {
             currentMerchant = (Merchant) getIntent().getSerializableExtra("merchant");
         }
@@ -34,7 +34,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
     private void initViews() {
         viewPager = findViewById(R.id.view_pager_merchant);
 
-        // 绑定底部导航按钮
+        // 绑定底部导航按钮（容器）
         btnStore = findViewById(R.id.btn_store);
         btnMessage = findViewById(R.id.btn_message);
         btnProfile = findViewById(R.id.btn_profile);
@@ -46,18 +46,17 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void setupViewPager() {
-        // 设置 Adapter
         viewPager.setAdapter(new FragmentStateAdapter(this) {
             @NonNull
             @Override
             public Fragment createFragment(int position) {
                 switch (position) {
                     case 0:
-                        return new MerchantStoreFragment(); // 1. 店铺页面
+                        return new MerchantStoreFragment();
                     case 1:
-                        return new MerchantMessageFragment(); // 2. 消息页面
+                        return new MerchantMessageFragment();
                     default:
-                        return new MerchantProfileFragment(); // 3. 我的页面
+                        return new MerchantProfileFragment();
                 }
             }
 
@@ -67,7 +66,6 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             }
         });
 
-        // 页面滑动监听，同步底部按钮状态
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -76,10 +74,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             }
         });
 
-        // 默认禁止预加载太多，但保持状态
         viewPager.setOffscreenPageLimit(3);
-
-        // 初始化默认选中第一项（店铺页面）
         updateBottomNavState(0);
     }
 
@@ -87,7 +82,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
     public void onClick(View v) {
         int id = v.getId();
         if (id == R.id.btn_store) {
-            viewPager.setCurrentItem(0, false); // false 表示去掉滑动动画，跳转更干脆
+            viewPager.setCurrentItem(0, false);
         } else if (id == R.id.btn_message) {
             viewPager.setCurrentItem(1, false);
         } else if (id == R.id.btn_profile) {
@@ -95,16 +90,12 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-    /**
-     * 更新底部导航栏的选中状态（改变文字颜色，如果有图标选择器也会改变图标状态）
-     */
     private void updateBottomNavState(int position) {
-        // 重置所有按钮选中状态
+        // 【修改点2】setSelected 方法在 View 类中就有，所以这里直接调用即可
         btnStore.setSelected(false);
         btnMessage.setSelected(false);
         btnProfile.setSelected(false);
 
-        // 设置当前选中
         switch (position) {
             case 0:
                 btnStore.setSelected(true);
@@ -118,7 +109,6 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-    // 公开方法供 Fragment 获取当前商家信息
     public Merchant getCurrentMerchant() {
         return currentMerchant;
     }

@@ -5,54 +5,90 @@
     android:orientation="horizontal"
     android:background="#FFFFFF"
     android:elevation="8dp"
-    android:paddingBottom="2dp">
+    android:baselineAligned="false">
 
-    <TextView
+    <LinearLayout
         android:id="@+id/btn_store"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center"
-        android:text="店铺"
-        android:textSize="12sp"
-        android:textColor="@color/nav_text_color"
-        android:drawableTop="@drawable/merchant_navigation_shop"
-        android:drawablePadding="2dp"
-        android:paddingTop="6dp"
         android:clickable="true"
         android:focusable="true"
-        android:background="?android:attr/selectableItemBackground"/>
+        android:background="?android:attr/selectableItemBackground">
 
-    <TextView
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/merchant_navigation_shop"
+            android:duplicateParentState="true"
+            android:contentDescription="店铺" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="店铺"
+            android:textSize="12sp"
+            android:textColor="@color/nav_text_color"
+            android:layout_marginTop="2dp"
+            android:duplicateParentState="true" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/btn_message"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center"
-        android:text="消息"
-        android:textSize="12sp"
-        android:textColor="@color/nav_text_color"
-        android:drawableTop="@drawable/merchant_navigation_message"
-        android:drawablePadding="2dp"
-        android:paddingTop="6dp"
         android:clickable="true"
         android:focusable="true"
-        android:background="?android:attr/selectableItemBackground"/>
+        android:background="?android:attr/selectableItemBackground">
 
-    <TextView
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/merchant_navigation_message"
+            android:duplicateParentState="true"
+            android:contentDescription="消息" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="消息"
+            android:textSize="12sp"
+            android:textColor="@color/nav_text_color"
+            android:layout_marginTop="2dp"
+            android:duplicateParentState="true" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/btn_profile"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
+        android:orientation="vertical"
         android:gravity="center"
-        android:text="我的"
-        android:textSize="12sp"
-        android:textColor="@color/nav_text_color"
-        android:drawableTop="@drawable/merchant_navigation_my"
-        android:drawablePadding="2dp"
-        android:paddingTop="6dp"
         android:clickable="true"
         android:focusable="true"
-        android:background="?android:attr/selectableItemBackground"/>
+        android:background="?android:attr/selectableItemBackground">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/merchant_navigation_my"
+            android:duplicateParentState="true"
+            android:contentDescription="我的" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="我的"
+            android:textSize="12sp"
+            android:textColor="@color/nav_text_color"
+            android:layout_marginTop="2dp"
+            android:duplicateParentState="true" />
+    </LinearLayout>
 
 </LinearLayout>
