@@ -4,92 +4,106 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    android:padding="30dp"
+    android:padding="20dp"
     tools:context=".login.MerchantLoginActivity">
 
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="商家登录"
-        android:textColor="#333333"
-        android:textSize="26sp"
+        android:text="专业商家登录"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:letterSpacing="0.05"
-        app:layout_constraintBottom_toTopOf="@+id/et_phone"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
+        android:layout_marginTop="60dp"/>
+
+    <!-- 手机号 -->
+    <TextView
+        android:id="@+id/tv_phone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="手机号:"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_title"
+        android:layout_marginTop="40dp"/>
 
     <EditText
         android:id="@+id/et_phone"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="40dp"
-        android:background="@drawable/bg_edittext_underline"
-        android:drawableLeft="@drawable/ic_contact"
-        android:drawablePadding="10dp"
+        android:background="@drawable/edittext_bg"
         android:hint="请输入手机号"
         android:inputType="phone"
-        android:textColor="#333333"
-        android:textSize="15sp"
+        android:padding="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_title" />
+        app:layout_constraintTop_toBottomOf="@id/tv_phone"
+        android:layout_marginTop="10dp"/>
+
+    <!-- 密码 -->
+    <TextView
+        android:id="@+id/tv_password"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="密码:"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_phone"
+        android:layout_marginTop="20dp"/>
 
     <EditText
         android:id="@+id/et_password"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="20dp"
-        android:background="@drawable/bg_edittext_underline"
-        android:drawableLeft="@drawable/deng_lu"
-        android:drawablePadding="10dp"
+        android:background="@drawable/edittext_bg"
         android:hint="请输入密码"
         android:inputType="textPassword"
-        android:textColor="#333333"
-        android:textSize="15sp"
+        android:padding="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/et_phone" />
+        app:layout_constraintTop_toBottomOf="@id/tv_password"
+        android:layout_marginTop="10dp"/>
 
+    <!-- 忘记密码 -->
     <TextView
         android:id="@+id/tv_forgot_password"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="15dp"
         android:text="忘记密码?"
-        android:textColor="#757575"
-        android:textSize="13sp"
+        android:textColor="#1E88E5"
+        android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/et_password" />
+        app:layout_constraintTop_toBottomOf="@id/et_password"
+        android:layout_marginTop="10dp"/>
 
+    <!-- 登录按钮 -->
     <Button
         android:id="@+id/btn_login"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:layout_marginTop="40dp"
-        android:background="@drawable/selector_btn_login"
-        android:text="登 录"
+        android:background="#4CAF50"
+        android:text="登录"
         android:textColor="#FFFFFF"
         android:textSize="18sp"
-        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_forgot_password" />
+        app:layout_constraintTop_toBottomOf="@id/tv_forgot_password"
+        android:layout_marginTop="30dp"/>
 
+    <!-- 注册入口 -->
     <TextView
         android:id="@+id/tv_register"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:padding="10dp"
         android:text="还没有账号？去注册"
         android:textColor="#1E88E5"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_login" />
+        app:layout_constraintTop_toBottomOf="@id/btn_login"
+        android:layout_marginTop="20dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
