@@ -43,6 +43,12 @@
 
         <activity android:name=".ui.merchant.MerchantQualificationActivity" android:exported="false"/>
 
+        <activity android:name=".ui.merchant.PendingOrdersActivity" android:exported="false"/>
+        <activity android:name=".ui.merchant.ProcessingOrdersActivity" android:exported="false"/>
+        <activity android:name=".ui.merchant.CompletedOrdersActivity" android:exported="false"/>
+        <activity android:name=".ui.merchant.AfterSalesActivity" android:exported="false"/>
+        <activity android:name=".ui.merchant.ProductManagementActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+
         <activity android:name=".ui.admin.MerchantAuditListActivity" android:exported="false"/>
 
         <activity android:name=".ui.admin.MerchantAuditDetailActivity" android:exported="false"/>
