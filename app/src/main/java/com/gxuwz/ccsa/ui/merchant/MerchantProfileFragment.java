@@ -88,6 +88,10 @@ public class MerchantProfileFragment extends Fragment {
 
                 if (updated != null) {
                     currentMerchant = updated;
+                    // 【修复点1】同步更新 Activity 中的全局对象，保证其他 Fragment 获取到的是最新的
+                    if (getActivity() instanceof MerchantMainActivity) {
+                        ((MerchantMainActivity) getActivity()).setCurrentMerchant(updated);
+                    }
                     if (getActivity() != null) {
                         getActivity().runOnUiThread(this::loadMerchantData);
                     }
@@ -124,7 +128,6 @@ public class MerchantProfileFragment extends Fragment {
         if (currentMerchant != null) {
             tvMerchantName.setText(currentMerchant.getMerchantName());
 
-            // --- 修复点 1：正确加载商家头像 ---
             try {
                 String avatarUri = currentMerchant.getAvatar();
                 if (avatarUri != null && !avatarUri.isEmpty()) {
@@ -175,16 +178,18 @@ public class MerchantProfileFragment extends Fragment {
                     isChanged = true;
                 }
 
-                // --- 修复点 2：保存头像 URI 到对象 ---
                 if (tempSelectedImageUri != null) {
                     currentMerchant.setAvatar(tempSelectedImageUri.toString());
-                    // 立即更新头像显示
                     ivAvatar.setImageURI(tempSelectedImageUri);
                     isChanged = true;
                     tempSelectedImageUri = null;
                 }
 
                 if (isChanged) {
+                    // 【修复点2】保存时，立即同步给 Activity，防止切换到"店铺"页面时数据不同步
+                    if (getActivity() instanceof MerchantMainActivity) {
+                        ((MerchantMainActivity) getActivity()).setCurrentMerchant(currentMerchant);
+                    }
                     saveMerchantToDb();
                 }
             }

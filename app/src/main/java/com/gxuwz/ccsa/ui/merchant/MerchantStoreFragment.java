@@ -28,7 +28,6 @@ public class MerchantStoreFragment extends Fragment {
     private TextView tvStoreName;
     private ImageView ivStoreStatus;
 
-    // 功能按钮区域
     private LinearLayout llPendingOrders;
     private LinearLayout llProcessingOrders;
     private LinearLayout llCompletedOrders;
@@ -40,18 +39,14 @@ public class MerchantStoreFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        // 关键点：确保这里加载的是正确的布局 ID
         View view = inflater.inflate(R.layout.fragment_merchant_store, container, false);
 
-        // 获取 Activity 中传递过来的 Merchant 对象
         if (getActivity() instanceof MerchantMainActivity) {
             currentMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
         }
 
         initViews(view);
         setupListeners();
-
-        // 初始更新一次UI
         updateUI();
 
         return view;
@@ -60,8 +55,29 @@ public class MerchantStoreFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // 每次页面可见时，刷新数据库中的最新商家信息
-        refreshMerchantData();
+        // 页面可见时，从 Activity 同步最新数据
+        syncDataFromActivity();
+    }
+
+    // 【修复点1】处理 Fragment show/hide 切换时的刷新
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        super.onHiddenChanged(hidden);
+        if (!hidden) {
+            syncDataFromActivity();
+        }
+    }
+
+    // 【修复点2】直接从 Activity 获取内存中最新的对象，而不是查数据库
+    // 这样可以确保"我的"页面修改后，这里立即同步
+    private void syncDataFromActivity() {
+        if (getActivity() instanceof MerchantMainActivity) {
+            Merchant activityMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
+            if (activityMerchant != null) {
+                this.currentMerchant = activityMerchant;
+                updateUI();
+            }
+        }
     }
 
     private void initViews(View view) {
@@ -77,12 +93,10 @@ public class MerchantStoreFragment extends Fragment {
     }
 
     private void setupListeners() {
-        // 店铺开关状态点击事件
         if (ivStoreStatus != null) {
             ivStoreStatus.setOnClickListener(v -> showToggleStatusDialog());
         }
 
-        // 功能跳转
         llPendingOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), PendingOrdersActivity.class)));
         llProcessingOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), ProcessingOrdersActivity.class)));
         llCompletedOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), CompletedOrdersActivity.class)));
@@ -90,26 +104,10 @@ public class MerchantStoreFragment extends Fragment {
         llProductManagement.setOnClickListener(v -> startActivity(new Intent(getContext(), ProductManagementActivity.class)));
     }
 
-    private void refreshMerchantData() {
-        if (currentMerchant == null || getContext() == null) return;
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            Merchant updated = AppDatabase.getInstance(getContext())
-                    .merchantDao()
-                    .findById(currentMerchant.getId());
-
-            if (updated != null && getActivity() != null) {
-                currentMerchant = updated;
-                getActivity().runOnUiThread(this::updateUI);
-            }
-        });
-    }
-
     private void updateUI() {
         if (currentMerchant == null) return;
-        if (ivStoreAvatar == null || tvStoreName == null) return; // 防止视图未初始化
+        if (ivStoreAvatar == null || tvStoreName == null) return;
 
-        // 设置头像
         try {
             if (currentMerchant.getAvatar() != null && !currentMerchant.getAvatar().isEmpty()) {
                 ivStoreAvatar.setImageURI(Uri.parse(currentMerchant.getAvatar()));
@@ -120,10 +118,8 @@ public class MerchantStoreFragment extends Fragment {
             ivStoreAvatar.setImageResource(R.drawable.merchant_picture);
         }
 
-        // 设置名称
         tvStoreName.setText(currentMerchant.getMerchantName());
 
-        // 设置开关状态图标
         if (currentMerchant.isOpen()) {
             ivStoreStatus.setImageResource(R.drawable.open);
         } else {
@@ -151,6 +147,10 @@ public class MerchantStoreFragment extends Fragment {
         Executors.newSingleThreadExecutor().execute(() -> {
             if (getContext() != null) {
                 AppDatabase.getInstance(getContext()).merchantDao().update(currentMerchant);
+                // 更新后也要同步回 Activity，虽然这里是引用的同一个对象，但为了保险
+                if (getActivity() instanceof MerchantMainActivity) {
+                    ((MerchantMainActivity) getActivity()).setCurrentMerchant(currentMerchant);
+                }
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         String statusMsg = newStatus ? "店铺已开启" : "店铺已关闭";
