@@ -8,7 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup; // 解决 Cannot resolve symbol 'ViewGroup'
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -47,10 +47,10 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 使用 activity_physical_product_edit 布局
         setContentView(R.layout.activity_physical_product_edit);
 
         initView();
+        // 默认添加几行价格表
         addPriceRow();
         addPriceRow();
         addPriceRow();
@@ -74,7 +74,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     }
 
     private void addPriceRow() {
-        // item_price_table_row_edit 必须存在于 layout 文件夹
         View rowView = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_edit, llPriceTableContainer, false);
         llPriceTableContainer.addView(rowView);
     }
@@ -84,6 +83,7 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
+        // 注意：使用 ACTION_OPEN_DOCUMENT 通常不需要 READ_EXTERNAL_STORAGE 权限，但保留检查也无妨
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
         } else {
@@ -92,8 +92,11 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     }
 
     private void openGallery() {
-        Intent intent = new Intent(Intent.ACTION_PICK);
+        // --- 修复点 1：使用 ACTION_OPEN_DOCUMENT 以支持权限持久化 ---
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
+        // 如果想支持多选，可以加上 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
     }
 
@@ -103,6 +106,17 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == RESULT_OK && data != null) {
             Uri imageUri = data.getData();
             if (imageUri != null) {
+                // --- 修复点 2：获取并保存持久化权限 ---
+                // 这一步至关重要，没有它，重启APP后图片就会变成 shopping.png
+                try {
+                    getContentResolver().takePersistableUriPermission(
+                            imageUri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    );
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
                 selectedImagePaths.add(imageUri.toString());
                 renderImages();
             }
@@ -115,10 +129,9 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         llImageContainer.addView(ivAddImage);
 
         for (String path : selectedImagePaths) {
-            // item_image_preview_small 已经在第四步补充
             View itemView = LayoutInflater.from(this).inflate(R.layout.item_image_preview_small, llImageContainer, false);
             ImageView iv = itemView.findViewById(R.id.iv_image);
-            ImageView btnDel = itemView.findViewById(R.id.btn_delete); // 解决 Cannot resolve symbol 'btn_delete'
+            ImageView btnDel = itemView.findViewById(R.id.btn_delete);
 
             Glide.with(this).load(path).into(iv);
             btnDel.setOnClickListener(v -> {
@@ -145,14 +158,17 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
                 View row = llPriceTableContainer.getChildAt(i);
                 EditText etItem = row.findViewById(R.id.et_price_item);
                 EditText etPrice = row.findViewById(R.id.et_price_value);
-                String itemText = etItem.getText().toString().trim();
-                String priceVal = etPrice.getText().toString().trim();
 
-                if (!itemText.isEmpty() && !priceVal.isEmpty()) {
-                    JSONObject obj = new JSONObject();
-                    obj.put("desc", itemText);
-                    obj.put("price", priceVal);
-                    priceJson.put(obj);
+                if (etItem != null && etPrice != null) {
+                    String itemText = etItem.getText().toString().trim();
+                    String priceVal = etPrice.getText().toString().trim();
+
+                    if (!itemText.isEmpty() && !priceVal.isEmpty()) {
+                        JSONObject obj = new JSONObject();
+                        obj.put("desc", itemText);
+                        obj.put("price", priceVal);
+                        priceJson.put(obj);
+                    }
                 }
             }
         } catch (JSONException e) {
@@ -170,7 +186,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
 
     private void showPreviewDialog(String name, String desc, JSONArray priceJson, int deliveryType) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        // dialog_product_preview 已经在第四步补充
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_product_preview, null);
 
         TextView tvName = view.findViewById(R.id.tv_preview_name);
@@ -198,23 +213,25 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             product.name = name;
             product.description = desc;
             product.priceTableJson = jsonPrice;
-            // 兼容字段，保存第一行价格到 old price 字段
+            // 兼容旧逻辑
             try {
                 JSONArray ja = new JSONArray(jsonPrice);
-                if (ja.length()>0) product.price = ja.getJSONObject(0).getString("price");
+                if (ja.length() > 0) product.price = ja.getJSONObject(0).getString("price");
             } catch(Exception e){}
 
             product.deliveryMethod = deliveryType;
             product.type = "GOODS";
-            product.merchantId = 1;
-            // DateUtils.getCurrentDateTime() 已经在第一步补充
+            product.merchantId = 1; // 实际开发中应从 User Session 获取
             product.createTime = DateUtils.getCurrentDateTime();
 
             StringBuilder sb = new StringBuilder();
-            for (String s : selectedImagePaths) sb.append(s).append(",");
+            for (String s : selectedImagePaths) {
+                sb.append(s).append(",");
+            }
             if (sb.length() > 0) sb.deleteCharAt(sb.length() - 1);
             product.imagePaths = sb.toString();
-            // 兼容字段
+
+            // 兼容封面图
             product.coverImage = product.getFirstImage();
 
             AppDatabase.getInstance(this).productDao().insert(product);
