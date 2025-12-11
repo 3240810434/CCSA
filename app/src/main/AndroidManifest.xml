@@ -42,16 +42,31 @@
         <activity android:name=".ui.merchant.MerchantMainActivity" android:exported="false"/>
 
         <activity android:name=".ui.merchant.MerchantQualificationActivity" android:exported="false"/>
-
         <activity android:name=".ui.merchant.PendingOrdersActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.ProcessingOrdersActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.CompletedOrdersActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.AfterSalesActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.ProductManagementActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
 
-        <activity android:name=".ui.admin.MerchantAuditListActivity" android:exported="false"/>
+        <activity android:name=".ui.merchant.PhysicalProductEditActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.merchant.ServiceEditActivity" android:exported="false"/>
+        <activity android:name=".ui.merchant.MerchantProductDetailActivity" android:exported="false"/>
 
+        <activity android:name=".ui.admin.MerchantAuditListActivity" android:exported="false"/>
         <activity android:name=".ui.admin.MerchantAuditDetailActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.SetFeeStandardActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.FeeAnnouncementActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.PaymentStatisticsActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.PaymentAppealListActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.ResidentListActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.VoteManagementActivity" android:parentActivityName=".ui.admin.AdminMainActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.CreateVoteActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.RoomAreaManagementActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.AdminRepairListActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.HandlePaymentAppealActivity" android:exported="false" />
+        <activity android:name=".ui.admin.AdminRepairDetailActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.AdminRepairHistoryActivity" android:exported="false"/>
+
         <activity android:name=".ui.resident.PayPropertyFeeActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PaymentDetailActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PaymentAppealActivity" android:exported="false"/>
@@ -62,32 +77,17 @@
         <activity android:name="com.gxuwz.ccsa.ui.resident.MyRepairsActivity" android:exported="false" />
         <activity android:name=".ui.resident.NotificationActivity" android:exported="false"/>
         <activity android:name=".ui.resident.RepairDetailActivity" android:exported="false"/>
-
         <activity android:name=".ui.resident.MediaSelectActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PostEditActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.PostDetailActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.ImagePreviewActivity" android:exported="false"/>
         <activity android:name=".ui.resident.VideoFullScreenActivity" android:screenOrientation="landscape" android:theme="@style/Theme.AppCompat.NoActionBar"/>
-
         <activity android:name=".ui.resident.HelpPostEditActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.MessageListActivity" android:exported="false"/>
-
         <activity android:name=".ui.resident.ResidentProductBrowsingActivity" android:exported="false"/>
 
-        <activity android:name=".ui.admin.SetFeeStandardActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.FeeAnnouncementActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.PaymentStatisticsActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.PaymentAppealListActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.ResidentListActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.VoteManagementActivity" android:parentActivityName=".ui.admin.AdminMainActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.CreateVoteActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.RoomAreaManagementActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.AdminRepairListActivity" android:exported="false"/>
         <activity android:name=".ui.common.VoteDetailActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.HandlePaymentAppealActivity" android:exported="false" />
-        <activity android:name=".ui.admin.AdminRepairDetailActivity" android:exported="false"/>
-        <activity android:name=".ui.admin.AdminRepairHistoryActivity" android:exported="false"/>
 
     </application>
 </manifest>

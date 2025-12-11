@@ -45,6 +45,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_audit_list.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_login.xml" value="0.2526041666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_main.xml" value="0.25" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_product_detail.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_qualification.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_merchant_register.xml" value="0.25" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_message_list.xml" value="0.24114583333333334" />
@@ -59,6 +60,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_payment_statistics.xml" value="0.264" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_payment_stats.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_pending_orders.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_physical_product_edit.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_post_detail_custom.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_post_edit.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_processing_orders.xml" value="0.24114583333333334" />
@@ -87,6 +89,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/dialog_loading.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/dialog_more_service.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/dialog_notification_detail.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/dialog_publish_type_selection.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/fragment_admin_manage.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/fragment_admin_profile.xml" value="0.12447916666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/fragment_dynamic.xml" value="0.24114583333333334" />
@@ -119,6 +122,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_payment_detail.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_payment_record.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_post_card.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_price_table_row_edit.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_product_card.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_repair.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_resident.xml" value="0.24114583333333334" />
