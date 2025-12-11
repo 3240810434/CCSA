@@ -1,100 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:orientation="vertical"
+    android:background="#F5F5F5">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="300dp"> <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/vp_banner"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-        <RelativeLayout
+        <ImageView
+            android:id="@+id/iv_banner_single"
             android:layout_width="match_parent"
-            android:layout_height="250dp">
-            <ImageView
-                android:id="@+id/iv_banner_single"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/shopping"/>
-            <ImageView
-                android:id="@+id/btn_close_detail"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:src="@drawable/fork"
-                android:layout_alignParentEnd="true"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:background="#80000000"
-                android:padding="6dp"/>
-        </RelativeLayout>
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <ImageView
+            android:id="@+id/btn_close_detail"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_margin="15dp"
+            android:src="@drawable/fan_hui"
+            android:padding="8dp"
+            android:background="@drawable/circle_alarm_bg" />
+
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="15dp">
 
             <TextView
                 android:id="@+id/tv_detail_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="商品名称"
                 android:textSize="20sp"
                 android:textStyle="bold"
-                android:textColor="#333"
-                android:layout_marginBottom="16dp"/>
+                android:textColor="#000000"
+                android:text="商品名称" />
 
             <LinearLayout
                 android:id="@+id/ll_detail_price_table"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/box_bg"
-                android:padding="10dp"
-                android:layout_marginBottom="20dp">
-            </LinearLayout>
+                android:layout_marginTop="10dp"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:layout_marginBottom="20dp">
+                android:layout_marginTop="20dp">
 
                 <ImageView
                     android:id="@+id/iv_merchant_avatar"
-                    android:layout_width="50dp"
-                    android:layout_height="50dp"
-                    android:src="@drawable/ic_avatar"
-                    android:background="@drawable/circle_avatar"/>
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/merchant_picture"/>
 
                 <TextView
                     android:id="@+id/tv_merchant_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="商家名称"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginStart="10dp"/>
+                    android:layout_marginLeft="10dp"
+                    android:text="商家名称"/>
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="商品详情"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"/>
             <TextView
                 android:id="@+id/tv_detail_desc"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="详细描述内容..."
-                android:lineSpacingExtra="4dp"
-                android:textColor="#666"/>
+                android:layout_marginTop="15dp"
+                android:text="商品描述内容..."/>
 
         </LinearLayout>
-    </LinearLayout>
-</ScrollView>
+    </ScrollView>
+</LinearLayout>
