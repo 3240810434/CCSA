@@ -1,6 +1,5 @@
 package com.gxuwz.ccsa.adapter;
 
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +20,22 @@ import java.util.List;
 
 public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
 
+    // --- 新增：上下文对象，用于Glide加载图片等（可选，目前代码中使用了 holder.itemView.getContext() 也可以） ---
+    // private Context context;
+
     private List<Product> productList;
+
+    // --- 构造函数 ---
+    // 如果你在 Activity 中是这样调用的：new ProductAdapter(this, productList);
+    // 请保留或添加这个构造函数。如果只用无参构造，可以忽略参数。
+    public ProductAdapter(android.content.Context context, List<Product> productList) {
+        // this.context = context;
+        this.productList = productList;
+    }
+
+    // 无参构造函数（为了兼容某些旧代码）
+    public ProductAdapter() {
+    }
 
     public void setProductList(List<Product> productList) {
         this.productList = productList;
@@ -31,6 +45,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // 加载布局 item_product_card
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card, parent, false);
         return new ViewHolder(view);
     }
@@ -38,33 +53,37 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Product product = productList.get(position);
-        holder.tvName.setText(product.name);
+
+        // 设置商品名称
+        if (holder.tvName != null) {
+            holder.tvName.setText(product.name);
+        }
 
         // --- 修复价格显示逻辑 ---
-        // 尝试解析 JSON 价格表
         boolean isJsonPrice = false;
         try {
             if (product.priceTableJson != null) {
                 JSONArray ja = new JSONArray(product.priceTableJson);
                 if (ja.length() > 0) {
                     JSONObject jo = ja.getJSONObject(0);
-                    holder.tvPrice.setText("¥ " + jo.optString("price"));
+                    if (holder.tvPrice != null) {
+                        holder.tvPrice.setText("¥ " + jo.optString("price"));
+                    }
                     isJsonPrice = true;
                 }
             }
         } catch (Exception e) {
-            // ignore
+            e.printStackTrace();
         }
 
         // 如果不是JSON或者解析失败，尝试使用旧字段
-        if (!isJsonPrice) {
+        if (!isJsonPrice && holder.tvPrice != null) {
             holder.tvPrice.setText(product.price != null ? "¥ " + product.price : "¥ --");
         }
 
         // --- 修复图片显示逻辑 ---
-        String imageUrl = product.getFirstImage(); // 使用我们在 Product 实体中新加的方法
+        String imageUrl = product.getFirstImage();
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            // 使用 Glide 加载 (推荐)
             Glide.with(holder.itemView.getContext()).load(imageUrl).into(holder.ivCover);
         } else {
             holder.ivCover.setImageResource(R.drawable.shopping);
@@ -82,9 +101,10 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            ivCover = itemView.findViewById(R.id.iv_cover);
-            tvName = itemView.findViewById(R.id.tv_name);
-            tvPrice = itemView.findViewById(R.id.tv_price);
+            // --- 修正点：这里的 ID 必须与 item_product_card.xml 中的 ID 一致 ---
+            ivCover = itemView.findViewById(R.id.iv_product_cover); // 原代码是 iv_cover (错误)
+            tvName = itemView.findViewById(R.id.tv_product_name);   // 原代码是 tv_name (错误)
+            tvPrice = itemView.findViewById(R.id.tv_product_price); // 原代码是 tv_price (错误)
         }
     }
 }
