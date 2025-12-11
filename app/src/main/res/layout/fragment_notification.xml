@@ -302,9 +302,13 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tv_merchant_more"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
                 android:text="更多"
                 android:textColor="#000000"
                 android:textSize="14sp" />
@@ -313,22 +317,22 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_marginTop="10dp"
+            android:orientation="horizontal"
             android:paddingHorizontal="10dp">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="5dp"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginEnd="5dp">
+                android:orientation="vertical">
 
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="120dp"
-                    android:src="@drawable/merchant1"
-                    android:scaleType="centerCrop" />
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/merchant1" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -343,15 +347,15 @@
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
                 android:layout_weight="1"
-                android:orientation="vertical"
-                android:layout_marginStart="5dp">
+                android:orientation="vertical">
 
                 <ImageView
                     android:layout_width="match_parent"
                     android:layout_height="120dp"
-                    android:src="@drawable/merchant2"
-                    android:scaleType="centerCrop" />
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/merchant2" />
 
                 <TextView
                     android:layout_width="wrap_content"

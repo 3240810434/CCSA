@@ -18,16 +18,15 @@ import com.gxuwz.ccsa.model.RoomArea;
 import com.gxuwz.ccsa.model.PropertyFeeBill;
 import com.gxuwz.ccsa.model.Notification;
 import com.gxuwz.ccsa.model.Repair;
-// --- 新增引入 ---
 import com.gxuwz.ccsa.model.Post;
 import com.gxuwz.ccsa.model.PostMedia;
 import com.gxuwz.ccsa.model.Comment;
-
 import com.gxuwz.ccsa.model.ChatMessage;
 import com.gxuwz.ccsa.model.HelpPost;
 import com.gxuwz.ccsa.model.HelpPostMedia;
+// --- 新增引入 ---
+import com.gxuwz.ccsa.model.Product;
 
-// 添加TypeConverters注解注册日期转换器
 @Database(
         entities = {
                 User.class,
@@ -43,19 +42,18 @@ import com.gxuwz.ccsa.model.HelpPostMedia;
                 PropertyFeeBill.class,
                 Notification.class,
                 Repair.class,
-                // --- 新增实体 ---
                 Post.class,
                 PostMedia.class,
                 Comment.class,
                 ChatMessage.class,
                 HelpPost.class,
-                HelpPostMedia.class
-
+                HelpPostMedia.class,
+                Product.class
         },
-        version = 10, // 升级版本号，原为7
+        version = 11, // 升级版本号
         exportSchema = false
 )
-@TypeConverters(DateConverter.class) // 关键：注册日期类型转换器
+@TypeConverters(DateConverter.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
@@ -66,7 +64,6 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract VoteDao voteDao();
     public abstract VoteRecordDao voteRecordDao();
     public abstract RepairDao repairDao();
-    // 原有新增DAO
     public abstract PropertyFeeStandardDao propertyFeeStandardDao();
     public abstract PaymentRecordDao paymentRecordDao();
     public abstract FeeAnnouncementDao feeAnnouncementDao();
@@ -74,10 +71,10 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract RoomAreaDao roomAreaDao();
     public abstract PropertyFeeBillDao propertyFeeBillDao();
     public abstract NotificationDao notificationDao();
-    // --- 新增：生活动态DAO ---
     public abstract PostDao postDao();
     public abstract HelpPostDao helpPostDao();
     public abstract ChatDao chatDao();
+    public abstract ProductDao productDao();
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -89,7 +86,6 @@ public abstract class AppDatabase extends RoomDatabase {
                                     "ccsa_database"
                             )
                             .allowMainThreadQueries()
-                            // 允许破坏性迁移（数据库版本更新时清空数据重建表），开发阶段方便调试
                             .fallbackToDestructiveMigration()
                             .build();
                 }
