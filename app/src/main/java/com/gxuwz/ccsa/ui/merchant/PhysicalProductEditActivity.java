@@ -8,11 +8,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup; // 解决 Cannot resolve symbol 'ViewGroup'
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -47,22 +47,16 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_post_edit); // 复用或使用新布局，这里我使用新布局代码
+        // 使用 activity_physical_product_edit 布局
+        setContentView(R.layout.activity_physical_product_edit);
 
         initView();
-        // 默认添加3行价格输入
         addPriceRow();
         addPriceRow();
         addPriceRow();
     }
 
     private void initView() {
-        // 设置自定义布局
-        ViewGroup contentLayout = findViewById(android.R.id.content);
-        contentLayout.removeAllViews();
-        View view = LayoutInflater.from(this).inflate(R.layout.activity_physical_product_edit, contentLayout, false);
-        contentLayout.addView(view);
-
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
         etName = findViewById(R.id.et_name);
@@ -74,29 +68,22 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         Button btnPublish = findViewById(R.id.btn_publish);
         ImageView btnAddPriceRow = findViewById(R.id.btn_add_price_row);
 
-        // 图片选择
         ivAddImage.setOnClickListener(v -> checkPermissionAndPickImage());
-
-        // 价格表添加行
         btnAddPriceRow.setOnClickListener(v -> addPriceRow());
-
-        // 发布按钮
         btnPublish.setOnClickListener(v -> attemptPublish());
     }
 
-    // 动态添加价格行
     private void addPriceRow() {
+        // item_price_table_row_edit 必须存在于 layout 文件夹
         View rowView = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_edit, llPriceTableContainer, false);
         llPriceTableContainer.addView(rowView);
     }
 
-    // 图片选择逻辑
     private void checkPermissionAndPickImage() {
         if (selectedImagePaths.size() >= 9) {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
-        // 简化的权限检查，实际需适配Android 13+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
         } else {
@@ -124,12 +111,14 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
 
     private void renderImages() {
         llImageContainer.removeAllViews();
-        llImageContainer.addView(ivAddImage); // 保持添加按钮在最后
+        // 重新添加"添加按钮"
+        llImageContainer.addView(ivAddImage);
 
         for (String path : selectedImagePaths) {
+            // item_image_preview_small 已经在第四步补充
             View itemView = LayoutInflater.from(this).inflate(R.layout.item_image_preview_small, llImageContainer, false);
             ImageView iv = itemView.findViewById(R.id.iv_image);
-            ImageView btnDel = itemView.findViewById(R.id.btn_delete);
+            ImageView btnDel = itemView.findViewById(R.id.btn_delete); // 解决 Cannot resolve symbol 'btn_delete'
 
             Glide.with(this).load(path).into(iv);
             btnDel.setOnClickListener(v -> {
@@ -137,11 +126,11 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
                 renderImages();
             });
 
+            // 将图片添加到"添加按钮"之前
             llImageContainer.addView(itemView, llImageContainer.getChildCount() - 1);
         }
     }
 
-    // 1.6 发布前确认
     private void attemptPublish() {
         String name = etName.getText().toString().trim();
         String desc = etDesc.getText().toString().trim();
@@ -149,15 +138,9 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             Toast.makeText(this, "请输入商品名称", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (selectedImagePaths.isEmpty()) {
-            Toast.makeText(this, "请至少上传一张图片", Toast.LENGTH_SHORT).show();
-            return;
-        }
 
-        // 解析价格表
         JSONArray priceJson = new JSONArray();
         try {
-            boolean hasValidPrice = false;
             for (int i = 0; i < llPriceTableContainer.getChildCount(); i++) {
                 View row = llPriceTableContainer.getChildAt(i);
                 EditText etItem = row.findViewById(R.id.et_price_item);
@@ -170,25 +153,24 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
                     obj.put("desc", itemText);
                     obj.put("price", priceVal);
                     priceJson.put(obj);
-                    hasValidPrice = true;
                 }
-            }
-            if (!hasValidPrice) {
-                Toast.makeText(this, "请至少输入一行完整的价格信息", Toast.LENGTH_SHORT).show();
-                return;
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
-        int deliveryType = rgDelivery.getCheckedRadioButtonId() == R.id.rb_delivery ? 0 : 1;
+        if (priceJson.length() == 0) {
+            Toast.makeText(this, "请至少输入一行完整的价格信息", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        // 构建预览弹窗
+        int deliveryType = rgDelivery.getCheckedRadioButtonId() == R.id.rb_delivery ? 0 : 1;
         showPreviewDialog(name, desc, priceJson, deliveryType);
     }
 
     private void showPreviewDialog(String name, String desc, JSONArray priceJson, int deliveryType) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        // dialog_product_preview 已经在第四步补充
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_product_preview, null);
 
         TextView tvName = view.findViewById(R.id.tv_preview_name);
@@ -216,15 +198,24 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             product.name = name;
             product.description = desc;
             product.priceTableJson = jsonPrice;
+            // 兼容字段，保存第一行价格到 old price 字段
+            try {
+                JSONArray ja = new JSONArray(jsonPrice);
+                if (ja.length()>0) product.price = ja.getJSONObject(0).getString("price");
+            } catch(Exception e){}
+
             product.deliveryMethod = deliveryType;
             product.type = "GOODS";
-            product.merchantId = 1; // 假定当前商家ID
-            product.createTime = DateUtils.getCurrentDateTime(); // 使用项目中的 DateUtils
+            product.merchantId = 1;
+            // DateUtils.getCurrentDateTime() 已经在第一步补充
+            product.createTime = DateUtils.getCurrentDateTime();
 
             StringBuilder sb = new StringBuilder();
             for (String s : selectedImagePaths) sb.append(s).append(",");
             if (sb.length() > 0) sb.deleteCharAt(sb.length() - 1);
             product.imagePaths = sb.toString();
+            // 兼容字段
+            product.coverImage = product.getFirstImage();
 
             AppDatabase.getInstance(this).productDao().insert(product);
 

@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,7 +20,6 @@ import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Product;
-import com.gxuwz.ccsa.util.DateUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,28 +31,24 @@ public class ProductManagementActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private TextView tvEmpty;
-    private ProductAdapter adapter;
+    private MerchantProductAdapter adapter; // 使用内部类 Adapter 避免冲突
     private List<Product> productList = new ArrayList<>();
-    private int currentMerchantId = 1; // 这里应从 SharedPreferences 获取当前登录商家的ID
+    private int currentMerchantId = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_product_management);
 
-        // 初始化UI
         ImageView btnBack = findViewById(R.id.btn_back);
         ImageView btnAdd = findViewById(R.id.btn_add);
         recyclerView = findViewById(R.id.recycler_view);
         tvEmpty = findViewById(R.id.tv_empty);
 
         btnBack.setOnClickListener(v -> finish());
-
-        // 1.2 点击发布按钮，弹出底部面板
         btnAdd.setOnClickListener(v -> showPublishTypeDialog());
 
-        // 1.1 初始化列表
-        adapter = new ProductAdapter();
+        adapter = new MerchantProductAdapter();
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setAdapter(adapter);
     }
@@ -67,7 +61,7 @@ public class ProductManagementActivity extends AppCompatActivity {
 
     private void loadData() {
         new Thread(() -> {
-            // 获取当前商家的商品
+            // 现在 ProductDao 已经有这个方法了
             productList = AppDatabase.getInstance(this).productDao().getProductsByMerchantId(currentMerchantId);
             runOnUiThread(() -> {
                 if (productList == null || productList.isEmpty()) {
@@ -82,8 +76,8 @@ public class ProductManagementActivity extends AppCompatActivity {
         }).start();
     }
 
-    // 1.3 显示底部发布类型选择弹窗
     private void showPublishTypeDialog() {
+        // 使用我们在 styles.xml 定义的 BottomDialogTheme
         Dialog dialog = new Dialog(this, R.style.BottomDialogTheme);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_publish_type_selection, null);
 
@@ -94,7 +88,6 @@ public class ProductManagementActivity extends AppCompatActivity {
         });
         view.findViewById(R.id.card_service).setOnClickListener(v -> {
             dialog.dismiss();
-            // 1.7 跳转到服务编辑页面（暂为空）
             startActivity(new Intent(this, ServiceEditActivity.class));
         });
 
@@ -102,18 +95,20 @@ public class ProductManagementActivity extends AppCompatActivity {
         WindowManager.LayoutParams lp = dialog.getWindow().getAttributes();
         lp.gravity = Gravity.BOTTOM;
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
-        lp.height = (int) (getResources().getDisplayMetrics().heightPixels * 0.4); // 40% 高度
+        lp.height = (int) (getResources().getDisplayMetrics().heightPixels * 0.4);
         dialog.getWindow().setAttributes(lp);
+        // 使用 styles.xml 定义的动画
         dialog.getWindow().setWindowAnimations(R.style.BottomDialogAnim);
         dialog.show();
     }
 
-    // Adapter Class
-    class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHolder> {
+    // 内部 Adapter 类
+    class MerchantProductAdapter extends RecyclerView.Adapter<MerchantProductAdapter.ViewHolder> {
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            // 引用我们在第四步创建的 item_product_card_merchant
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card_merchant, parent, false);
             return new ViewHolder(view);
         }
@@ -123,30 +118,27 @@ public class ProductManagementActivity extends AppCompatActivity {
             Product product = productList.get(position);
             holder.tvName.setText(product.name);
 
-            // 解析第一张图片
             if (product.imagePaths != null && !product.imagePaths.isEmpty()) {
                 String firstImage = product.imagePaths.split(",")[0];
                 Glide.with(ProductManagementActivity.this).load(firstImage).into(holder.ivCover);
             } else {
-                holder.ivCover.setImageResource(R.drawable.shopping); // 默认图
+                holder.ivCover.setImageResource(R.drawable.shopping);
             }
 
-            // 1.1 解析价格表第一行
             try {
                 if (product.priceTableJson != null) {
                     JSONArray jsonArray = new JSONArray(product.priceTableJson);
                     if (jsonArray.length() > 0) {
                         JSONObject firstRow = jsonArray.getJSONObject(0);
-                        String desc = firstRow.optString("desc");
-                        String price = firstRow.optString("price");
-                        holder.tvPrice.setText(desc + " ¥" + price);
+                        holder.tvPrice.setText(firstRow.optString("desc") + " ¥" + firstRow.optString("price"));
                     }
+                } else {
+                    holder.tvPrice.setText("¥" + product.price);
                 }
             } catch (Exception e) {
                 holder.tvPrice.setText("¥ --");
             }
 
-            // 1.8 点击跳转详情
             holder.itemView.setOnClickListener(v -> {
                 Intent intent = new Intent(ProductManagementActivity.this, MerchantProductDetailActivity.class);
                 intent.putExtra("product_id", product.id);
@@ -165,6 +157,7 @@ public class ProductManagementActivity extends AppCompatActivity {
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
+                // 确保这些 ID 在 item_product_card_merchant.xml 中存在
                 ivCover = itemView.findViewById(R.id.iv_cover);
                 tvName = itemView.findViewById(R.id.tv_name);
                 tvPrice = itemView.findViewById(R.id.tv_price);

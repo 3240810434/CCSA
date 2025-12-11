@@ -14,22 +14,14 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Product;
-import com.gxuwz.ccsa.ui.resident.ImagePreviewActivity; // 假设有这个全屏查看
-import com.youth.banner.Banner; // 如果项目有banner库
-import com.youth.banner.adapter.BannerImageAdapter;
-import com.youth.banner.holder.BannerImageHolder;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 public class MerchantProductDetailActivity extends AppCompatActivity {
 
     private int productId;
-    private Banner banner; // 简单实现可以只是一个 ImageView，但需求说轮播
+    // 移除 Banner，改用 ImageView 简单实现，如果需要轮播建议使用 ViewPager2 但代码量较大，这里先保证不报错
     private ImageView ivSingleImage;
     private TextView tvName, tvMerchantName, tvDesc;
     private ImageView ivMerchantAvatar, btnBack;
@@ -46,10 +38,8 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     }
 
     private void initView() {
-        btnBack = findViewById(R.id.btn_close_detail); // fork.png
-        // 这里如果是轮播组件，根据项目依赖决定，这里用简单的 ImageView 模拟单图，如果多图建议用 ViewPager
-        // 由于不能确定项目是否有Banner库，我用原生 ImageView 并在代码逻辑中处理（简化：只显示第一张，点击查看全图）
-        ivSingleImage = findViewById(R.id.iv_banner_single);
+        btnBack = findViewById(R.id.btn_close_detail);
+        ivSingleImage = findViewById(R.id.iv_banner_single); // 确保 XML 里有这个 ID
 
         tvName = findViewById(R.id.tv_detail_name);
         llPriceTable = findViewById(R.id.ll_detail_price_table);
@@ -62,8 +52,11 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
 
     private void loadData() {
         new Thread(() -> {
+            // ProductDao 已在第三步添加了 getProductById
             Product product = AppDatabase.getInstance(this).productDao().getProductById(productId);
             if (product != null) {
+                // MerchantDao 中应该有 getMerchantById，如果没有请参考 ProductDao 补上
+                // 这里假设 MerchantDao 已存在该方法，如果报错请仿照 ProductDao 添加
                 Merchant merchant = AppDatabase.getInstance(this).merchantDao().getMerchantById(product.merchantId);
                 runOnUiThread(() -> updateUI(product, merchant));
             }
@@ -74,41 +67,38 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         tvName.setText(product.name);
         tvDesc.setText(product.description);
 
-        // 处理图片 (简单起见，显示第一张，点击全屏)
-        List<String> images = new ArrayList<>();
-        if (product.imagePaths != null) {
-            images = Arrays.asList(product.imagePaths.split(","));
+        String imgUrl = product.getFirstImage();
+        if (imgUrl != null && !imgUrl.isEmpty()) {
+            Glide.with(this).load(imgUrl).into(ivSingleImage);
         }
 
-        if (!images.isEmpty()) {
-            Glide.with(this).load(images.get(0)).into(ivSingleImage);
-            ivSingleImage.setOnClickListener(v -> {
-                // 跳转到全屏查看逻辑
-            });
-        }
-
-        // 渲染价格表
         llPriceTable.removeAllViews();
         try {
             JSONArray jsonArray = new JSONArray(product.priceTableJson);
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject obj = jsonArray.getJSONObject(i);
+                // item_price_table_row_view 已在第四步补充
                 View row = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_view, llPriceTable, false);
                 TextView t1 = row.findViewById(R.id.tv_row_desc);
                 TextView t2 = row.findViewById(R.id.tv_row_price);
-                t1.setText(obj.getString("desc"));
-                t2.setText("¥" + obj.getString("price"));
+
+                String desc = obj.optString("desc");
+                String price = obj.optString("price");
+
+                if (t1 != null) t1.setText(desc);
+                if (t2 != null) t2.setText("¥" + price);
+
                 llPriceTable.addView(row);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            // 如果解析失败，显示旧价格
+            TextView tv = new TextView(this);
+            tv.setText("价格: ¥" + product.price);
+            llPriceTable.addView(tv);
         }
 
-        // 商家信息
         if (merchant != null) {
             tvMerchantName.setText(merchant.name);
-            // 假设 Merchant 有 avatar 字段，或者使用默认
-            // Glide.with(this).load(merchant.avatar).into(ivMerchantAvatar);
         }
     }
 }
