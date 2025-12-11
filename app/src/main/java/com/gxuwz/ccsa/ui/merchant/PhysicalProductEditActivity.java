@@ -44,7 +44,7 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     private List<String> selectedImagePaths = new ArrayList<>();
     private ImageView ivAddImage;
 
-    // --- 新增：保存正在编辑的商品对象 ---
+    // 保存正在编辑的商品对象
     private Product mEditingProduct;
 
     @Override
@@ -54,13 +54,12 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
 
         initView();
 
-        // --- 修改：判断是新增还是编辑 ---
+        // 判断是新增还是编辑
         if (getIntent().hasExtra("product")) {
             mEditingProduct = (Product) getIntent().getSerializableExtra("product");
-            // 如果有数据，则填充 UI（进入编辑模式）
             initDataFromProduct();
         } else {
-            // 如果没有数据，则是新增模式，执行默认逻辑（默认添加3行空价格表）
+            // 新增模式，默认添加3行空价格表
             addPriceRow();
             addPriceRow();
             addPriceRow();
@@ -84,9 +83,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         btnPublish.setOnClickListener(v -> attemptPublish());
     }
 
-    /**
-     * 新增：从 Product 对象回显数据到界面
-     */
     private void initDataFromProduct() {
         // 1. 回显文本信息
         etName.setText(mEditingProduct.name);
@@ -96,6 +92,9 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         if (mEditingProduct.deliveryMethod == 0) {
             rgDelivery.check(R.id.rb_delivery);
         } else {
+            // --- 修复点 1: 确保 XML 中有这个 ID ---
+            // 如果这里爆红，请去 activity_physical_product_edit.xml
+            // 把第二个 RadioButton 的 id 改为 android:id="@+id/rb_self_pick"
             rgDelivery.check(R.id.rb_self_pick);
         }
 
@@ -103,16 +102,15 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         if (mEditingProduct.imagePaths != null && !mEditingProduct.imagePaths.isEmpty()) {
             String[] paths = mEditingProduct.imagePaths.split(",");
             for (String path : paths) {
-                // 简单的防空判断
                 if (!path.trim().isEmpty()) {
                     selectedImagePaths.add(path);
                 }
             }
-            renderImages(); // 复用已有的渲染方法
+            renderImages();
         }
 
         // 4. 回显价格表
-        llPriceTableContainer.removeAllViews(); // 清除界面初始化时可能存在的默认行
+        llPriceTableContainer.removeAllViews();
         try {
             JSONArray jsonArray = new JSONArray(mEditingProduct.priceTableJson);
             for (int i = 0; i < jsonArray.length(); i++) {
@@ -121,22 +119,15 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             }
         } catch (JSONException e) {
             e.printStackTrace();
-            // 如果解析失败，至少显示一行空的
             addPriceRow();
         }
     }
 
-    /**
-     * 默认添加空行
-     */
     private void addPriceRow() {
         View rowView = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_edit, llPriceTableContainer, false);
         llPriceTableContainer.addView(rowView);
     }
 
-    /**
-     * 新增：添加带有数据的价格行（用于编辑回显）
-     */
     private void addPriceRowWithData(String desc, String price) {
         View rowView = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_edit, llPriceTableContainer, false);
         EditText etItem = rowView.findViewById(R.id.et_price_item);
@@ -190,7 +181,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
 
     private void renderImages() {
         llImageContainer.removeAllViews();
-        // 重新添加"添加按钮"
         llImageContainer.addView(ivAddImage);
 
         for (String path : selectedImagePaths) {
@@ -204,7 +194,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
                 renderImages();
             });
 
-            // 将图片添加到"添加按钮"之前
             llImageContainer.addView(itemView, llImageContainer.getChildCount() - 1);
         }
     }
@@ -272,32 +261,33 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
                 .show();
     }
 
-    // --- 修改：区分新增和更新逻辑 ---
+    // --- 修复点 2: 解决 Lambda 变量 final 问题 ---
     private void saveToDb(String name, String desc, String jsonPrice, int deliveryType) {
+        // 在进入线程前或线程顶部确定是否为更新模式，定义为 final 变量
+        // 这样在 lambda 中使用就不会报错了，而且逻辑更清晰
+        final boolean isUpdate = (mEditingProduct != null);
+
         new Thread(() -> {
             Product product;
-            boolean isUpdate = false;
 
-            if (mEditingProduct != null) {
-                // 编辑模式：复用原有对象（关键是保留 id），只更新字段
+            if (isUpdate) {
+                // 编辑模式：复用原有对象
                 product = mEditingProduct;
-                isUpdate = true;
             } else {
                 // 新增模式：创建新对象
                 product = new Product();
                 product.createTime = DateUtils.getCurrentDateTime();
-                product.merchantId = 1; // 实际开发中应从 User Session 获取
+                product.merchantId = 1;
                 product.type = "GOODS";
-                isUpdate = false;
             }
 
-            // 更新/设置通用字段
+            // 更新通用字段
             product.name = name;
             product.description = desc;
             product.priceTableJson = jsonPrice;
             product.deliveryMethod = deliveryType;
 
-            // 兼容旧逻辑：设置 price 字段为第一行价格
+            // 兼容旧逻辑
             try {
                 JSONArray ja = new JSONArray(jsonPrice);
                 if (ja.length() > 0) product.price = ja.getJSONObject(0).getString("price");
@@ -305,18 +295,15 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            // 处理图片路径
             StringBuilder sb = new StringBuilder();
             for (String s : selectedImagePaths) {
                 sb.append(s).append(",");
             }
             if (sb.length() > 0) sb.deleteCharAt(sb.length() - 1);
             product.imagePaths = sb.toString();
-
-            // 兼容封面图
             product.coverImage = product.getFirstImage();
 
-            // --- 核心修改：区分 Update 和 Insert ---
+            // 根据 final 变量 isUpdate 判断操作
             if (isUpdate) {
                 AppDatabase.getInstance(this).productDao().update(product);
             } else {
@@ -324,6 +311,7 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             }
 
             runOnUiThread(() -> {
+                // 此时使用的是外部定义的 final isUpdate，不再报错
                 Toast.makeText(this, isUpdate ? "修改成功" : "发布成功", Toast.LENGTH_SHORT).show();
                 finish();
             });
