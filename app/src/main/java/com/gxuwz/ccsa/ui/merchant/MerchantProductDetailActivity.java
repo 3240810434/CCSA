@@ -21,7 +21,6 @@ import org.json.JSONObject;
 public class MerchantProductDetailActivity extends AppCompatActivity {
 
     private int productId;
-    // 移除 Banner，改用 ImageView 简单实现，如果需要轮播建议使用 ViewPager2 但代码量较大，这里先保证不报错
     private ImageView ivSingleImage;
     private TextView tvName, tvMerchantName, tvDesc;
     private ImageView ivMerchantAvatar, btnBack;
@@ -39,7 +38,7 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
 
     private void initView() {
         btnBack = findViewById(R.id.btn_close_detail);
-        ivSingleImage = findViewById(R.id.iv_banner_single); // 确保 XML 里有这个 ID
+        ivSingleImage = findViewById(R.id.iv_banner_single);
 
         tvName = findViewById(R.id.tv_detail_name);
         llPriceTable = findViewById(R.id.ll_detail_price_table);
@@ -52,12 +51,11 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
 
     private void loadData() {
         new Thread(() -> {
-            // ProductDao 已在第三步添加了 getProductById
+            // 获取商品信息
             Product product = AppDatabase.getInstance(this).productDao().getProductById(productId);
             if (product != null) {
-                // MerchantDao 中应该有 getMerchantById，如果没有请参考 ProductDao 补上
-                // 这里假设 MerchantDao 已存在该方法，如果报错请仿照 ProductDao 添加
-                Merchant merchant = AppDatabase.getInstance(this).merchantDao().getMerchantById(product.merchantId);
+                // 修正1: 使用 findById 替代 getMerchantById (MerchantDao 中定义的方法名是 findById)
+                Merchant merchant = AppDatabase.getInstance(this).merchantDao().findById(product.merchantId);
                 runOnUiThread(() -> updateUI(product, merchant));
             }
         }).start();
@@ -67,9 +65,12 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         tvName.setText(product.name);
         tvDesc.setText(product.description);
 
+        // 修正2: 现在 Product 类中已经有了 getFirstImage() 方法
         String imgUrl = product.getFirstImage();
         if (imgUrl != null && !imgUrl.isEmpty()) {
             Glide.with(this).load(imgUrl).into(ivSingleImage);
+        } else {
+            ivSingleImage.setImageResource(R.drawable.shopping); // 默认图
         }
 
         llPriceTable.removeAllViews();
@@ -77,28 +78,35 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             JSONArray jsonArray = new JSONArray(product.priceTableJson);
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject obj = jsonArray.getJSONObject(i);
-                // item_price_table_row_view 已在第四步补充
                 View row = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_view, llPriceTable, false);
                 TextView t1 = row.findViewById(R.id.tv_row_desc);
                 TextView t2 = row.findViewById(R.id.tv_row_price);
 
                 String desc = obj.optString("desc");
-                String price = obj.optString("price");
+                String priceStr = obj.optString("price");
 
                 if (t1 != null) t1.setText(desc);
-                if (t2 != null) t2.setText("¥" + price);
+                if (t2 != null) t2.setText("¥" + priceStr);
 
                 llPriceTable.addView(row);
             }
         } catch (Exception e) {
-            // 如果解析失败，显示旧价格
+            // 修正3: 移除了对 product.price 的引用，因为 Product 类中没有这个字段了
+            // 如果解析 JSON 失败，只显示简单的文本提示
             TextView tv = new TextView(this);
-            tv.setText("价格: ¥" + product.price);
+            tv.setText("价格信息解析失败");
+            tv.setPadding(10, 10, 10, 10);
             llPriceTable.addView(tv);
         }
 
         if (merchant != null) {
-            tvMerchantName.setText(merchant.name);
+            // 修正4: 使用 Getter 方法获取商家名称，而不是直接访问 private 字段
+            tvMerchantName.setText(merchant.getMerchantName());
+
+            // 如果有头像也可以加载
+            // if (merchant.getAvatar() != null) Glide.with(this).load(merchant.getAvatar()).into(ivMerchantAvatar);
+        } else {
+            tvMerchantName.setText("未知商家");
         }
     }
 }

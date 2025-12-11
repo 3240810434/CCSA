@@ -12,21 +12,18 @@ public class Product implements Serializable {
 
     public int merchantId;        // 商家ID
     public String name;           // 商品名称
-    public String imagePaths;     // 图片路径，用逗号分隔: "path1,path2"
+    public String imagePaths;     // 图片路径，用逗号分隔
     public String description;    // 详细描述
 
-    // 新增字段
-    public String type;           // "GOODS" (实物) 或 "SERVICE" (服务)
-    public String priceTableJson; // JSON字符串存储价格表: [{"desc":"香蕉","price":"5"},{"desc":"苹果","price":"5"}]
+    public String type;           // "GOODS" 或 "SERVICE"
+    public String priceTableJson; // JSON字符串存储价格表
     public int deliveryMethod;    // 0: 商家配送, 1: 自提
     public String createTime;     // 发布时间
 
-    // 1. 无参构造函数 (Room 数据库读取数据时需要)
+    // 无参构造函数
     public Product() {
     }
 
-    // 2. 全参构造函数 (方便在 Activity 中创建新对象)
-    // 注意：id 是自增的，所以在创建新对象时不需要传入 id
     @Ignore
     public Product(int merchantId, String name, String imagePaths, String description,
                    String type, String priceTableJson, int deliveryMethod, String createTime) {
@@ -38,5 +35,14 @@ public class Product implements Serializable {
         this.priceTableJson = priceTableJson;
         this.deliveryMethod = deliveryMethod;
         this.createTime = createTime;
+    }
+
+    // --- 新增：解决 Cannot resolve method 'getFirstImage' ---
+    public String getFirstImage() {
+        if (imagePaths != null && !imagePaths.isEmpty()) {
+            // 分割字符串获取第一张图片路径
+            return imagePaths.split(",")[0];
+        }
+        return ""; // 如果没有图片，返回空字符串
     }
 }
