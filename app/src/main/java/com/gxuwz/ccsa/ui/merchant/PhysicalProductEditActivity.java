@@ -44,16 +44,27 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     private List<String> selectedImagePaths = new ArrayList<>();
     private ImageView ivAddImage;
 
+    // --- 新增：保存正在编辑的商品对象 ---
+    private Product mEditingProduct;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_physical_product_edit);
 
         initView();
-        // 默认添加几行价格表
-        addPriceRow();
-        addPriceRow();
-        addPriceRow();
+
+        // --- 修改：判断是新增还是编辑 ---
+        if (getIntent().hasExtra("product")) {
+            mEditingProduct = (Product) getIntent().getSerializableExtra("product");
+            // 如果有数据，则填充 UI（进入编辑模式）
+            initDataFromProduct();
+        } else {
+            // 如果没有数据，则是新增模式，执行默认逻辑（默认添加3行空价格表）
+            addPriceRow();
+            addPriceRow();
+            addPriceRow();
+        }
     }
 
     private void initView() {
@@ -73,8 +84,67 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         btnPublish.setOnClickListener(v -> attemptPublish());
     }
 
+    /**
+     * 新增：从 Product 对象回显数据到界面
+     */
+    private void initDataFromProduct() {
+        // 1. 回显文本信息
+        etName.setText(mEditingProduct.name);
+        etDesc.setText(mEditingProduct.description);
+
+        // 2. 回显配送方式
+        if (mEditingProduct.deliveryMethod == 0) {
+            rgDelivery.check(R.id.rb_delivery);
+        } else {
+            rgDelivery.check(R.id.rb_self_pick);
+        }
+
+        // 3. 回显图片
+        if (mEditingProduct.imagePaths != null && !mEditingProduct.imagePaths.isEmpty()) {
+            String[] paths = mEditingProduct.imagePaths.split(",");
+            for (String path : paths) {
+                // 简单的防空判断
+                if (!path.trim().isEmpty()) {
+                    selectedImagePaths.add(path);
+                }
+            }
+            renderImages(); // 复用已有的渲染方法
+        }
+
+        // 4. 回显价格表
+        llPriceTableContainer.removeAllViews(); // 清除界面初始化时可能存在的默认行
+        try {
+            JSONArray jsonArray = new JSONArray(mEditingProduct.priceTableJson);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject obj = jsonArray.getJSONObject(i);
+                addPriceRowWithData(obj.optString("desc"), obj.optString("price"));
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            // 如果解析失败，至少显示一行空的
+            addPriceRow();
+        }
+    }
+
+    /**
+     * 默认添加空行
+     */
     private void addPriceRow() {
         View rowView = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_edit, llPriceTableContainer, false);
+        llPriceTableContainer.addView(rowView);
+    }
+
+    /**
+     * 新增：添加带有数据的价格行（用于编辑回显）
+     */
+    private void addPriceRowWithData(String desc, String price) {
+        View rowView = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_edit, llPriceTableContainer, false);
+        EditText etItem = rowView.findViewById(R.id.et_price_item);
+        EditText etPrice = rowView.findViewById(R.id.et_price_value);
+
+        if (etItem != null) etItem.setText(desc);
+        if (etPrice != null) etPrice.setText(price);
+
         llPriceTableContainer.addView(rowView);
     }
 
@@ -83,7 +153,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
-        // 注意：使用 ACTION_OPEN_DOCUMENT 通常不需要 READ_EXTERNAL_STORAGE 权限，但保留检查也无妨
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
         } else {
@@ -92,11 +161,9 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     }
 
     private void openGallery() {
-        // --- 修复点 1：使用 ACTION_OPEN_DOCUMENT 以支持权限持久化 ---
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("image/*");
-        // 如果想支持多选，可以加上 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
     }
 
@@ -106,8 +173,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_PICK_IMAGE && resultCode == RESULT_OK && data != null) {
             Uri imageUri = data.getData();
             if (imageUri != null) {
-                // --- 修复点 2：获取并保存持久化权限 ---
-                // 这一步至关重要，没有它，重启APP后图片就会变成 shopping.png
                 try {
                     getContentResolver().takePersistableUriPermission(
                             imageUri,
@@ -200,30 +265,47 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         } catch (Exception e) {}
 
         builder.setView(view)
-                .setPositiveButton("确认发布", (dialog, which) -> {
+                .setPositiveButton(mEditingProduct != null ? "确认修改" : "确认发布", (dialog, which) -> {
                     saveToDb(name, desc, priceJson.toString(), deliveryType);
                 })
                 .setNegativeButton("取消", null)
                 .show();
     }
 
+    // --- 修改：区分新增和更新逻辑 ---
     private void saveToDb(String name, String desc, String jsonPrice, int deliveryType) {
         new Thread(() -> {
-            Product product = new Product();
+            Product product;
+            boolean isUpdate = false;
+
+            if (mEditingProduct != null) {
+                // 编辑模式：复用原有对象（关键是保留 id），只更新字段
+                product = mEditingProduct;
+                isUpdate = true;
+            } else {
+                // 新增模式：创建新对象
+                product = new Product();
+                product.createTime = DateUtils.getCurrentDateTime();
+                product.merchantId = 1; // 实际开发中应从 User Session 获取
+                product.type = "GOODS";
+                isUpdate = false;
+            }
+
+            // 更新/设置通用字段
             product.name = name;
             product.description = desc;
             product.priceTableJson = jsonPrice;
-            // 兼容旧逻辑
+            product.deliveryMethod = deliveryType;
+
+            // 兼容旧逻辑：设置 price 字段为第一行价格
             try {
                 JSONArray ja = new JSONArray(jsonPrice);
                 if (ja.length() > 0) product.price = ja.getJSONObject(0).getString("price");
-            } catch(Exception e){}
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-            product.deliveryMethod = deliveryType;
-            product.type = "GOODS";
-            product.merchantId = 1; // 实际开发中应从 User Session 获取
-            product.createTime = DateUtils.getCurrentDateTime();
-
+            // 处理图片路径
             StringBuilder sb = new StringBuilder();
             for (String s : selectedImagePaths) {
                 sb.append(s).append(",");
@@ -234,10 +316,15 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             // 兼容封面图
             product.coverImage = product.getFirstImage();
 
-            AppDatabase.getInstance(this).productDao().insert(product);
+            // --- 核心修改：区分 Update 和 Insert ---
+            if (isUpdate) {
+                AppDatabase.getInstance(this).productDao().update(product);
+            } else {
+                AppDatabase.getInstance(this).productDao().insert(product);
+            }
 
             runOnUiThread(() -> {
-                Toast.makeText(this, "发布成功", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, isUpdate ? "修改成功" : "发布成功", Toast.LENGTH_SHORT).show();
                 finish();
             });
         }).start();
