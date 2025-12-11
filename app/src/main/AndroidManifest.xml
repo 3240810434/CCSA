@@ -72,6 +72,9 @@
         <activity android:name=".ui.resident.HelpPostEditActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.MessageListActivity" android:exported="false"/>
+
+        <activity android:name=".ui.resident.ResidentProductBrowsingActivity" android:exported="false"/>
+
         <activity android:name=".ui.admin.SetFeeStandardActivity" android:exported="false"/>
         <activity android:name=".ui.admin.FeeAnnouncementActivity" android:exported="false"/>
         <activity android:name=".ui.admin.PaymentStatisticsActivity" android:exported="false"/>
