@@ -68,7 +68,6 @@ public class ServiceEditActivity extends AppCompatActivity {
         ivAddImage = findViewById(R.id.iv_add_image);
 
         spinnerUnit = findViewById(R.id.spinner_unit);
-        // 确保 XML 中使用的是 RadioGroup，这样 RadioButton 就会互斥（单选）
         rgServiceType = findViewById(R.id.rg_service_type);
         rgServiceTag = findViewById(R.id.rg_service_tag);
 
@@ -160,15 +159,20 @@ public class ServiceEditActivity extends AppCompatActivity {
         // 获取服务类型 (RadioGroup 保证单选)
         int typeId = rgServiceType.getCheckedRadioButtonId();
         String serviceMode = "上门服务"; // 默认
-        if (typeId == R.id.rb_type_shop) serviceMode = "到店服务";
-        else if (typeId == R.id.rb_type_online) serviceMode = "线上咨询";
+        if (typeId != -1) {
+            RadioButton rbMode = findViewById(typeId);
+            if (rbMode != null) serviceMode = rbMode.getText().toString();
+        }
 
         // 获取服务标签 (RadioGroup 保证单选)
+        // 之前可能因为布局嵌套导致ID获取失败，现在布局修复后，这里可以正确获取用户选择的项
         int tagId = rgServiceTag.getCheckedRadioButtonId();
-        String serviceTag = "便民服务"; // 默认
-        RadioButton rbTag = findViewById(tagId);
-        if (rbTag != null) {
-            serviceTag = rbTag.getText().toString();
+        String serviceTag = "便民服务"; // 默认值
+        if (tagId != -1) {
+            RadioButton rbTag = findViewById(tagId);
+            if (rbTag != null) {
+                serviceTag = rbTag.getText().toString();
+            }
         }
 
         // 构建 JSON 数据
@@ -177,10 +181,10 @@ public class ServiceEditActivity extends AppCompatActivity {
         try {
             obj.put("desc", "基础服务费");
             obj.put("price", priceStr);
-            obj.put("unit", unit); // 保存单位
+            obj.put("unit", unit);
             obj.put("note", extraFee);
-            obj.put("mode", serviceMode); // 保存类型
-            obj.put("tag", serviceTag);   // 保存标签
+            obj.put("mode", serviceMode);
+            obj.put("tag", serviceTag); // 这里存入正确的 tag
             priceJson.put(obj);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -225,7 +229,7 @@ public class ServiceEditActivity extends AppCompatActivity {
         new Thread(() -> {
             Product product = new Product();
             product.createTime = DateUtils.getCurrentDateTime();
-            product.merchantId = 1; // 默认商家ID，实际开发需获取当前登录商家ID
+            product.merchantId = 1; // 默认商家ID
             product.type = "SERVICE";
 
             product.name = name;

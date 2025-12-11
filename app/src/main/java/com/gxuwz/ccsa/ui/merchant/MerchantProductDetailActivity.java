@@ -44,7 +44,6 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     private int productId;
     private Product currentProduct;
     private ViewPager2 vpBanner;
-    // 新增控件变量
     private TextView tvName, tvMerchantName, tvDesc, tvPrice, tvType, tvTag;
     private ImageView ivMerchantAvatar, btnBack, btnEdit;
 
@@ -72,9 +71,9 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
 
         tvName = findViewById(R.id.tv_detail_name);
         tvDesc = findViewById(R.id.tv_detail_desc);
-        tvPrice = findViewById(R.id.tv_detail_price); // 绑定价格
-        tvType = findViewById(R.id.tv_detail_type);   // 绑定类型
-        tvTag = findViewById(R.id.tv_detail_tag);     // 绑定标签
+        tvPrice = findViewById(R.id.tv_detail_price);
+        tvType = findViewById(R.id.tv_detail_type);
+        tvTag = findViewById(R.id.tv_detail_tag);
 
         ivMerchantAvatar = findViewById(R.id.iv_merchant_avatar);
         tvMerchantName = findViewById(R.id.tv_merchant_name);
@@ -100,12 +99,9 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     }
 
     private void updateUI(Product product, Merchant merchant) {
-        // 1. 设置名称
         tvName.setText(product.name);
-        // 2. 设置描述
         tvDesc.setText(product.description);
 
-        // 3. 设置轮播图
         if (vpBanner != null) {
             List<String> imageList = new ArrayList<>();
             if (product.imagePaths != null && !product.imagePaths.isEmpty()) {
@@ -117,28 +113,24 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             bannerAdapter.setOnBannerClickListener(this::showZoomImage);
         }
 
-        // 4. 解析 JSON 设置 价格、类型、标签
         try {
             if (product.priceTableJson != null) {
                 JSONArray jsonArray = new JSONArray(product.priceTableJson);
                 if (jsonArray.length() > 0) {
                     JSONObject obj = jsonArray.getJSONObject(0);
 
-                    // 价格
                     String price = obj.optString("price");
                     String unit = obj.optString("unit");
                     tvPrice.setText("¥ " + price + " / " + unit);
 
-                    // 服务类型
                     String mode = obj.optString("mode");
                     tvType.setText(mode.isEmpty() ? "暂无" : mode);
 
-                    // 服务标签
+                    // 关键点：这里获取之前存入的tag，而不是硬编码的默认值
                     String tag = obj.optString("tag");
-                    tvTag.setText(tag.isEmpty() ? "暂无" : tag);
+                    tvTag.setText(tag.isEmpty() ? "便民服务" : tag);
                 }
             } else {
-                // 回退逻辑
                 tvPrice.setText("¥ " + product.price);
                 tvType.setText("--");
                 tvTag.setText("--");
@@ -148,7 +140,6 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             tvPrice.setText("¥ " + product.price);
         }
 
-        // 5. 设置商家信息
         if (merchant != null) {
             tvMerchantName.setText(merchant.getMerchantName());
             String avatarUrl = merchant.getAvatar();
