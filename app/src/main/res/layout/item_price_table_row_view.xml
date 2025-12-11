@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="8dp"
-    android:border="1dp">
+    android:padding="12dp"
+    android:background="@drawable/bg_edittext_underline">
 
     <TextView
         android:id="@+id/tv_row_desc"
@@ -12,7 +12,8 @@
         android:layout_weight="2"
         android:layout_height="wrap_content"
         android:text="规格"
-        android:textColor="#333"/>
+        android:textSize="14sp"
+        android:textColor="#333333"/>
 
     <TextView
         android:id="@+id/tv_row_price"
@@ -20,6 +21,8 @@
         android:layout_weight="1"
         android:layout_height="wrap_content"
         android:text="¥0.00"
+        android:gravity="end"
+        android:textSize="14sp"
         android:textColor="#F44336"
         android:textStyle="bold"/>
 </LinearLayout>
