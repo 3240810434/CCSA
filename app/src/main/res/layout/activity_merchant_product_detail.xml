@@ -1,89 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#F5F5F5">
 
     <RelativeLayout
+        android:id="@+id/rl_header"
         android:layout_width="match_parent"
-        android:layout_height="300dp"> <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/vp_banner"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-        <ImageView
-            android:id="@+id/iv_banner_single"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:visibility="gone" />
+        android:layout_height="50dp"
+        android:background="@android:color/white"
+        android:elevation="2dp">
 
         <ImageView
             android:id="@+id/btn_close_detail"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_margin="15dp"
-            android:src="@drawable/fan_hui"
-            android:padding="8dp"
-            android:background="@drawable/circle_alarm_bg" />
+            android:layout_centerVertical="true"
+            android:padding="10dp"
+            android:src="@drawable/fan_hui" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="商品详情"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btn_edit"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="10dp"
+            android:padding="8dp"
+            android:src="@drawable/edit" />
     </RelativeLayout>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_below="@id/rl_header">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="15dp">
+            android:paddingBottom="20dp">
 
-            <TextView
-                android:id="@+id/tv_detail_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:text="商品名称" />
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/vp_banner"
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                android:background="#E0E0E0" />
 
             <LinearLayout
-                android:id="@+id/ll_detail_price_table"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:background="@drawable/card_bg"
                 android:orientation="vertical"
-                android:layout_marginTop="10dp"/>
+                android:padding="15dp">
+
+                <TextView
+                    android:id="@+id/tv_detail_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="商品名称"
+                    android:textColor="#333333"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_detail_desc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="商品描述信息..."
+                    android:textColor="#666666"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="20dp">
+                android:layout_margin="10dp"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="15dp">
 
-                <ImageView
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="价格详情"
+                    android:textColor="#333333"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="#EEEEEE" />
+
+                <LinearLayout
+                    android:id="@+id/ll_detail_price_table"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:background="@drawable/card_bg"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:padding="15dp">
+
+                <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/iv_merchant_avatar"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@drawable/merchant_picture"/>
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/merchant_picture" />
 
                 <TextView
                     android:id="@+id/tv_merchant_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
-                    android:text="商家名称"/>
+                    android:layout_marginStart="15dp"
+                    android:text="商家名称"
+                    android:textColor="#333333"
+                    android:textSize="16sp" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/tv_detail_desc"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:text="商品描述内容..."/>
 
         </LinearLayout>
     </ScrollView>
-</LinearLayout>
+</RelativeLayout>
