@@ -13,13 +13,16 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
+
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.BannerAdapter;
 import com.gxuwz.ccsa.model.User;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -30,7 +33,8 @@ public class NotificationFragment extends Fragment {
     private ViewPager2 viewPager;
     private LinearLayout indicatorLayout;
     private BannerAdapter bannerAdapter;
-    private List<Integer> bannerImages = new ArrayList<>();
+    // 修正1：将 List<Integer> 改为 List<String> 以匹配新的 Adapter
+    private List<String> bannerImages = new ArrayList<>();
     private int currentPage = 0;
     private Timer timer;
     private User currentUser;
@@ -57,10 +61,14 @@ public class NotificationFragment extends Fragment {
         viewPager = view.findViewById(R.id.viewPager);
         indicatorLayout = view.findViewById(R.id.indicatorLayout);
 
-        // 添加轮播图资源
-        bannerImages.add(R.drawable.banner1);
-        bannerImages.add(R.drawable.banner2);
-        bannerImages.add(R.drawable.banner3);
+        // 修正2：将资源ID转换为 String 路径
+        // 格式：android.resource://包名/资源ID
+        String packageName = requireContext().getPackageName();
+
+        bannerImages.clear(); // 避免重复添加
+        bannerImages.add("android.resource://" + packageName + "/" + R.drawable.banner1);
+        bannerImages.add("android.resource://" + packageName + "/" + R.drawable.banner2);
+        bannerImages.add("android.resource://" + packageName + "/" + R.drawable.banner3);
 
         bannerAdapter = new BannerAdapter(getContext(), bannerImages);
         viewPager.setAdapter(bannerAdapter);
@@ -123,8 +131,10 @@ public class NotificationFragment extends Fragment {
             public void run() {
                 if (getActivity() != null) {
                     new Handler(Looper.getMainLooper()).post(() -> {
-                        currentPage = (currentPage + 1) % bannerImages.size();
-                        viewPager.setCurrentItem(currentPage);
+                        if (bannerImages.size() > 0) {
+                            currentPage = (currentPage + 1) % bannerImages.size();
+                            viewPager.setCurrentItem(currentPage);
+                        }
                     });
                 }
             }
@@ -205,17 +215,14 @@ public class NotificationFragment extends Fragment {
             startActivity(intent);
         });
 
-        // 8. 更多按钮 (修改：调用弹窗方法)
+        // 8. 更多按钮
         view.findViewById(R.id.ll_more).setOnClickListener(v -> showMoreServiceDialog());
 
-        // 9. 周边商家 - 更多 (修改：新增跳转)
-        // 对应XML中新增的 id: tv_merchant_more
+        // 9. 周边商家 - 更多
         TextView tvMerchantMore = view.findViewById(R.id.tv_merchant_more);
         if (tvMerchantMore != null) {
             tvMerchantMore.setOnClickListener(v -> {
-                // 跳转到周边商品/商家浏览页面
                 Intent intent = new Intent(getContext(), ResidentProductBrowsingActivity.class);
-                // 如果需要传参，可以在这里 intent.putExtra(...)
                 startActivity(intent);
             });
         }
@@ -227,16 +234,11 @@ public class NotificationFragment extends Fragment {
 
         final Dialog dialog = new Dialog(getContext());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        // 确保你有这个布局文件：R.layout.dialog_more_service
         dialog.setContentView(R.layout.dialog_more_service);
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
-
-        // 查找弹窗内的 "产品服务" 入口并设置点击事件
-        // 注意：这里假设 dialog_more_service.xml 中有 id 为 iv_product_service 和 tv_product_service 的控件
-        // 或者有一个包含它们的父布局
 
         View ivProductService = dialog.findViewById(R.id.iv_product_service);
         View tvProductService = dialog.findViewById(R.id.tv_product_service);
@@ -247,12 +249,8 @@ public class NotificationFragment extends Fragment {
             startActivity(intent);
         };
 
-        if (ivProductService != null) {
-            ivProductService.setOnClickListener(jumpListener);
-        }
-        if (tvProductService != null) {
-            tvProductService.setOnClickListener(jumpListener);
-        }
+        if (ivProductService != null) ivProductService.setOnClickListener(jumpListener);
+        if (tvProductService != null) tvProductService.setOnClickListener(jumpListener);
 
         dialog.show();
     }
