@@ -69,8 +69,9 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         btnEdit = findViewById(R.id.btn_edit); // 绑定编辑按钮
 
         vpBanner = findViewById(R.id.vp_banner);
-        View singleImg = findViewById(R.id.iv_banner_single);
-        if (singleImg != null) singleImg.setVisibility(View.GONE);
+
+        // --- 修复点 1：删除了找不到 ID iv_banner_single 的相关代码 ---
+        // 确保 vp_banner 可见
         if (vpBanner != null) vpBanner.setVisibility(View.VISIBLE);
 
         tvName = findViewById(R.id.tv_detail_name);
@@ -81,7 +82,7 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
 
         btnBack.setOnClickListener(v -> finish());
 
-        // --- 新增：编辑按钮点击事件 ---
+        // --- 编辑按钮点击事件 ---
         btnEdit.setOnClickListener(v -> showEditDialog());
     }
 
@@ -159,7 +160,8 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         if (currentProduct == null) return;
 
         // 1. 创建 Dialog
-        Dialog dialog = new Dialog(this, R.style.Theme_AppCompat_Light_Dialog_Alert);
+        // --- 修复点 2：使用标准 Android Dialog 主题，避免找不到符号 ---
+        Dialog dialog = new Dialog(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_merchant_product_edit, null);
         dialog.setContentView(view);
 
@@ -168,7 +170,9 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         if (window != null) {
             window.setGravity(Gravity.BOTTOM);
             window.setWindowAnimations(R.style.DialogAnimation); // 设置动画样式
-            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT)); // 背景透明以显示圆角(如果布局有圆角)
+
+            // 必须设置背景透明，否则圆角效果会被白色矩形背景覆盖
+            window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
 
             WindowManager.LayoutParams params = window.getAttributes();
             params.width = WindowManager.LayoutParams.MATCH_PARENT;
@@ -178,7 +182,7 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             params.height = (int) (displayMetrics.heightPixels * 0.4);
 
-            // 设置背景变暗 (默认 dimAmount 通常为 0.5/0.6，这里确保开启)
+            // 设置背景变暗
             params.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
             params.dimAmount = 0.5f;
 
@@ -203,15 +207,16 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     }
 
     private void goToEditPage() {
-        // 根据商品类型跳转到对应的编辑页面
-        // 注意：这里假设 Product 类中有 type 字段 (0:实体商品, 1:服务)
-        // 如果没有 type 字段，请根据实际业务逻辑判断，例如 catch 异常或默认跳转
+        // --- 修复点 3：根据 Product 模型中的 String type 字段判断跳转 ---
         Intent intent;
-        if (currentProduct.getType() == 0) { // 实体商品
+
+        // 您的 Product 模型中 type 是 String 类型 ("GOODS" 或 "SERVICE")
+        if ("GOODS".equals(currentProduct.type)) {
             intent = new Intent(this, PhysicalProductEditActivity.class);
-        } else { // 服务类商品
+        } else { // 默认为服务类
             intent = new Intent(this, ServiceEditActivity.class);
         }
+
         // 传递当前商品对象，以便编辑页面填充数据
         intent.putExtra("product", currentProduct);
         startActivity(intent);
