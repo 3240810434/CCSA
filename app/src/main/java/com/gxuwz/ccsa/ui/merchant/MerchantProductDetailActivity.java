@@ -42,11 +42,11 @@ import java.util.concurrent.Executors;
 public class MerchantProductDetailActivity extends AppCompatActivity {
 
     private int productId;
-    private Product currentProduct; // 保存当前商品对象供编辑/删除使用
+    private Product currentProduct;
     private ViewPager2 vpBanner;
-    private TextView tvName, tvMerchantName, tvDesc;
-    private ImageView ivMerchantAvatar, btnBack, btnEdit; // 新增 btnEdit
-    private LinearLayout llPriceTable;
+    // 新增控件变量
+    private TextView tvName, tvMerchantName, tvDesc, tvPrice, tvType, tvTag;
+    private ImageView ivMerchantAvatar, btnBack, btnEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,29 +60,26 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // 每次页面可见时刷新数据（因为可能从编辑页面返回）
         loadData();
     }
 
     private void initView() {
         btnBack = findViewById(R.id.btn_close_detail);
-        btnEdit = findViewById(R.id.btn_edit); // 绑定编辑按钮
+        btnEdit = findViewById(R.id.btn_edit);
 
         vpBanner = findViewById(R.id.vp_banner);
-
-        // --- 修复点 1：删除了找不到 ID iv_banner_single 的相关代码 ---
-        // 确保 vp_banner 可见
         if (vpBanner != null) vpBanner.setVisibility(View.VISIBLE);
 
         tvName = findViewById(R.id.tv_detail_name);
-        llPriceTable = findViewById(R.id.ll_detail_price_table);
+        tvDesc = findViewById(R.id.tv_detail_desc);
+        tvPrice = findViewById(R.id.tv_detail_price); // 绑定价格
+        tvType = findViewById(R.id.tv_detail_type);   // 绑定类型
+        tvTag = findViewById(R.id.tv_detail_tag);     // 绑定标签
+
         ivMerchantAvatar = findViewById(R.id.iv_merchant_avatar);
         tvMerchantName = findViewById(R.id.tv_merchant_name);
-        tvDesc = findViewById(R.id.tv_detail_desc);
 
         btnBack.setOnClickListener(v -> finish());
-
-        // --- 编辑按钮点击事件 ---
         btnEdit.setOnClickListener(v -> showEditDialog());
     }
 
@@ -90,11 +87,10 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         new Thread(() -> {
             Product product = AppDatabase.getInstance(this).productDao().getProductById(productId);
             if (product != null) {
-                currentProduct = product; // 保存引用
+                currentProduct = product;
                 Merchant merchant = AppDatabase.getInstance(this).merchantDao().findById(product.merchantId);
                 runOnUiThread(() -> updateUI(product, merchant));
             } else {
-                // 如果商品已被删除（例如在其他地方），关闭页面
                 runOnUiThread(() -> {
                     Toast.makeText(this, "商品不存在", Toast.LENGTH_SHORT).show();
                     finish();
@@ -104,9 +100,12 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     }
 
     private void updateUI(Product product, Merchant merchant) {
+        // 1. 设置名称
         tvName.setText(product.name);
+        // 2. 设置描述
         tvDesc.setText(product.description);
 
+        // 3. 设置轮播图
         if (vpBanner != null) {
             List<String> imageList = new ArrayList<>();
             if (product.imagePaths != null && !product.imagePaths.isEmpty()) {
@@ -118,25 +117,38 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             bannerAdapter.setOnBannerClickListener(this::showZoomImage);
         }
 
-        llPriceTable.removeAllViews();
+        // 4. 解析 JSON 设置 价格、类型、标签
         try {
-            JSONArray jsonArray = new JSONArray(product.priceTableJson);
-            for (int i = 0; i < jsonArray.length(); i++) {
-                JSONObject obj = jsonArray.getJSONObject(i);
-                View row = LayoutInflater.from(this).inflate(R.layout.item_price_table_row_view, llPriceTable, false);
-                TextView t1 = row.findViewById(R.id.tv_row_desc);
-                TextView t2 = row.findViewById(R.id.tv_row_price);
-                if (t1 != null) t1.setText(obj.optString("desc"));
-                if (t2 != null) t2.setText("¥" + obj.optString("price"));
-                llPriceTable.addView(row);
+            if (product.priceTableJson != null) {
+                JSONArray jsonArray = new JSONArray(product.priceTableJson);
+                if (jsonArray.length() > 0) {
+                    JSONObject obj = jsonArray.getJSONObject(0);
+
+                    // 价格
+                    String price = obj.optString("price");
+                    String unit = obj.optString("unit");
+                    tvPrice.setText("¥ " + price + " / " + unit);
+
+                    // 服务类型
+                    String mode = obj.optString("mode");
+                    tvType.setText(mode.isEmpty() ? "暂无" : mode);
+
+                    // 服务标签
+                    String tag = obj.optString("tag");
+                    tvTag.setText(tag.isEmpty() ? "暂无" : tag);
+                }
+            } else {
+                // 回退逻辑
+                tvPrice.setText("¥ " + product.price);
+                tvType.setText("--");
+                tvTag.setText("--");
             }
         } catch (Exception e) {
-            TextView tv = new TextView(this);
-            tv.setText("暂无详细价格");
-            tv.setPadding(10, 10, 10, 10);
-            llPriceTable.addView(tv);
+            e.printStackTrace();
+            tvPrice.setText("¥ " + product.price);
         }
 
+        // 5. 设置商家信息
         if (merchant != null) {
             tvMerchantName.setText(merchant.getMerchantName());
             String avatarUrl = merchant.getAvatar();
@@ -155,41 +167,28 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         }
     }
 
-    // --- 核心功能：显示编辑/删除弹窗 ---
     private void showEditDialog() {
         if (currentProduct == null) return;
 
-        // 1. 创建 Dialog
-        // --- 修复点 2：使用标准 Android Dialog 主题，避免找不到符号 ---
         Dialog dialog = new Dialog(this, android.R.style.Theme_DeviceDefault_Light_Dialog);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_merchant_product_edit, null);
         dialog.setContentView(view);
 
-        // 2. 设置 Window 属性 (底部滑出，占据40%高度)
         Window window = dialog.getWindow();
         if (window != null) {
             window.setGravity(Gravity.BOTTOM);
-            window.setWindowAnimations(R.style.DialogAnimation); // 设置动画样式
-
-            // 必须设置背景透明，否则圆角效果会被白色矩形背景覆盖
+            window.setWindowAnimations(R.style.DialogAnimation);
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-
             WindowManager.LayoutParams params = window.getAttributes();
             params.width = WindowManager.LayoutParams.MATCH_PARENT;
-
-            // 计算屏幕高度的 40%
             DisplayMetrics displayMetrics = new DisplayMetrics();
             getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
             params.height = (int) (displayMetrics.heightPixels * 0.4);
-
-            // 设置背景变暗
             params.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
             params.dimAmount = 0.5f;
-
             window.setAttributes(params);
         }
 
-        // 3. 绑定按钮事件
         Button btnReEdit = view.findViewById(R.id.btn_re_edit);
         Button btnDelete = view.findViewById(R.id.btn_delete_product);
 
@@ -207,17 +206,12 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     }
 
     private void goToEditPage() {
-        // --- 修复点 3：根据 Product 模型中的 String type 字段判断跳转 ---
         Intent intent;
-
-        // 您的 Product 模型中 type 是 String 类型 ("GOODS" 或 "SERVICE")
         if ("GOODS".equals(currentProduct.type)) {
             intent = new Intent(this, PhysicalProductEditActivity.class);
-        } else { // 默认为服务类
+        } else {
             intent = new Intent(this, ServiceEditActivity.class);
         }
-
-        // 传递当前商品对象，以便编辑页面填充数据
         intent.putExtra("product", currentProduct);
         startActivity(intent);
     }
@@ -236,12 +230,11 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             AppDatabase.getInstance(this).productDao().delete(currentProduct);
             runOnUiThread(() -> {
                 Toast.makeText(this, "商品已删除", Toast.LENGTH_SHORT).show();
-                finish(); // 删除后关闭详情页
+                finish();
             });
         });
     }
 
-    // --- 图片放大查看功能 ---
     private void showZoomImage(String imageUrl) {
         Dialog dialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);

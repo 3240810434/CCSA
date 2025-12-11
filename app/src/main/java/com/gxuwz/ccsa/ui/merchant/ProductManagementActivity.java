@@ -31,7 +31,7 @@ public class ProductManagementActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private TextView tvEmpty;
-    private MerchantProductAdapter adapter; // 使用内部类 Adapter 避免冲突
+    private MerchantProductAdapter adapter;
     private List<Product> productList = new ArrayList<>();
     private int currentMerchantId = 1;
 
@@ -61,7 +61,6 @@ public class ProductManagementActivity extends AppCompatActivity {
 
     private void loadData() {
         new Thread(() -> {
-            // 现在 ProductDao 已经有这个方法了
             productList = AppDatabase.getInstance(this).productDao().getProductsByMerchantId(currentMerchantId);
             runOnUiThread(() -> {
                 if (productList == null || productList.isEmpty()) {
@@ -77,7 +76,6 @@ public class ProductManagementActivity extends AppCompatActivity {
     }
 
     private void showPublishTypeDialog() {
-        // 使用我们在 styles.xml 定义的 BottomDialogTheme
         Dialog dialog = new Dialog(this, R.style.BottomDialogTheme);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_publish_type_selection, null);
 
@@ -97,18 +95,15 @@ public class ProductManagementActivity extends AppCompatActivity {
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = (int) (getResources().getDisplayMetrics().heightPixels * 0.4);
         dialog.getWindow().setAttributes(lp);
-        // 使用 styles.xml 定义的动画
         dialog.getWindow().setWindowAnimations(R.style.BottomDialogAnim);
         dialog.show();
     }
 
-    // 内部 Adapter 类
     class MerchantProductAdapter extends RecyclerView.Adapter<MerchantProductAdapter.ViewHolder> {
 
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            // 引用我们在第四步创建的 item_product_card_merchant
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card_merchant, parent, false);
             return new ViewHolder(view);
         }
@@ -118,6 +113,7 @@ public class ProductManagementActivity extends AppCompatActivity {
             Product product = productList.get(position);
             holder.tvName.setText(product.name);
 
+            // 1. 设置封面：默认第一张图
             if (product.imagePaths != null && !product.imagePaths.isEmpty()) {
                 String firstImage = product.imagePaths.split(",")[0];
                 Glide.with(ProductManagementActivity.this).load(firstImage).into(holder.ivCover);
@@ -125,18 +121,25 @@ public class ProductManagementActivity extends AppCompatActivity {
                 holder.ivCover.setImageResource(R.drawable.shopping);
             }
 
+            // 2. 设置价格：显示 "基础价格 + 计价单位" (例如：100元/次)
             try {
-                if (product.priceTableJson != null) {
+                if ("SERVICE".equals(product.type) && product.priceTableJson != null) {
                     JSONArray jsonArray = new JSONArray(product.priceTableJson);
                     if (jsonArray.length() > 0) {
                         JSONObject firstRow = jsonArray.getJSONObject(0);
-                        holder.tvPrice.setText(firstRow.optString("desc") + " ¥" + firstRow.optString("price"));
+                        String price = firstRow.optString("price");
+                        String unit = firstRow.optString("unit");
+                        // 移除“基础服务费”文字，只显示价格+单位
+                        holder.tvPrice.setText(price + "元/" + unit);
+                    } else {
+                        holder.tvPrice.setText("¥" + product.price);
                     }
                 } else {
+                    // 实物商品显示 ¥价格
                     holder.tvPrice.setText("¥" + product.price);
                 }
             } catch (Exception e) {
-                holder.tvPrice.setText("¥ --");
+                holder.tvPrice.setText("¥" + product.price);
             }
 
             holder.itemView.setOnClickListener(v -> {
@@ -157,7 +160,6 @@ public class ProductManagementActivity extends AppCompatActivity {
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
-                // 确保这些 ID 在 item_product_card_merchant.xml 中存在
                 ivCover = itemView.findViewById(R.id.iv_cover);
                 tvName = itemView.findViewById(R.id.tv_name);
                 tvPrice = itemView.findViewById(R.id.tv_price);

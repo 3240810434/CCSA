@@ -39,7 +39,7 @@ import java.util.List;
 
 public class ServiceEditActivity extends AppCompatActivity {
 
-    private static final int REQUEST_CODE_PICK_IMAGE = 102; // 唯一的请求码
+    private static final int REQUEST_CODE_PICK_IMAGE = 102;
 
     private EditText etName, etDesc, etPrice, etExtraFeeNote;
     private LinearLayout llImageContainer;
@@ -47,14 +47,12 @@ public class ServiceEditActivity extends AppCompatActivity {
     private Spinner spinnerUnit;
     private RadioGroup rgServiceType, rgServiceTag;
 
-    // 存储选中的图片路径
     private List<String> selectedImagePaths = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service_edit);
-
         initView();
     }
 
@@ -70,12 +68,12 @@ public class ServiceEditActivity extends AppCompatActivity {
         ivAddImage = findViewById(R.id.iv_add_image);
 
         spinnerUnit = findViewById(R.id.spinner_unit);
+        // 确保 XML 中使用的是 RadioGroup，这样 RadioButton 就会互斥（单选）
         rgServiceType = findViewById(R.id.rg_service_type);
         rgServiceTag = findViewById(R.id.rg_service_tag);
 
         Button btnPublish = findViewById(R.id.btn_publish);
 
-        // 初始化计价单位下拉框
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item,
                 new String[]{"次", "小时", "天"});
@@ -85,8 +83,6 @@ public class ServiceEditActivity extends AppCompatActivity {
         ivAddImage.setOnClickListener(v -> checkPermissionAndPickImage());
         btnPublish.setOnClickListener(v -> attemptPublish());
     }
-
-    // --- 图片选择逻辑 (复用自 PhysicalProductEditActivity) ---
 
     private void checkPermissionAndPickImage() {
         if (selectedImagePaths.size() >= 9) {
@@ -114,7 +110,6 @@ public class ServiceEditActivity extends AppCompatActivity {
             Uri imageUri = data.getData();
             if (imageUri != null) {
                 try {
-                    // 获取持久化权限，防止重启后图片无法加载
                     getContentResolver().takePersistableUriPermission(
                             imageUri,
                             Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -122,7 +117,6 @@ public class ServiceEditActivity extends AppCompatActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-
                 selectedImagePaths.add(imageUri.toString());
                 renderImages();
             }
@@ -131,9 +125,7 @@ public class ServiceEditActivity extends AppCompatActivity {
 
     private void renderImages() {
         llImageContainer.removeAllViews();
-        // 始终保留添加按钮
         llImageContainer.addView(ivAddImage);
-
         for (String path : selectedImagePaths) {
             View itemView = LayoutInflater.from(this).inflate(R.layout.item_image_preview_small, llImageContainer, false);
             ImageView iv = itemView.findViewById(R.id.iv_image);
@@ -142,15 +134,11 @@ public class ServiceEditActivity extends AppCompatActivity {
             Glide.with(this).load(path).into(iv);
             btnDel.setOnClickListener(v -> {
                 selectedImagePaths.remove(path);
-                renderImages(); // 重新渲染
+                renderImages();
             });
-
-            // 将图片插在添加按钮之前
             llImageContainer.addView(itemView, llImageContainer.getChildCount() - 1);
         }
     }
-
-    // --- 发布逻辑 ---
 
     private void attemptPublish() {
         String name = etName.getText().toString().trim();
@@ -169,32 +157,30 @@ public class ServiceEditActivity extends AppCompatActivity {
             return;
         }
 
-        // 获取服务类型
+        // 获取服务类型 (RadioGroup 保证单选)
         int typeId = rgServiceType.getCheckedRadioButtonId();
-        String serviceMode = "上门服务";
+        String serviceMode = "上门服务"; // 默认
         if (typeId == R.id.rb_type_shop) serviceMode = "到店服务";
         else if (typeId == R.id.rb_type_online) serviceMode = "线上咨询";
 
-        // 获取服务标签
+        // 获取服务标签 (RadioGroup 保证单选)
         int tagId = rgServiceTag.getCheckedRadioButtonId();
-        String serviceTag = "便民服务";
+        String serviceTag = "便民服务"; // 默认
         RadioButton rbTag = findViewById(tagId);
         if (rbTag != null) {
             serviceTag = rbTag.getText().toString();
         }
 
         // 构建 JSON 数据
-        // 为了兼容 ProductManagementActivity 的列表显示，我们构造一个类似的结构
-        // [{"desc":"基础服务费", "price":"50", "unit":"次", "mode":"上门", "tag":"保洁", "note":"..."}]
         JSONArray priceJson = new JSONArray();
         JSONObject obj = new JSONObject();
         try {
-            obj.put("desc", "基础服务费"); // 固定描述，用于列表显示兼容
+            obj.put("desc", "基础服务费");
             obj.put("price", priceStr);
-            obj.put("unit", unit);
+            obj.put("unit", unit); // 保存单位
             obj.put("note", extraFee);
-            obj.put("mode", serviceMode);
-            obj.put("tag", serviceTag);
+            obj.put("mode", serviceMode); // 保存类型
+            obj.put("tag", serviceTag);   // 保存标签
             priceJson.put(obj);
         } catch (JSONException e) {
             e.printStackTrace();
@@ -239,16 +225,15 @@ public class ServiceEditActivity extends AppCompatActivity {
         new Thread(() -> {
             Product product = new Product();
             product.createTime = DateUtils.getCurrentDateTime();
-            product.merchantId = 1; // 默认商家ID
-            product.type = "SERVICE"; // 标记为服务类型
+            product.merchantId = 1; // 默认商家ID，实际开发需获取当前登录商家ID
+            product.type = "SERVICE";
 
             product.name = name;
             product.description = desc;
             product.priceTableJson = jsonPrice;
-            product.price = priceVal; // 存储基础价格供排序或简单显示
-            product.deliveryMethod = 0; // 服务类此字段可默认填0，具体逻辑由JSON中的mode决定
+            product.price = priceVal;
+            product.deliveryMethod = 0;
 
-            // 处理图片路径
             StringBuilder sb = new StringBuilder();
             for (String s : selectedImagePaths) {
                 sb.append(s).append(",");

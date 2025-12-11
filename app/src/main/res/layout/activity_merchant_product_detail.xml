@@ -68,49 +68,87 @@
                     android:id="@+id/tv_detail_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="商品名称"
+                    android:text="服务名称"
                     android:textColor="#333333"
                     android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/tv_detail_desc"
+                    android:id="@+id/tv_detail_price"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="商品描述信息..."
-                    android:textColor="#666666"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="10dp"
-                android:background="@drawable/card_bg"
-                android:orientation="vertical"
-                android:padding="15dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="价格详情"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
+                    android:layout_marginTop="10dp"
+                    android:text="¥ 0.00 / 次"
+                    android:textColor="#F44336"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
+                    android:layout_marginTop="15dp"
+                    android:layout_marginBottom="15dp"
                     android:background="#EEEEEE" />
 
-                <LinearLayout
-                    android:id="@+id/ll_detail_price_table"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical" />
+                    android:text="服务详情"
+                    android:textSize="14sp"
+                    android:textColor="#999999"
+                    android:layout_marginBottom="5dp"/>
+
+                <TextView
+                    android:id="@+id/tv_detail_desc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="这里是服务的详细描述..."
+                    android:textColor="#666666"
+                    android:lineSpacingExtra="4dp"
+                    android:textSize="14sp" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="服务类型："
+                        android:textColor="#333333"/>
+                    <TextView
+                        android:id="@+id/tv_detail_type"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="上门服务"
+                        android:textColor="#666666"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="服务标签："
+                        android:textColor="#333333"/>
+                    <TextView
+                        android:id="@+id/tv_detail_tag"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="便民服务"
+                        android:background="@drawable/bg_business_item"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"
+                        android:textSize="12sp"
+                        android:textColor="#2196F3"/>
+                </LinearLayout>
+
             </LinearLayout>
 
             <LinearLayout
