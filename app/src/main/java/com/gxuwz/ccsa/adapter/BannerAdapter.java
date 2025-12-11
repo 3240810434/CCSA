@@ -5,19 +5,31 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
+
 import java.util.List;
 
 public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerViewHolder> {
     private Context mContext;
-    private List<Integer> mBannerImages;
+    private List<String> mBannerImages; // 修改为 String 类型的图片路径
+    private OnBannerClickListener mListener; // 点击事件接口
 
-    // 修复构造函数，添加Context参数
-    public BannerAdapter(Context context, List<Integer> bannerImages) {
+    public interface OnBannerClickListener {
+        void onBannerClick(String imageUrl);
+    }
+
+    public BannerAdapter(Context context, List<String> bannerImages) {
         this.mContext = context;
         this.mBannerImages = bannerImages;
+    }
+
+    public void setOnBannerClickListener(OnBannerClickListener listener) {
+        this.mListener = listener;
     }
 
     @NonNull
@@ -30,12 +42,25 @@ public class BannerAdapter extends RecyclerView.Adapter<BannerAdapter.BannerView
 
     @Override
     public void onBindViewHolder(@NonNull BannerViewHolder holder, int position) {
-        holder.bannerImage.setImageResource(mBannerImages.get(position));
+        String imageUrl = mBannerImages.get(position);
+        // 使用 Glide 加载图片
+        Glide.with(mContext)
+                .load(imageUrl)
+                .placeholder(R.drawable.shopping) // 加载中占位图
+                .error(R.drawable.shopping)       // 错误占位图
+                .into(holder.bannerImage);
+
+        // 设置点击事件
+        holder.itemView.setOnClickListener(v -> {
+            if (mListener != null) {
+                mListener.onBannerClick(imageUrl);
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return mBannerImages.size();
+        return mBannerImages == null ? 0 : mBannerImages.size();
     }
 
     static class BannerViewHolder extends RecyclerView.ViewHolder {
