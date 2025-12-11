@@ -112,8 +112,14 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-    // 供 Fragment 调用的公共方法
+    // 供 Fragment 调用的公共方法 - 获取当前商家
     public Merchant getCurrentMerchant() {
         return currentMerchant;
+    }
+
+    // 【新增修复】供 Fragment 调用的公共方法 - 更新当前商家
+    // 解决 "找不到符号: 方法 setCurrentMerchant(Merchant)" 错误
+    public void setCurrentMerchant(Merchant merchant) {
+        this.currentMerchant = merchant;
     }
 }
