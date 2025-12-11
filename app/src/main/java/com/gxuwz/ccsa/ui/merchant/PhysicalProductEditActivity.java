@@ -92,10 +92,8 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         if (mEditingProduct.deliveryMethod == 0) {
             rgDelivery.check(R.id.rb_delivery);
         } else {
-            // --- 修复点 1: 确保 XML 中有这个 ID ---
-            // 如果这里爆红，请去 activity_physical_product_edit.xml
-            // 把第二个 RadioButton 的 id 改为 android:id="@+id/rb_self_pick"
-            rgDelivery.check(R.id.rb_self_pick);
+            // --- 修复完成: 使用 XML 中定义的正确 ID (rb_pickup) ---
+            rgDelivery.check(R.id.rb_pickup);
         }
 
         // 3. 回显图片
@@ -261,10 +259,8 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
                 .show();
     }
 
-    // --- 修复点 2: 解决 Lambda 变量 final 问题 ---
     private void saveToDb(String name, String desc, String jsonPrice, int deliveryType) {
         // 在进入线程前或线程顶部确定是否为更新模式，定义为 final 变量
-        // 这样在 lambda 中使用就不会报错了，而且逻辑更清晰
         final boolean isUpdate = (mEditingProduct != null);
 
         new Thread(() -> {
@@ -303,7 +299,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             product.imagePaths = sb.toString();
             product.coverImage = product.getFirstImage();
 
-            // 根据 final 变量 isUpdate 判断操作
             if (isUpdate) {
                 AppDatabase.getInstance(this).productDao().update(product);
             } else {
@@ -311,7 +306,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             }
 
             runOnUiThread(() -> {
-                // 此时使用的是外部定义的 final isUpdate，不再报错
                 Toast.makeText(this, isUpdate ? "修改成功" : "发布成功", Toast.LENGTH_SHORT).show();
                 finish();
             });
