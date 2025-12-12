@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,6 +37,7 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     private EditText etName, etDesc;
     private LinearLayout llImageContainer, llPriceTableContainer;
     private RadioGroup rgDelivery;
+    private RadioGroup rgTag; // 新增标签RadioGroup
     private List<String> selectedImagePaths = new ArrayList<>();
     private ImageView ivAddImage;
 
@@ -70,6 +72,7 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         ivAddImage = findViewById(R.id.iv_add_image);
         llPriceTableContainer = findViewById(R.id.ll_price_table_container);
         rgDelivery = findViewById(R.id.rg_delivery);
+        rgTag = findViewById(R.id.rg_tag); // 初始化标签RadioGroup
         Button btnPublish = findViewById(R.id.btn_publish);
         ImageView btnAddPriceRow = findViewById(R.id.btn_add_price_row);
 
@@ -113,6 +116,24 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             e.printStackTrace();
             addPriceRow();
         }
+
+        // 5. 回显商品标签 (新增)
+        if (mEditingProduct.tag != null) {
+            switch (mEditingProduct.tag) {
+                case "生鲜食材":
+                    rgTag.check(R.id.rb_tag_fresh);
+                    break;
+                case "日用百货":
+                    rgTag.check(R.id.rb_tag_daily);
+                    break;
+                case "零食饮品":
+                    rgTag.check(R.id.rb_tag_snack);
+                    break;
+                default:
+                    rgTag.check(R.id.rb_tag_fresh);
+                    break;
+            }
+        }
     }
 
     private void addPriceRow() {
@@ -136,10 +157,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        // 【修复点2】使用 Intent.ACTION_OPEN_DOCUMENT (SAF) 不需要 READ_EXTERNAL_STORAGE 权限。
-        // 之前在 Android 13+ (含 Android 15) 上申请该权限会被系统自动拒绝或忽略，导致无法打开相册。
-        // 直接打开相册即可。
         openGallery();
     }
 
@@ -227,10 +244,20 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         }
 
         int deliveryType = rgDelivery.getCheckedRadioButtonId() == R.id.rb_delivery ? 0 : 1;
-        showPreviewDialog(name, desc, priceJson, deliveryType);
+
+        // 获取选中的标签
+        String selectedTag = "生鲜食材";
+        int checkedId = rgTag.getCheckedRadioButtonId();
+        if (checkedId == R.id.rb_tag_daily) {
+            selectedTag = "日用百货";
+        } else if (checkedId == R.id.rb_tag_snack) {
+            selectedTag = "零食饮品";
+        }
+
+        showPreviewDialog(name, desc, priceJson, deliveryType, selectedTag);
     }
 
-    private void showPreviewDialog(String name, String desc, JSONArray priceJson, int deliveryType) {
+    private void showPreviewDialog(String name, String desc, JSONArray priceJson, int deliveryType, String tag) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_product_preview, null);
 
@@ -247,36 +274,33 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
 
         builder.setView(view)
                 .setPositiveButton(mEditingProduct != null ? "确认修改" : "确认发布", (dialog, which) -> {
-                    saveToDb(name, desc, priceJson.toString(), deliveryType);
+                    saveToDb(name, desc, priceJson.toString(), deliveryType, tag);
                 })
                 .setNegativeButton("取消", null)
                 .show();
     }
 
-    private void saveToDb(String name, String desc, String jsonPrice, int deliveryType) {
+    private void saveToDb(String name, String desc, String jsonPrice, int deliveryType, String tag) {
         final boolean isUpdate = (mEditingProduct != null);
 
         new Thread(() -> {
             Product product;
 
             if (isUpdate) {
-                // 编辑模式：复用原有对象
                 product = mEditingProduct;
             } else {
-                // 新增模式：创建新对象
                 product = new Product();
                 product.createTime = DateUtils.getCurrentDateTime();
-                product.merchantId = 1;
+                product.merchantId = 1; // 实际开发中应获取当前登录商家ID
                 product.type = "GOODS";
             }
 
-            // 更新通用字段
             product.name = name;
             product.description = desc;
             product.priceTableJson = jsonPrice;
             product.deliveryMethod = deliveryType;
+            product.tag = tag; // 保存标签
 
-            // 兼容旧逻辑
             try {
                 JSONArray ja = new JSONArray(jsonPrice);
                 if (ja.length() > 0) product.price = ja.getJSONObject(0).getString("price");

@@ -68,7 +68,7 @@
                     android:id="@+id/tv_detail_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="服务名称"
+                    android:text="商品名称"
                     android:textColor="#333333"
                     android:textSize="20sp"
                     android:textStyle="bold" />
@@ -78,7 +78,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    android:text="¥ 0.00 / 次"
+                    android:text="¥ 0.00"
                     android:textColor="#F44336"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -93,7 +93,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="服务详情"
+                    android:text="商品详情"
                     android:textSize="14sp"
                     android:textColor="#999999"
                     android:layout_marginBottom="5dp"/>
@@ -102,7 +102,7 @@
                     android:id="@+id/tv_detail_desc"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="这里是服务的详细描述..."
+                    android:text="这里是商品的详细描述..."
                     android:textColor="#666666"
                     android:lineSpacingExtra="4dp"
                     android:textSize="14sp" />
@@ -115,13 +115,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="服务类型："
+                        android:text="配送方式："
                         android:textColor="#333333"/>
                     <TextView
-                        android:id="@+id/tv_detail_type"
+                        android:id="@+id/tv_detail_delivery"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="上门服务"
+                        android:text="商家配送"
                         android:textColor="#666666"/>
                 </LinearLayout>
 
@@ -133,13 +133,13 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="服务标签："
+                        android:text="商品标签："
                         android:textColor="#333333"/>
                     <TextView
                         android:id="@+id/tv_detail_tag"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="便民服务"
+                        android:text="生鲜食材"
                         android:background="@drawable/bg_business_item"
                         android:paddingStart="8dp"
                         android:paddingEnd="8dp"

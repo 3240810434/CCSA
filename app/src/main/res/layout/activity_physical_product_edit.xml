@@ -135,17 +135,46 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
             <RadioButton
-                android:id="@+id/rb_pickup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="自提"
-                android:layout_marginEnd="20dp"/>
-            <RadioButton
                 android:id="@+id/rb_delivery"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="商家配送"
                 android:checked="true"/>
+            <RadioButton
+                android:id="@+id/rb_pickup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="自提"
+                android:layout_marginStart="20dp"/>
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="商品标签"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"/>
+        <RadioGroup
+            android:id="@+id/rg_tag"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RadioButton
+                android:id="@+id/rb_tag_fresh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="生鲜食材"
+                android:checked="true"/>
+            <RadioButton
+                android:id="@+id/rb_tag_daily"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="日用百货"/>
+            <RadioButton
+                android:id="@+id/rb_tag_snack"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="零食饮品"/>
         </RadioGroup>
 
         <Button
@@ -156,7 +185,8 @@
             android:textColor="@color/white"
             android:background="@drawable/blue_rounded_btn"
             android:backgroundTint="#89CFF0"
-            android:layout_marginTop="30dp"/>
+            android:layout_marginTop="30dp"
+            android:layout_marginBottom="50dp"/>
 
     </LinearLayout>
 </ScrollView>

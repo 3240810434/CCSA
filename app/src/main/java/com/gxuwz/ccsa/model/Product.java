@@ -20,9 +20,11 @@ public class Product implements Serializable {
     public int deliveryMethod;    // 0: 商家配送, 1: 自提
     public String createTime;     // 发布时间
 
-    // --- 新增：补全缺失字段，解决 PhysicalProductEditActivity 中的报错 ---
     public String price;          // 单价（兼容旧逻辑）
     public String coverImage;     // 封面图（兼容旧逻辑）
+
+    // --- 新增：商品标签 ---
+    public String tag;            // 商品标签：生鲜食材、日用百货、零食饮品
 
     // 无参构造函数
     public Product() {
