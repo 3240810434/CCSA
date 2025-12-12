@@ -1,7 +1,7 @@
 package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
-import android.content.Intent; // 1. 新增导入
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,10 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.Product;
-import com.gxuwz.ccsa.ui.resident.ResidentProductDetailActivity; // 2. 新增导入
-
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.gxuwz.ccsa.ui.resident.ResidentProductDetailActivity;
 
 import java.util.List;
 
@@ -31,21 +28,11 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         this.productList = productList;
     }
 
-    public ProductAdapter() {
-    }
-
-    public void setProductList(List<Product> productList) {
-        this.productList = productList;
-        notifyDataSetChanged();
-    }
-
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // 使用修改后的商家商品卡片布局 item_product_card_merchant
-        // 注意：如果你是给居民端使用，可能使用的是 item_product_card.xml，请根据实际情况确认布局文件
-        // 这里保留你原代码中的 item_product_card_merchant
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card_merchant, parent, false);
+        // 使用修改后的 item_product_card 布局
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card, parent, false);
         return new ViewHolder(view);
     }
 
@@ -53,60 +40,47 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Product product = productList.get(position);
 
-        // 设置名称
-        if (holder.tvName != null) {
-            holder.tvName.setText(product.name);
+        // --- 1. 处理名称显示 (只显示前5个字) ---
+        String name = product.getName();
+        if (name != null && name.length() > 5) {
+            name = name.substring(0, 5) + "...";
         }
+        holder.tvName.setText(name);
 
-        // --- 设置价格和单位 (格式：100元/次) ---
-        boolean isJsonPrice = false;
-        try {
-            if (product.priceTableJson != null && !product.priceTableJson.isEmpty()) {
-                JSONArray ja = new JSONArray(product.priceTableJson);
-                if (ja.length() > 0) {
-                    JSONObject jo = ja.getJSONObject(0);
-                    String price = jo.optString("price", "0");
-                    String unit = jo.optString("desc", ""); // 假设 desc 字段存的是单位（如"次"、"小时"）
-
-                    if (!unit.isEmpty()) {
-                        holder.tvPrice.setText(price + "元/" + unit);
-                    } else {
-                        holder.tvPrice.setText(price + "元");
-                    }
-                    isJsonPrice = true;
-                }
+        // --- 2. 处理价格显示 ---
+        String priceStr = "暂无报价";
+        if ("实物".equals(product.getType())) {
+            // 实物商品：价格
+            if (product.getPrice() != null) {
+                // 如果是区间价格，可能包含逗号，这里简单处理
+                priceStr = "¥" + product.getPrice();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } else {
+            // 服务商品：基础价格 + 单位 (例如 50元/次)
+            String price = product.getPrice() != null ? product.getPrice() : "0";
+            String unit = product.getUnit() != null ? product.getUnit() : "次";
+            priceStr = price + "元/" + unit;
         }
+        holder.tvPrice.setText(priceStr);
 
-        // 如果解析失败，使用旧字段
-        if (!isJsonPrice && holder.tvPrice != null) {
-            holder.tvPrice.setText(product.price != null ? product.price + "元" : "暂无报价");
-        }
 
-        // --- 设置封面图 (默认第一张) ---
-        // 注意：Product 类中必须有 getFirstImage() 方法（之前已添加）
+        // --- 3. 设置封面图 ---
         String imageUrl = product.getFirstImage();
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            Glide.with(holder.itemView.getContext())
+            Glide.with(context)
                     .load(imageUrl)
-                    .placeholder(R.drawable.shopping) // 加载占位图
+                    .placeholder(R.drawable.shopping)
                     .into(holder.ivCover);
         } else {
             holder.ivCover.setImageResource(R.drawable.shopping);
         }
 
-        // ==================== 【关键修改：添加点击跳转逻辑】 ====================
+        // --- 4. 点击跳转 ---
         holder.itemView.setOnClickListener(v -> {
-            // 创建跳转到 ResidentProductDetailActivity 的 Intent
             Intent intent = new Intent(context, ResidentProductDetailActivity.class);
-            // 传递当前点击的商品对象 (Product 类必须实现 Serializable)
             intent.putExtra("product", product);
-            // 启动 Activity
             context.startActivity(intent);
         });
-        // ===================================================================
     }
 
     @Override
@@ -120,10 +94,9 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // 绑定布局中的控件 ID
-            ivCover = itemView.findViewById(R.id.iv_cover);
-            tvName = itemView.findViewById(R.id.tv_name);
-            tvPrice = itemView.findViewById(R.id.tv_price);
+            ivCover = itemView.findViewById(R.id.iv_product_cover);
+            tvName = itemView.findViewById(R.id.tv_product_name);
+            tvPrice = itemView.findViewById(R.id.tv_product_price);
         }
     }
 }

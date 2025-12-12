@@ -1,50 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@drawable/card_bg"
     android:layout_margin="5dp"
-    android:padding="0dp"
-    android:elevation="2dp">
+    android:elevation="2dp"
+    android:background="@drawable/card_bg">
 
-    <ImageView
-        android:id="@+id/iv_cover"
-        android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:scaleType="centerCrop"
-        android:src="@drawable/shopping"
-        android:background="#F0F0F0"/>
-
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp">
+        android:orientation="vertical"
+        android:paddingBottom="8dp">
 
-        <TextView
-            android:id="@+id/tv_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="维修冰箱"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:textColor="#333333"
-            android:layout_alignParentStart="true"
-            android:layout_toStartOf="@+id/tv_price"
-            android:layout_centerVertical="true"/>
+        <ImageView
+            android:id="@+id/iv_product_cover"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_add_photo"
+            android:background="#E0E0E0"/>
 
-        <TextView
-            android:id="@+id/tv_price"
-            android:layout_width="wrap_content"
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="100元/次"
-            android:textColor="#F44336"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_marginStart="8dp"/>
-    </RelativeLayout>
-</LinearLayout>
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp">
+
+            <TextView
+                android:id="@+id/tv_product_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/tv_product_price"
+                android:text="商品名称"
+                android:textColor="#333333"
+                android:textSize="14sp"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/tv_product_price"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:text="¥0.00"
+                android:textColor="#FF4081"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>
