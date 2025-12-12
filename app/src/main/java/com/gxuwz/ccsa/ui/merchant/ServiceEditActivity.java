@@ -84,7 +84,7 @@ public class ServiceEditActivity extends AppCompatActivity {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
-        // 【修复点2】直接调用相册，移除 Android 15 上无效且导致阻塞的权限检查
+        // 直接调用相册
         openGallery();
     }
 
@@ -211,13 +211,15 @@ public class ServiceEditActivity extends AppCompatActivity {
 
         builder.setView(view)
                 .setPositiveButton("确认发布", (dialog, which) -> {
-                    saveToDb(name, desc, priceJson.toString(), price);
+                    // 【修复点1】将 tag 传递给 saveToDb
+                    saveToDb(name, desc, priceJson.toString(), price, tag);
                 })
                 .setNegativeButton("取消", null)
                 .show();
     }
 
-    private void saveToDb(String name, String desc, String jsonPrice, String priceVal) {
+    // 【修复点2】增加了 String tag 参数
+    private void saveToDb(String name, String desc, String jsonPrice, String priceVal, String tag) {
         new Thread(() -> {
             Product product = new Product();
             product.createTime = DateUtils.getCurrentDateTime();
@@ -229,6 +231,8 @@ public class ServiceEditActivity extends AppCompatActivity {
             product.priceTableJson = jsonPrice;
             product.price = priceVal;
             product.deliveryMethod = 0;
+            // 【修复点3】保存标签到数据库字段
+            product.tag = tag;
 
             StringBuilder sb = new StringBuilder();
             for (String s : selectedImagePaths) {
