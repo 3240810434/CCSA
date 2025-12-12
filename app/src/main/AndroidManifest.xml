@@ -86,7 +86,13 @@
         <activity android:name=".ui.resident.ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.MessageListActivity" android:exported="false"/>
         <activity android:name=".ui.resident.ResidentProductBrowsingActivity" android:exported="false"/>
-
+        <!-- ========== 新增Activity注册 ========== -->
+        <!-- 居民商品详情页 -->
+        <activity android:name=".ui.resident.ResidentProductDetailActivity" android:exported="false"/>
+        <!-- 居民订单页 -->
+        <activity android:name=".ui.resident.ResidentOrdersActivity" android:exported="false"/>
+        <!-- 可选：若有支付确认页，可补充注册 -->
+        <!-- <activity android:name=".ui.resident.PaymentConfirmActivity" android:exported="false"/> -->
         <activity android:name=".ui.common.VoteDetailActivity" android:exported="false"/>
 
     </application>

@@ -26,6 +26,8 @@ import com.gxuwz.ccsa.model.HelpPost;
 import com.gxuwz.ccsa.model.HelpPostMedia;
 // --- 新增引入 ---
 import com.gxuwz.ccsa.model.Product;
+// ========== 1. 新增Order实体导入 ==========
+import com.gxuwz.ccsa.model.Order;
 
 @Database(
         entities = {
@@ -48,9 +50,12 @@ import com.gxuwz.ccsa.model.Product;
                 ChatMessage.class,
                 HelpPost.class,
                 HelpPostMedia.class,
-                Product.class
+                Product.class,
+                // ========== 2. 新增Order实体到数据库实体列表 ==========
+                Order.class
         },
-        version = 11, // 升级版本号
+        // ========== 3. 数据库版本号升级（从11→12） ==========
+        version = 12,
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)
@@ -75,6 +80,9 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract HelpPostDao helpPostDao();
     public abstract ChatDao chatDao();
     public abstract ProductDao productDao();
+
+    // ========== 4. 新增OrderDao抽象方法 ==========
+    public abstract OrderDao orderDao();
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
