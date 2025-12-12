@@ -2,6 +2,7 @@ package com.gxuwz.ccsa.ui.merchant;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -82,15 +83,35 @@ public class MerchantProfileFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        // 【修复点1】如果 currentMerchant 为空，再次尝试从 Activity 获取
-        // 这解决了登录后立即进入此页面，数据可能尚未同步导致的问题
+        // 1. 尝试从 Activity 获取
         if (currentMerchant == null && getActivity() instanceof MerchantMainActivity) {
             currentMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
-            // 获取到数据后立即刷新界面
-            loadMerchantData();
         }
 
+        // 2. 如果还是为空，尝试从 SharedPreferences 获取 ID 并查询数据库 (兜底方案)
+        if (currentMerchant == null && getContext() != null) {
+            long savedId = getContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                    .getLong("merchant_id", -1);
+            if (savedId != -1) {
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    Merchant m = AppDatabase.getInstance(getContext()).merchantDao().findById((int) savedId);
+                    if (m != null) {
+                        currentMerchant = m;
+                        // 更新 Activity 中的引用
+                        if (getActivity() instanceof MerchantMainActivity) {
+                            ((MerchantMainActivity) getActivity()).setCurrentMerchant(m);
+                        }
+                        if (getActivity() != null) {
+                            getActivity().runOnUiThread(this::loadMerchantData);
+                        }
+                    }
+                });
+            }
+        }
+
+        // 3. 如果已有数据，刷新最新状态
         if (currentMerchant != null) {
+            loadMerchantData(); // 立即刷新UI
             Executors.newSingleThreadExecutor().execute(() -> {
                 Merchant updated = AppDatabase.getInstance(getContext())
                         .merchantDao()
@@ -121,23 +142,14 @@ public class MerchantProfileFragment extends Fragment {
         view.findViewById(R.id.cv_avatar).setOnClickListener(editProfileListener);
 
         view.findViewById(R.id.btn_qualification).setOnClickListener(v -> {
-            // 这里使用了 currentMerchant 判断，如果为空则无法跳转
             if (currentMerchant != null) {
                 Intent intent = new Intent(getContext(), MerchantQualificationActivity.class);
                 intent.putExtra("merchant", currentMerchant);
                 startActivity(intent);
             } else {
-                // 尝试最后的补救：再次从 Activity 获取
-                if (getActivity() instanceof MerchantMainActivity) {
-                    currentMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
-                    if (currentMerchant != null) {
-                        Intent intent = new Intent(getContext(), MerchantQualificationActivity.class);
-                        intent.putExtra("merchant", currentMerchant);
-                        startActivity(intent);
-                        return;
-                    }
-                }
-                Toast.makeText(getContext(), "无法获取商家信息，请尝试重新登录", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "数据加载中或获取失败，请稍后再试", Toast.LENGTH_SHORT).show();
+                // 触发一次重新加载
+                onResume();
             }
         });
 
@@ -207,7 +219,6 @@ public class MerchantProfileFragment extends Fragment {
                 }
 
                 if (isChanged) {
-                    // 保存时，立即同步给 Activity
                     if (getActivity() instanceof MerchantMainActivity) {
                         ((MerchantMainActivity) getActivity()).setCurrentMerchant(currentMerchant);
                     }

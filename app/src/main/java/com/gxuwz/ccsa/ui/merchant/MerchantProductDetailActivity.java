@@ -117,15 +117,41 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             bannerAdapter.setOnBannerClickListener(this::showZoomImage);
         }
 
-        // 4. 设置价格 (优化逻辑：区分实物和服务)
-        try {
-            if ("SERVICE".equals(product.type)) {
-                // 服务商品：显示 价格 / 单位
-                String unit = (product.unit != null && !product.unit.isEmpty()) ? product.unit : "次";
-                tvPrice.setText("¥ " + product.price + " / " + unit);
-                tvPrice.setTextSize(18); // 正常字体
-            } else {
-                // 实物商品：解析JSON，显示所有规格和价格
+        // 4. 根据类型设置 价格、配送/服务方式、标签
+        if ("SERVICE".equals(product.type)) {
+            // === 服务商品逻辑 ===
+
+            // 价格
+            String unit = (product.unit != null && !product.unit.isEmpty()) ? product.unit : "次";
+            tvPrice.setText("¥ " + product.price + " / " + unit);
+            tvPrice.setTextSize(18);
+
+            // 服务类型 (替代配送方式)
+            String serviceMode = "上门服务"; // 默认
+            try {
+                if (product.priceTableJson != null) {
+                    JSONArray ja = new JSONArray(product.priceTableJson);
+                    if (ja.length() > 0) {
+                        serviceMode = ja.getJSONObject(0).optString("mode", "上门服务");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            if (tvDelivery != null) {
+                tvDelivery.setText("服务类型：" + serviceMode);
+            }
+
+            // 服务标签
+            if (tvTag != null) {
+                tvTag.setText("服务标签：" + (product.tag != null ? product.tag : "暂无标签"));
+            }
+
+        } else {
+            // === 实物商品逻辑 ===
+
+            // 价格表
+            try {
                 if (product.priceTableJson != null && !product.priceTableJson.isEmpty()) {
                     JSONArray jsonArray = new JSONArray(product.priceTableJson);
                     StringBuilder sb = new StringBuilder();
@@ -137,26 +163,24 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
                                 .append("\n");
                     }
                     tvPrice.setText(sb.toString().trim());
-                    tvPrice.setTextSize(16); // 稍微小一点以适应多行
+                    tvPrice.setTextSize(16);
                 } else {
-                    // 没有价格表JSON的兜底显示
                     tvPrice.setText("¥ " + product.price);
                     tvPrice.setTextSize(18);
                 }
+            } catch (Exception e) {
+                tvPrice.setText("¥ " + product.price);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            tvPrice.setText("¥ " + product.price);
-        }
 
-        // 5. 设置配送方式
-        if (tvDelivery != null) {
-            tvDelivery.setText(product.deliveryMethod == 0 ? "商家配送" : "自提");
-        }
+            // 配送方式
+            if (tvDelivery != null) {
+                tvDelivery.setText("配送方式：" + (product.deliveryMethod == 0 ? "商家配送" : "用户自提"));
+            }
 
-        // 6. 设置商品标签
-        if (tvTag != null) {
-            tvTag.setText((product.tag != null && !product.tag.isEmpty()) ? product.tag : "暂无标签");
+            // 商品标签
+            if (tvTag != null) {
+                tvTag.setText("商品标签：" + (product.tag != null ? product.tag : "暂无标签"));
+            }
         }
 
         // 商家信息

@@ -150,11 +150,20 @@ public class MerchantRegisterActivity extends AppCompatActivity {
 
         // 插入数据库
         new Thread(() -> {
-            db.merchantDao().insert(merchant);
+            // 【修复关键】：获取插入后生成的ID
+            long id = db.merchantDao().insert(merchant);
+            merchant.id = (int) id; // 更新对象ID
+
+            // 保存登录状态到 SharedPreferences
+            getSharedPreferences("user_prefs", MODE_PRIVATE)
+                    .edit()
+                    .putLong("merchant_id", id)
+                    .apply();
+
             runOnUiThread(() -> {
                 Toast.makeText(this, "注册成功", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(MerchantRegisterActivity.this, MerchantMainActivity.class);
-                intent.putExtra("merchant", merchant);
+                intent.putExtra("merchant", merchant); // 此时 merchant 包含正确的 ID
                 startActivity(intent);
                 finish();
             });
