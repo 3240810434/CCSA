@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
+import android.content.Intent; // 1. 新增导入
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.Product;
+import com.gxuwz.ccsa.ui.resident.ResidentProductDetailActivity; // 2. 新增导入
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -41,6 +43,8 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // 使用修改后的商家商品卡片布局 item_product_card_merchant
+        // 注意：如果你是给居民端使用，可能使用的是 item_product_card.xml，请根据实际情况确认布局文件
+        // 这里保留你原代码中的 item_product_card_merchant
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card_merchant, parent, false);
         return new ViewHolder(view);
     }
@@ -82,6 +86,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         }
 
         // --- 设置封面图 (默认第一张) ---
+        // 注意：Product 类中必须有 getFirstImage() 方法（之前已添加）
         String imageUrl = product.getFirstImage();
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -91,6 +96,17 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         } else {
             holder.ivCover.setImageResource(R.drawable.shopping);
         }
+
+        // ==================== 【关键修改：添加点击跳转逻辑】 ====================
+        holder.itemView.setOnClickListener(v -> {
+            // 创建跳转到 ResidentProductDetailActivity 的 Intent
+            Intent intent = new Intent(context, ResidentProductDetailActivity.class);
+            // 传递当前点击的商品对象 (Product 类必须实现 Serializable)
+            intent.putExtra("product", product);
+            // 启动 Activity
+            context.startActivity(intent);
+        });
+        // ===================================================================
     }
 
     @Override
@@ -104,7 +120,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
-            // 绑定 item_product_card_merchant.xml 中的控件 ID
+            // 绑定布局中的控件 ID
             ivCover = itemView.findViewById(R.id.iv_cover);
             tvName = itemView.findViewById(R.id.tv_name);
             tvPrice = itemView.findViewById(R.id.tv_price);
