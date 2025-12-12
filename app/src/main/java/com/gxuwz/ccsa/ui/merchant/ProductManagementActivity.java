@@ -95,7 +95,8 @@ public class ProductManagementActivity extends AppCompatActivity {
         lp.width = WindowManager.LayoutParams.MATCH_PARENT;
         lp.height = (int) (getResources().getDisplayMetrics().heightPixels * 0.4);
         dialog.getWindow().setAttributes(lp);
-        dialog.getWindow().setWindowAnimations(R.style.BottomDialogAnim);
+        // 如果没有定义 BottomDialogAnim 样式，可以注释掉下面这行
+        // dialog.getWindow().setWindowAnimations(R.style.BottomDialogAnim);
         dialog.show();
     }
 
@@ -104,6 +105,7 @@ public class ProductManagementActivity extends AppCompatActivity {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            // 确保这里引用的布局文件名是正确的
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card_merchant, parent, false);
             return new ViewHolder(view);
         }
@@ -121,7 +123,7 @@ public class ProductManagementActivity extends AppCompatActivity {
                 holder.ivCover.setImageResource(R.drawable.shopping);
             }
 
-            // 2. 设置价格：显示 "基础价格 + 计价单位" (例如：100元/次)
+            // 2. 设置价格
             try {
                 if ("SERVICE".equals(product.type) && product.priceTableJson != null) {
                     JSONArray jsonArray = new JSONArray(product.priceTableJson);
@@ -129,13 +131,11 @@ public class ProductManagementActivity extends AppCompatActivity {
                         JSONObject firstRow = jsonArray.getJSONObject(0);
                         String price = firstRow.optString("price");
                         String unit = firstRow.optString("unit");
-                        // 移除“基础服务费”文字，只显示价格+单位
                         holder.tvPrice.setText(price + "元/" + unit);
                     } else {
                         holder.tvPrice.setText("¥" + product.price);
                     }
                 } else {
-                    // 实物商品显示 ¥价格
                     holder.tvPrice.setText("¥" + product.price);
                 }
             } catch (Exception e) {
@@ -160,9 +160,10 @@ public class ProductManagementActivity extends AppCompatActivity {
 
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
-                ivCover = itemView.findViewById(R.id.iv_cover);
-                tvName = itemView.findViewById(R.id.tv_name);
-                tvPrice = itemView.findViewById(R.id.tv_price);
+                // 【关键修改】这里必须使用 item_product_card_merchant.xml 中定义的真实 ID
+                ivCover = itemView.findViewById(R.id.iv_product_cover); // 原代码是 R.id.iv_cover
+                tvName = itemView.findViewById(R.id.tv_product_name);   // 原代码是 R.id.tv_name
+                tvPrice = itemView.findViewById(R.id.tv_product_price); // 原代码是 R.id.tv_price
             }
         }
     }
