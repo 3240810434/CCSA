@@ -113,16 +113,11 @@
                     android:layout_marginTop="15dp"
                     android:orientation="horizontal">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="配送方式："
-                        android:textColor="#333333"/>
-                    <TextView
                         android:id="@+id/tv_detail_delivery"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="商家配送"
-                        android:textColor="#666666"/>
+                        android:text="配送方式：商家配送"
+                        android:textColor="#333333"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -131,15 +126,10 @@
                     android:layout_marginTop="8dp"
                     android:orientation="horizontal">
                     <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="商品标签："
-                        android:textColor="#333333"/>
-                    <TextView
                         android:id="@+id/tv_detail_tag"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="生鲜食材"
+                        android:text="商品标签：生鲜食材"
                         android:background="@drawable/bg_business_item"
                         android:paddingStart="8dp"
                         android:paddingEnd="8dp"

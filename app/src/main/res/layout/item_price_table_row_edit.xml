@@ -10,7 +10,6 @@
         android:layout_width="0dp"
         android:layout_weight="2"
         android:layout_height="wrap_content"
-        android:hint="如：新鲜香蕉一斤5块"
         android:textSize="14sp"
         android:background="@drawable/bg_edittext_underline"
         android:padding="8dp"/>
@@ -20,7 +19,6 @@
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:hint="输入数字"
         android:inputType="numberDecimal"
         android:background="@drawable/bg_edittext_underline"
         android:padding="8dp"

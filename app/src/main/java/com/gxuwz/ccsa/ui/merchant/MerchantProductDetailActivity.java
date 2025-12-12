@@ -139,11 +139,13 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             if (tvDelivery != null) {
+                // 由于XML中删除了静态的“配送方式：”Label，这里直接设置完整字符串，显示效果为“服务类型：上门服务”
                 tvDelivery.setText("服务类型：" + serviceMode);
             }
 
             // 服务标签
             if (tvTag != null) {
+                // 显示效果为“服务标签：xxx”
                 tvTag.setText("服务标签：" + (product.tag != null ? product.tag : "暂无标签"));
             }
 
@@ -174,11 +176,13 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
 
             // 配送方式
             if (tvDelivery != null) {
+                // 显示效果为“配送方式：xxx”
                 tvDelivery.setText("配送方式：" + (product.deliveryMethod == 0 ? "商家配送" : "用户自提"));
             }
 
             // 商品标签
             if (tvTag != null) {
+                // 显示效果为“商品标签：xxx”
                 tvTag.setText("商品标签：" + (product.tag != null ? product.tag : "暂无标签"));
             }
         }
