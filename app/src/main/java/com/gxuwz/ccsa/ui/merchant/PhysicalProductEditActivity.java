@@ -1,14 +1,11 @@
 package com.gxuwz.ccsa.ui.merchant;
 
-import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -19,8 +16,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
@@ -92,7 +87,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
         if (mEditingProduct.deliveryMethod == 0) {
             rgDelivery.check(R.id.rb_delivery);
         } else {
-            // --- 修复完成: 使用 XML 中定义的正确 ID (rb_pickup) ---
             rgDelivery.check(R.id.rb_pickup);
         }
 
@@ -142,11 +136,11 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-        } else {
-            openGallery();
-        }
+
+        // 【修复点2】使用 Intent.ACTION_OPEN_DOCUMENT (SAF) 不需要 READ_EXTERNAL_STORAGE 权限。
+        // 之前在 Android 13+ (含 Android 15) 上申请该权限会被系统自动拒绝或忽略，导致无法打开相册。
+        // 直接打开相册即可。
+        openGallery();
     }
 
     private void openGallery() {
@@ -260,7 +254,6 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     }
 
     private void saveToDb(String name, String desc, String jsonPrice, int deliveryType) {
-        // 在进入线程前或线程顶部确定是否为更新模式，定义为 final 变量
         final boolean isUpdate = (mEditingProduct != null);
 
         new Thread(() -> {

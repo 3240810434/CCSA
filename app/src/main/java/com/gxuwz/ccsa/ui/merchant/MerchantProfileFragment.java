@@ -66,6 +66,7 @@ public class MerchantProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_merchant_profile, container, false);
 
+        // 尝试初次获取
         if (getActivity() instanceof MerchantMainActivity) {
             currentMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
         }
@@ -80,6 +81,15 @@ public class MerchantProfileFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
+        // 【修复点1】如果 currentMerchant 为空，再次尝试从 Activity 获取
+        // 这解决了登录后立即进入此页面，数据可能尚未同步导致的问题
+        if (currentMerchant == null && getActivity() instanceof MerchantMainActivity) {
+            currentMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
+            // 获取到数据后立即刷新界面
+            loadMerchantData();
+        }
+
         if (currentMerchant != null) {
             Executors.newSingleThreadExecutor().execute(() -> {
                 Merchant updated = AppDatabase.getInstance(getContext())
@@ -88,7 +98,7 @@ public class MerchantProfileFragment extends Fragment {
 
                 if (updated != null) {
                     currentMerchant = updated;
-                    // 【修复点1】同步更新 Activity 中的全局对象，保证其他 Fragment 获取到的是最新的
+                    // 同步更新 Activity 中的全局对象
                     if (getActivity() instanceof MerchantMainActivity) {
                         ((MerchantMainActivity) getActivity()).setCurrentMerchant(updated);
                     }
@@ -111,12 +121,23 @@ public class MerchantProfileFragment extends Fragment {
         view.findViewById(R.id.cv_avatar).setOnClickListener(editProfileListener);
 
         view.findViewById(R.id.btn_qualification).setOnClickListener(v -> {
+            // 这里使用了 currentMerchant 判断，如果为空则无法跳转
             if (currentMerchant != null) {
                 Intent intent = new Intent(getContext(), MerchantQualificationActivity.class);
                 intent.putExtra("merchant", currentMerchant);
                 startActivity(intent);
             } else {
-                Toast.makeText(getContext(), "无法获取商家信息", Toast.LENGTH_SHORT).show();
+                // 尝试最后的补救：再次从 Activity 获取
+                if (getActivity() instanceof MerchantMainActivity) {
+                    currentMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
+                    if (currentMerchant != null) {
+                        Intent intent = new Intent(getContext(), MerchantQualificationActivity.class);
+                        intent.putExtra("merchant", currentMerchant);
+                        startActivity(intent);
+                        return;
+                    }
+                }
+                Toast.makeText(getContext(), "无法获取商家信息，请尝试重新登录", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -186,7 +207,7 @@ public class MerchantProfileFragment extends Fragment {
                 }
 
                 if (isChanged) {
-                    // 【修复点2】保存时，立即同步给 Activity，防止切换到"店铺"页面时数据不同步
+                    // 保存时，立即同步给 Activity
                     if (getActivity() instanceof MerchantMainActivity) {
                         ((MerchantMainActivity) getActivity()).setCurrentMerchant(currentMerchant);
                     }

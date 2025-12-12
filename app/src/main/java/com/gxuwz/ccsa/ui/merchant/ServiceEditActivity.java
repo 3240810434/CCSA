@@ -1,9 +1,7 @@
 package com.gxuwz.ccsa.ui.merchant;
 
-import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -21,8 +19,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
@@ -88,11 +84,8 @@ public class ServiceEditActivity extends AppCompatActivity {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-        } else {
-            openGallery();
-        }
+        // 【修复点2】直接调用相册，移除 Android 15 上无效且导致阻塞的权限检查
+        openGallery();
     }
 
     private void openGallery() {
@@ -164,8 +157,7 @@ public class ServiceEditActivity extends AppCompatActivity {
             if (rbMode != null) serviceMode = rbMode.getText().toString();
         }
 
-        // 获取服务标签 (RadioGroup 保证单选)
-        // 之前可能因为布局嵌套导致ID获取失败，现在布局修复后，这里可以正确获取用户选择的项
+        // 获取服务标签
         int tagId = rgServiceTag.getCheckedRadioButtonId();
         String serviceTag = "便民服务"; // 默认值
         if (tagId != -1) {
@@ -184,7 +176,7 @@ public class ServiceEditActivity extends AppCompatActivity {
             obj.put("unit", unit);
             obj.put("note", extraFee);
             obj.put("mode", serviceMode);
-            obj.put("tag", serviceTag); // 这里存入正确的 tag
+            obj.put("tag", serviceTag);
             priceJson.put(obj);
         } catch (JSONException e) {
             e.printStackTrace();
