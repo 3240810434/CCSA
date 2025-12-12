@@ -34,7 +34,7 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
     }
 
     @Override
-    public int getItemCount() { return list.size(); }
+    public int getItemCount() { return list == null ? 0 : list.size(); }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvMerchant, tvStatus, tvProduct, tvAmount;

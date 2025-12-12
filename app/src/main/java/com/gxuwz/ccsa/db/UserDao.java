@@ -1,54 +1,36 @@
-// CCSA/app/app/src/main/java/com/gxuwz/ccsa/db/UserDao.java
 package com.gxuwz.ccsa.db;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 import com.gxuwz.ccsa.model.User;
 import java.util.List;
-import androidx.room.Update;
 
 @Dao
 public interface UserDao {
-    /**
-     * 插入新用户（注册时使用）
-     */
     @Insert
     void insert(User user);
 
-    /**
-     * 手机号+密码登录验证
-     */
     @Query("SELECT * FROM user WHERE phone = :phone AND password = :password LIMIT 1")
     User login(String phone, String password);
 
-    /**
-     * 根据手机号查询用户（判断是否已注册）
-     */
     @Query("SELECT * FROM user WHERE phone = :phone LIMIT 1")
     User findByPhone(String phone);
 
-    /**
-     * 根据ID获取最新用户信息（头像、昵称等）
-     */
     @Query("SELECT * FROM user WHERE id = :id")
     User getUserById(int id);
 
-    /**
-     * 根据小区查询居民并按楼栋和房号排序
-     */
+    // --- 新增此方法，Activity 中使用的是 long 类型 ---
+    @Query("SELECT * FROM user WHERE id = :id")
+    User findById(long id);
+
     @Query("SELECT * FROM user WHERE community = :community ORDER BY building ASC, room ASC")
     List<User> findResidentsByCommunity(String community);
 
-    /**
-     * 添加按小区查询居民的基础方法（可按姓名排序）
-     */
     @Query("SELECT * FROM user WHERE community = :community ORDER BY name ASC")
-    List<User> findByCommunity(String community); // 新增此方法
+    List<User> findByCommunity(String community);
 
-    /**
-     * 按楼栋和房间号升序排序的查询方法
-     */
     @Query("SELECT * FROM user WHERE community = :community ORDER BY building ASC, room ASC")
     List<User> findResidentsByCommunitySorted(String community);
 
@@ -66,6 +48,4 @@ public interface UserDao {
 
     @Update
     void update(User user);
-
-
 }

@@ -15,18 +15,16 @@ public class Product implements Serializable {
     public String imagePaths;     // 图片路径，用逗号分隔
     public String description;    // 详细描述
 
-    public String type;           // "GOODS" 或 "SERVICE"
+    public String type;           // "实物" 或 "服务"
     public String priceTableJson; // JSON字符串存储价格表
     public int deliveryMethod;    // 0: 商家配送, 1: 自提
     public String createTime;     // 发布时间
 
-    public String price;          // 单价（兼容旧逻辑）
-    public String coverImage;     // 封面图（兼容旧逻辑）
+    public String price;          // 单价
+    public String coverImage;     // 封面图
+    public String tag;            // 商品标签
+    public String unit;           // 单位 (新增字段)
 
-    // --- 新增：商品标签 ---
-    public String tag;            // 商品标签：生鲜食材、日用百货、零食饮品
-
-    // 无参构造函数
     public Product() {
     }
 
@@ -43,11 +41,13 @@ public class Product implements Serializable {
         this.createTime = createTime;
     }
 
-    // 获取第一张图片作为封面
-    public String getFirstImage() {
-        if (imagePaths != null && !imagePaths.isEmpty()) {
-            return imagePaths.split(",")[0];
-        }
-        return "";
-    }
+    // --- 新增的 Getter 方法，解决 Cannot resolve method 错误 ---
+    public int getId() { return id; }
+    public int getMerchantId() { return merchantId; }
+    public String getName() { return name; }
+    public String getDescription() { return description; }
+    public String getImageUrls() { return imagePaths; } // 映射 imagePaths
+    public String getType() { return type; }
+    public String getPrice() { return price; }
+    public String getUnit() { return unit; }
 }

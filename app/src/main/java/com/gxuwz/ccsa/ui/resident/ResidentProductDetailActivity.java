@@ -9,7 +9,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -17,12 +16,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+// 移除了 Gson 引用，因为代码并未真正使用它
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Order;
@@ -31,9 +27,7 @@ import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.util.DateUtils;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 public class ResidentProductDetailActivity extends AppCompatActivity {
 
@@ -43,9 +37,9 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     private Dialog bottomSheetDialog;
 
     // UI Components for Dialog
-    private TextView tvTotalPrice;
-    private LinearLayout containerSpecs; // For Physical
-    private LinearLayout containerService; // For Service
+    private Button btnPay; // 修改为使用 Button
+    private LinearLayout containerSpecs;
+    private LinearLayout containerService;
     private TextView tvServicePrice;
     private TextView tvServiceCount;
     private double currentPrice = 0.0;
@@ -55,11 +49,11 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_resident_product_detail.xml);
+        setContentView(R.layout.activity_resident_product_detail); // 注意：去除 .xml 后缀
 
         db = AppDatabase.getInstance(this);
         long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
-        new Thread(() -> currentUser = db.userDao().findById(userId)).start();
+        new Thread(() -> currentUser = db.userDao().findById(userId)).start(); // 现在 Dao 中有 findById 了
 
         product = (Product) getIntent().getSerializableExtra("product");
 
@@ -76,14 +70,11 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         if (product != null) {
             tvName.setText(product.getName());
             tvDesc.setText(product.getDescription());
-            // 简单解析第一张图
             String imgUrl = "";
             if (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) {
                 imgUrl = product.getImageUrls().split(",")[0];
             }
             Glide.with(this).load(imgUrl).placeholder(R.drawable.ic_launcher_background).into(ivImage);
-
-            // 价格显示逻辑根据类型略有不同，暂时显示“查看详情”
             tvPrice.setText("查看价格");
         }
 
@@ -91,20 +82,20 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     }
 
     private void showPurchaseDialog() {
-        bottomSheetDialog = new Dialog(this, R.style.Theme_AppCompat_Light_Dialog_Alert); // 或自定义样式
+        // 使用 androidx.appcompat.R.style
+        bottomSheetDialog = new Dialog(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_purchase, null);
 
-        // 设置Dialog参数：底部弹出，宽全屏，高70%
         Window window = bottomSheetDialog.getWindow();
         if (window != null) {
             window.setContentView(view);
             window.setGravity(Gravity.BOTTOM);
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, (int) (getResources().getDisplayMetrics().heightPixels * 0.7));
-            window.setBackgroundDrawable(new ColorDrawable(Color.WHITE)); // 白色背景
-            window.setWindowAnimations(R.style.Animation_Design_BottomSheetDialog); // 默认动画
+            window.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
+            // 简单起见，如果 Animation 报错可移除下面这行，或者使用系统默认
+            window.setWindowAnimations(android.R.style.Animation_Dialog);
         }
 
-        // --- Dialog UI 初始化 ---
         TextView tvAddressName = view.findViewById(R.id.tv_address_name);
         TextView tvAddressDetail = view.findViewById(R.id.tv_address_detail);
         ImageView ivThumb = view.findViewById(R.id.iv_thumb);
@@ -114,27 +105,25 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         tvServicePrice = view.findViewById(R.id.tv_service_base_price);
         tvServiceCount = view.findViewById(R.id.tv_service_count);
         ImageView btnServiceAdd = view.findViewById(R.id.btn_service_add);
-        tvTotalPrice = view.findViewById(R.id.tv_total_price);
-        Button btnPay = view.findViewById(R.id.btn_pay_now);
 
-        // 填充用户信息
+        // 修复：直接获取 Button，不再寻找不存在的 tv_total_price
+        btnPay = view.findViewById(R.id.btn_pay_now);
+
         if (currentUser != null) {
             tvAddressName.setText(currentUser.getName() + " " + currentUser.getPhone());
             tvAddressDetail.setText(currentUser.getCommunityName() + currentUser.getBuilding() + currentUser.getRoomNumber());
         }
 
-        // 填充商品基础信息
         if (product != null) {
             tvSheetName.setText(product.getName());
             String imgUrl = (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) ? product.getImageUrls().split(",")[0] : "";
             Glide.with(this).load(imgUrl).into(ivThumb);
         }
 
-        // 根据类型显示选择区域
         if ("实物".equals(product.getType())) {
             containerService.setVisibility(View.GONE);
             containerSpecs.setVisibility(View.VISIBLE);
-            loadPhysicalSpecs(); // 动态加载实物价格表
+            loadPhysicalSpecs();
         } else {
             containerSpecs.setVisibility(View.GONE);
             containerService.setVisibility(View.VISIBLE);
@@ -146,18 +135,11 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         bottomSheetDialog.show();
     }
 
-    // 模拟加载实物规格表
     private void loadPhysicalSpecs() {
         containerSpecs.removeAllViews();
         try {
-            // 假设 price 字段存的是 JSON: [{"spec":"5斤装","price":"50"},{"spec":"10斤装","price":"90"}]
-            // 这里为了简化，我们手动模拟解析或者假设字段是用分号分割的 "规格,价格;规格,价格"
-            // 若您的数据结构更复杂，请使用 Gson 解析
-            // 模拟数据供演示：
             List<String[]> specs = new ArrayList<>();
             if (product.getPrice() != null && product.getPrice().contains(",")) {
-                // 简单解析逻辑，实际请根据您的 JSON 结构调整
-                // 假设存储格式为简单的 String 描述，这里造一些假数据测试 UI
                 specs.add(new String[]{"标准规格", product.getPrice()});
             } else {
                 specs.add(new String[]{"小份 (500g)", "20"});
@@ -175,19 +157,16 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 tvP.setText("¥" + spec[1]);
 
                 llRow.setOnClickListener(v -> {
-                    // 重置所有选中状态
                     for (int i = 0; i < containerSpecs.getChildCount(); i++) {
                         View child = containerSpecs.getChildAt(i);
-                        child.findViewById(R.id.ll_spec_row).setBackgroundResource(R.drawable.box_bg); // 默认背景
+                        child.findViewById(R.id.ll_spec_row).setBackgroundResource(R.drawable.box_bg);
                         ((TextView) child.findViewById(R.id.tv_spec_name)).setTextColor(Color.BLACK);
                         ((TextView) child.findViewById(R.id.tv_spec_price)).setTextColor(Color.BLACK);
                     }
-                    // 设置选中
-                    llRow.setBackgroundResource(R.drawable.border_red); // 需要创建这个 drawable
+                    llRow.setBackgroundResource(R.drawable.border_red);
                     tvSpec.setTextColor(Color.RED);
                     tvP.setTextColor(Color.RED);
 
-                    // 更新价格
                     currentPrice = Double.parseDouble(spec[1]);
                     selectedSpecStr = spec[0];
                     updatePayButton();
@@ -201,14 +180,12 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
     private void loadServiceLogic(TextView tvPrice, TextView tvCount, ImageView btnAdd) {
         try {
-            // 服务商品：只能单选（这里理解为一种基础服务，只能加数量）
             double basePrice = 0;
-            try { basePrice = Double.parseDouble(product.getPrice()); } catch (Exception e) { basePrice = 50.0; } // 默认值防止崩溃
+            try { basePrice = Double.parseDouble(product.getPrice()); } catch (Exception e) { basePrice = 50.0; }
 
             final double finalBasePrice = basePrice;
             tvPrice.setText("基础价格: ¥" + finalBasePrice + "/" + (product.getUnit() == null ? "次" : product.getUnit()));
 
-            // 初始化
             serviceQuantity = 1;
             currentPrice = finalBasePrice;
             tvCount.setText("x" + serviceQuantity);
@@ -216,7 +193,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
             btnAdd.setOnClickListener(v -> {
                 serviceQuantity++;
-                currentPrice += finalBasePrice; // 价格累加
+                currentPrice += finalBasePrice;
                 tvCount.setText("x" + serviceQuantity);
                 updatePayButton();
             });
@@ -227,8 +204,8 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     }
 
     private void updatePayButton() {
-        if (tvTotalPrice != null) {
-            tvTotalPrice.setText("立即支付 ¥" + String.format("%.2f", currentPrice));
+        if (btnPay != null) {
+            btnPay.setText("立即支付 ¥" + String.format("%.2f", currentPrice));
         }
     }
 
@@ -237,13 +214,11 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             Toast.makeText(this, "请选择商品规格", Toast.LENGTH_SHORT).show();
             return;
         }
-
-        // 模拟支付过程
         Toast.makeText(this, "正在支付...", Toast.LENGTH_SHORT).show();
 
         new Thread(() -> {
             try {
-                Thread.sleep(1500); // 模拟网络
+                Thread.sleep(1500);
 
                 Order order = new Order();
                 order.orderNo = "ORD" + System.currentTimeMillis();
@@ -251,9 +226,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 order.residentName = currentUser.getName();
                 order.residentPhone = currentUser.getPhone();
                 order.address = currentUser.getCommunityName() + currentUser.getBuilding() + currentUser.getRoomNumber();
-                order.merchantId = product.getMerchantId(); // 假设 Product 有 merchantId 字段
-                // 如果 Product 没有 merchantId, 需要从数据库关联查询或者传递过来
-                // 这里假设 product.getMerchantId() 存在，如果没有请自行添加
+                order.merchantId = product.getMerchantId();
                 order.productId = String.valueOf(product.getId());
                 order.productName = product.getName();
                 order.productType = product.getType();
@@ -276,7 +249,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(this, "支付成功！", Toast.LENGTH_SHORT).show();
                     if (bottomSheetDialog != null) bottomSheetDialog.dismiss();
-                    finish(); // 或者跳转到订单列表
+                    finish();
                 });
 
             } catch (Exception e) {
