@@ -1,4 +1,3 @@
-// CCSA/app/src/main/java/com/gxuwz/ccsa/login/ResidentRegisterActivity.java
 package com.gxuwz.ccsa.login;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -32,8 +31,6 @@ public class ResidentRegisterActivity extends AppCompatActivity {
     private Spinner spinnerCommunity;
     private Spinner spinnerBuilding;
     private Spinner spinnerRoom;
-    private EditText etVerificationCode;
-    private TextView tvGetCode;
     private Button btnRegister;
 
     // 数据相关
@@ -84,8 +81,6 @@ public class ResidentRegisterActivity extends AppCompatActivity {
         spinnerCommunity = findViewById(R.id.spinner_community);
         spinnerBuilding = findViewById(R.id.spinner_building);
         spinnerRoom = findViewById(R.id.spinner_room);
-        etVerificationCode = findViewById(R.id.et_verification_code);
-        tvGetCode = findViewById(R.id.tv_get_code);
         btnRegister = findViewById(R.id.btn_register);
 
         // 默认选中男性
@@ -167,16 +162,6 @@ public class ResidentRegisterActivity extends AppCompatActivity {
             }
         });
 
-        // 获取验证码点击事件（模拟发送，实际验证码为1234）
-        tvGetCode.setOnClickListener(v -> {
-            String phone = etPhone.getText().toString().trim();
-            if (phone.isEmpty()) { // 修改：仅校验不为空
-                Toast.makeText(this, "请输入手机号", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            Toast.makeText(this, "验证码已发送（默认1234）", Toast.LENGTH_SHORT).show();
-        });
-
         // 注册按钮点击事件
         btnRegister.setOnClickListener(v -> register());
     }
@@ -189,29 +174,20 @@ public class ResidentRegisterActivity extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String phone = etPhone.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-        String code = etVerificationCode.getText().toString().trim();
 
         // 1. 校验所有字段不为空
-        if (name.isEmpty() || phone.isEmpty() || password.isEmpty() || code.isEmpty()) {
+        if (name.isEmpty() || phone.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "请填写所有必填信息", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 2. 移除手机号11位校验
-
-        // 3. 校验验证码（固定为1234）
-        if (!"1234".equals(code)) {
-            Toast.makeText(this, "验证码错误（正确为1234）", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 4. 校验手机号是否已注册
+        // 2. 校验手机号是否已注册
         if (db.userDao().findByPhone(phone) != null) {
             Toast.makeText(this, "该手机号已注册，请直接登录", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 5. 所有校验通过，创建用户并保存到数据库
+        // 3. 所有校验通过，创建用户并保存到数据库
         User user = new User(
                 name,
                 gender,
@@ -223,7 +199,7 @@ public class ResidentRegisterActivity extends AppCompatActivity {
         );
         db.userDao().insert(user);
 
-        // 6. 注册成功，跳转到居民首界面（使用Bundle传递用户信息）
+        // 4. 注册成功，跳转到居民首界面（使用Bundle传递用户信息）
         Toast.makeText(this, "注册成功！", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(ResidentRegisterActivity.this, ResidentMainActivity.class);
         Bundle bundle = new Bundle();
