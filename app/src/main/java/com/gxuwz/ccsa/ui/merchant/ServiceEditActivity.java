@@ -37,7 +37,8 @@ public class ServiceEditActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_PICK_IMAGE = 102;
 
-    private EditText etName, etDesc, etPrice, etExtraFeeNote;
+    private EditText etName, etDesc, etPrice;
+    // 删除了 etExtraFeeNote
     private LinearLayout llImageContainer;
     private ImageView ivAddImage;
     private Spinner spinnerUnit;
@@ -45,11 +46,20 @@ public class ServiceEditActivity extends AppCompatActivity {
 
     private List<String> selectedImagePaths = new ArrayList<>();
 
+    // 新增：保存正在编辑的对象
+    private Product mEditingProduct;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_service_edit);
         initView();
+
+        // 修复：添加数据回显逻辑
+        if (getIntent().hasExtra("product")) {
+            mEditingProduct = (Product) getIntent().getSerializableExtra("product");
+            initDataFromProduct();
+        }
     }
 
     private void initView() {
@@ -58,7 +68,7 @@ public class ServiceEditActivity extends AppCompatActivity {
         etName = findViewById(R.id.et_name);
         etDesc = findViewById(R.id.et_desc);
         etPrice = findViewById(R.id.et_price);
-        etExtraFeeNote = findViewById(R.id.et_extra_fee_note);
+        // 删除 etExtraFeeNote 查找
 
         llImageContainer = findViewById(R.id.ll_image_container);
         ivAddImage = findViewById(R.id.iv_add_image);
@@ -79,12 +89,58 @@ public class ServiceEditActivity extends AppCompatActivity {
         btnPublish.setOnClickListener(v -> attemptPublish());
     }
 
+    // 修复：实现数据回显
+    private void initDataFromProduct() {
+        etName.setText(mEditingProduct.name);
+        etDesc.setText(mEditingProduct.description);
+        etPrice.setText(mEditingProduct.price);
+
+        // 回显图片
+        if (mEditingProduct.imagePaths != null && !mEditingProduct.imagePaths.isEmpty()) {
+            String[] paths = mEditingProduct.imagePaths.split(",");
+            for (String path : paths) {
+                if (!path.trim().isEmpty()) {
+                    selectedImagePaths.add(path);
+                }
+            }
+            renderImages();
+        }
+
+        // 回显单位
+        String unit = mEditingProduct.unit;
+        if (unit != null) {
+            ArrayAdapter adapter = (ArrayAdapter) spinnerUnit.getAdapter();
+            int pos = adapter.getPosition(unit);
+            if (pos >= 0) spinnerUnit.setSelection(pos);
+        }
+
+        // 回显标签
+        if (mEditingProduct.tag != null) {
+            String tag = mEditingProduct.tag;
+            if (tag.equals("保洁服务")) rgServiceTag.check(R.id.rb_tag_clean);
+            else if (tag.equals("维修服务")) rgServiceTag.check(R.id.rb_tag_repair);
+            else if (tag.equals("家政帮手")) rgServiceTag.check(R.id.rb_tag_housework);
+            else if (tag.equals("便民代办")) rgServiceTag.check(R.id.rb_tag_errand);
+        }
+
+        // 回显类型 (需要解析 priceTableJson 中的 mode 字段)
+        try {
+            JSONArray ja = new JSONArray(mEditingProduct.priceTableJson);
+            if (ja.length() > 0) {
+                JSONObject obj = ja.getJSONObject(0);
+                String mode = obj.optString("mode");
+                if ("上门服务".equals(mode)) rgServiceType.check(R.id.rb_type_door);
+                else if ("到店服务".equals(mode)) rgServiceType.check(R.id.rb_type_shop);
+                else if ("线上咨询".equals(mode)) rgServiceType.check(R.id.rb_type_online);
+            }
+        } catch (Exception e) {}
+    }
+
     private void checkPermissionAndPickImage() {
         if (selectedImagePaths.size() >= 9) {
             Toast.makeText(this, "最多上传9张图片", Toast.LENGTH_SHORT).show();
             return;
         }
-        // 直接调用相册
         openGallery();
     }
 
@@ -136,7 +192,6 @@ public class ServiceEditActivity extends AppCompatActivity {
         String name = etName.getText().toString().trim();
         String desc = etDesc.getText().toString().trim();
         String priceStr = etPrice.getText().toString().trim();
-        String extraFee = etExtraFeeNote.getText().toString().trim();
         String unit = spinnerUnit.getSelectedItem().toString();
 
         if (name.isEmpty() || desc.isEmpty() || priceStr.isEmpty()) {
@@ -149,17 +204,15 @@ public class ServiceEditActivity extends AppCompatActivity {
             return;
         }
 
-        // 获取服务类型 (RadioGroup 保证单选)
         int typeId = rgServiceType.getCheckedRadioButtonId();
-        String serviceMode = "上门服务"; // 默认
+        String serviceMode = "上门服务";
         if (typeId != -1) {
             RadioButton rbMode = findViewById(typeId);
             if (rbMode != null) serviceMode = rbMode.getText().toString();
         }
 
-        // 获取服务标签
         int tagId = rgServiceTag.getCheckedRadioButtonId();
-        String serviceTag = "便民服务"; // 默认值
+        String serviceTag = "便民服务";
         if (tagId != -1) {
             RadioButton rbTag = findViewById(tagId);
             if (rbTag != null) {
@@ -167,14 +220,12 @@ public class ServiceEditActivity extends AppCompatActivity {
             }
         }
 
-        // 构建 JSON 数据
         JSONArray priceJson = new JSONArray();
         JSONObject obj = new JSONObject();
         try {
             obj.put("desc", "基础服务费");
             obj.put("price", priceStr);
             obj.put("unit", unit);
-            obj.put("note", extraFee);
             obj.put("mode", serviceMode);
             obj.put("tag", serviceTag);
             priceJson.put(obj);
@@ -182,57 +233,57 @@ public class ServiceEditActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        showPreviewDialog(name, desc, priceJson, serviceMode, serviceTag, priceStr, unit, extraFee);
+        // 移除了 extraFee 参数
+        showPreviewDialog(name, desc, priceJson, serviceMode, serviceTag, priceStr, unit);
     }
 
     private void showPreviewDialog(String name, String desc, JSONArray priceJson,
-                                   String mode, String tag, String price, String unit, String note) {
+                                   String mode, String tag, String price, String unit) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_service_preview, null);
 
         TextView tvName = view.findViewById(R.id.tv_preview_name);
+        TextView tvDesc = view.findViewById(R.id.tv_preview_desc);
         TextView tvTag = view.findViewById(R.id.tv_preview_tag);
         TextView tvMode = view.findViewById(R.id.tv_preview_mode);
         TextView tvPrice = view.findViewById(R.id.tv_preview_price);
-        TextView tvNote = view.findViewById(R.id.tv_preview_note);
 
-        tvName.setText(name);
-        tvTag.setText(tag);
-        tvMode.setText("服务方式：" + mode);
-        tvPrice.setText("¥" + price + " / " + unit);
-
-        if (!note.isEmpty()) {
-            tvNote.setText("备注：" + note);
-            tvNote.setVisibility(View.VISIBLE);
-        } else {
-            tvNote.setVisibility(View.GONE);
-        }
+        tvName.setText("名称：" + name);
+        tvDesc.setText("详情：" + desc);
+        tvTag.setText("标签：" + tag);
+        tvMode.setText("方式：" + mode);
+        tvPrice.setText("价格：¥" + price + " / " + unit);
 
         builder.setView(view)
-                .setPositiveButton("确认发布", (dialog, which) -> {
-                    // 【修复点1】将 tag 传递给 saveToDb
-                    saveToDb(name, desc, priceJson.toString(), price, tag);
+                .setPositiveButton(mEditingProduct != null ? "确认修改" : "确认发布", (dialog, which) -> {
+                    saveToDb(name, desc, priceJson.toString(), price, tag, unit);
                 })
                 .setNegativeButton("取消", null)
                 .show();
     }
 
-    // 【修复点2】增加了 String tag 参数
-    private void saveToDb(String name, String desc, String jsonPrice, String priceVal, String tag) {
+    // 增加 unit 参数
+    private void saveToDb(String name, String desc, String jsonPrice, String priceVal, String tag, String unit) {
+        final boolean isUpdate = (mEditingProduct != null);
         new Thread(() -> {
-            Product product = new Product();
-            product.createTime = DateUtils.getCurrentDateTime();
-            product.merchantId = 1; // 默认商家ID
-            product.type = "SERVICE";
+            Product product;
+            if (isUpdate) {
+                product = mEditingProduct;
+            } else {
+                product = new Product();
+                product.createTime = DateUtils.getCurrentDateTime();
+                product.merchantId = 1;
+                product.type = "SERVICE";
+            }
 
             product.name = name;
             product.description = desc;
             product.priceTableJson = jsonPrice;
             product.price = priceVal;
             product.deliveryMethod = 0;
-            // 【修复点3】保存标签到数据库字段
             product.tag = tag;
+            product.unit = unit; // 保存单位
 
             StringBuilder sb = new StringBuilder();
             for (String s : selectedImagePaths) {
@@ -242,10 +293,14 @@ public class ServiceEditActivity extends AppCompatActivity {
             product.imagePaths = sb.toString();
             product.coverImage = product.getFirstImage();
 
-            AppDatabase.getInstance(this).productDao().insert(product);
+            if (isUpdate) {
+                AppDatabase.getInstance(this).productDao().update(product);
+            } else {
+                AppDatabase.getInstance(this).productDao().insert(product);
+            }
 
             runOnUiThread(() -> {
-                Toast.makeText(this, "服务发布成功", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, isUpdate ? "修改成功" : "发布成功", Toast.LENGTH_SHORT).show();
                 finish();
             });
         }).start();

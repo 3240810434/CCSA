@@ -29,11 +29,15 @@
                 android:layout_centerInParent="true"/>
         </RelativeLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="服务名称"
+            android:layout_marginBottom="5dp"/>
         <EditText
             android:id="@+id/et_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="服务名称：如“上门电脑维修”"
             android:background="@drawable/edittext_bg"
             android:padding="12dp"
             android:layout_marginBottom="16dp"/>
@@ -63,13 +67,17 @@
             </LinearLayout>
         </HorizontalScrollView>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="详细描述"
+            android:layout_marginBottom="5dp"/>
         <EditText
             android:id="@+id/et_desc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minLines="3"
             android:gravity="top"
-            android:hint="详细描述：请介绍服务内容、服务流程等细节"
             android:background="@drawable/edittext_bg"
             android:padding="12dp"
             android:layout_marginBottom="16dp"/>
@@ -111,8 +119,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp">
+                android:gravity="center_vertical">
                 <TextView
                     android:layout_width="80dp"
                     android:layout_height="wrap_content"
@@ -121,27 +128,7 @@
                     android:id="@+id/et_price"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="请输入数字，如 50"
                     android:inputType="numberDecimal"
-                    android:background="@drawable/edittext_bg"
-                    android:padding="10dp"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-                <TextView
-                    android:layout_width="80dp"
-                    android:layout_height="wrap_content"
-                    android:text="附加费用"/>
-                <EditText
-                    android:id="@+id/et_extra_fee_note"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="备注：如需更换零件，另按实结算"
-                    android:textSize="12sp"
                     android:background="@drawable/edittext_bg"
                     android:padding="10dp"/>
             </LinearLayout>

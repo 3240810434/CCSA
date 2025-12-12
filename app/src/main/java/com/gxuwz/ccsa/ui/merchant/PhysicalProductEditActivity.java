@@ -10,7 +10,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,7 +36,7 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
     private EditText etName, etDesc;
     private LinearLayout llImageContainer, llPriceTableContainer;
     private RadioGroup rgDelivery;
-    private RadioGroup rgTag; // 新增标签RadioGroup
+    private RadioGroup rgTag; // 标签RadioGroup
     private List<String> selectedImagePaths = new ArrayList<>();
     private ImageView ivAddImage;
 
@@ -117,7 +116,7 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             addPriceRow();
         }
 
-        // 5. 回显商品标签 (新增)
+        // 5. 回显商品标签
         if (mEditingProduct.tag != null) {
             switch (mEditingProduct.tag) {
                 case "生鲜食材":
@@ -254,25 +253,46 @@ public class PhysicalProductEditActivity extends AppCompatActivity {
             selectedTag = "零食饮品";
         }
 
+        // 调用优化后的预览弹窗
         showPreviewDialog(name, desc, priceJson, deliveryType, selectedTag);
     }
 
+    // ==========================================
+    // 重点修改区域：优化后的确认面板
+    // ==========================================
     private void showPreviewDialog(String name, String desc, JSONArray priceJson, int deliveryType, String tag) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        // 注意：请确保你的 dialog_product_preview.xml 布局文件中包含了以下 ID 的 TextView
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_product_preview, null);
 
         TextView tvName = view.findViewById(R.id.tv_preview_name);
+        TextView tvDesc = view.findViewById(R.id.tv_preview_desc);        // 需要在XML中添加
         TextView tvPrice = view.findViewById(R.id.tv_preview_price);
+        TextView tvDelivery = view.findViewById(R.id.tv_preview_delivery); // 需要在XML中添加
+        TextView tvTag = view.findViewById(R.id.tv_preview_tag);           // 需要在XML中添加
 
-        tvName.setText(name);
+        // 设置基本信息
+        tvName.setText("名称：" + name);
+        tvDesc.setText("详情：" + (desc.isEmpty() ? "暂无描述" : desc));
+        tvTag.setText("标签：" + tag);
+        tvDelivery.setText("配送：" + (deliveryType == 0 ? "商家配送" : "用户自提"));
+
+        // 构建价格表显示字符串（显示所有行）
+        StringBuilder priceSb = new StringBuilder();
+        priceSb.append("价格表：\n");
         try {
-            if (priceJson.length() > 0) {
-                JSONObject first = priceJson.getJSONObject(0);
-                tvPrice.setText(first.getString("desc") + " ¥" + first.getString("price"));
+            for (int i = 0; i < priceJson.length(); i++) {
+                JSONObject obj = priceJson.getJSONObject(i);
+                priceSb.append("  • ").append(obj.getString("desc"))
+                        .append(": ¥").append(obj.getString("price")).append("\n");
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        tvPrice.setText(priceSb.toString());
 
         builder.setView(view)
+                .setTitle("确认发布信息") // 建议增加标题
                 .setPositiveButton(mEditingProduct != null ? "确认修改" : "确认发布", (dialog, which) -> {
                     saveToDb(name, desc, priceJson.toString(), deliveryType, tag);
                 })

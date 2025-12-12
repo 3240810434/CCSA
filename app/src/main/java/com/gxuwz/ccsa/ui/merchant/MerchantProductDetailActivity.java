@@ -43,7 +43,6 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     private int productId;
     private Product currentProduct;
     private ViewPager2 vpBanner;
-    // 更新了控件变量，去掉了 tvType, 增加了 tvDelivery
     private TextView tvName, tvMerchantName, tvDesc, tvPrice, tvDelivery, tvTag;
     private ImageView ivMerchantAvatar, btnBack, btnEdit;
 
@@ -72,7 +71,7 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         tvName = findViewById(R.id.tv_detail_name);
         tvDesc = findViewById(R.id.tv_detail_desc);
         tvPrice = findViewById(R.id.tv_detail_price);
-        // 初始化新控件
+
         tvDelivery = findViewById(R.id.tv_detail_delivery);
         tvTag = findViewById(R.id.tv_detail_tag);
 
@@ -118,18 +117,32 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             bannerAdapter.setOnBannerClickListener(this::showZoomImage);
         }
 
-        // 4. 设置价格 (处理JSON以获取显示价格)
+        // 4. 设置价格 (优化逻辑：区分实物和服务)
         try {
-            if (product.priceTableJson != null) {
-                JSONArray jsonArray = new JSONArray(product.priceTableJson);
-                if (jsonArray.length() > 0) {
-                    JSONObject obj = jsonArray.getJSONObject(0);
-                    // 仅显示价格数字，不带 /unit
-                    String price = obj.optString("price");
-                    tvPrice.setText("¥ " + price);
-                }
+            if ("SERVICE".equals(product.type)) {
+                // 服务商品：显示 价格 / 单位
+                String unit = (product.unit != null && !product.unit.isEmpty()) ? product.unit : "次";
+                tvPrice.setText("¥ " + product.price + " / " + unit);
+                tvPrice.setTextSize(18); // 正常字体
             } else {
-                tvPrice.setText("¥ " + product.price);
+                // 实物商品：解析JSON，显示所有规格和价格
+                if (product.priceTableJson != null && !product.priceTableJson.isEmpty()) {
+                    JSONArray jsonArray = new JSONArray(product.priceTableJson);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject obj = jsonArray.getJSONObject(i);
+                        sb.append(obj.optString("desc"))
+                                .append(" : ¥ ")
+                                .append(obj.optString("price"))
+                                .append("\n");
+                    }
+                    tvPrice.setText(sb.toString().trim());
+                    tvPrice.setTextSize(16); // 稍微小一点以适应多行
+                } else {
+                    // 没有价格表JSON的兜底显示
+                    tvPrice.setText("¥ " + product.price);
+                    tvPrice.setTextSize(18);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
