@@ -226,7 +226,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 order.residentName = currentUser.getName();
                 order.residentPhone = currentUser.getPhone();
                 order.address = currentUser.getCommunityName() + currentUser.getBuilding() + currentUser.getRoomNumber();
-                order.merchantId = product.getMerchantId();
+                order.merchantId = String.valueOf(product.getMerchantId());
                 order.productId = String.valueOf(product.getId());
                 order.productName = product.getName();
                 order.productType = product.getType();

@@ -23,7 +23,7 @@ public class Product implements Serializable {
     public String price;          // 单价
     public String coverImage;     // 封面图
     public String tag;            // 商品标签
-    public String unit;           // 单位 (新增字段)
+    public String unit;           // 单位
 
     public Product() {
     }
@@ -41,13 +41,24 @@ public class Product implements Serializable {
         this.createTime = createTime;
     }
 
-    // --- 新增的 Getter 方法，解决 Cannot resolve method 错误 ---
+    // --- 现有的 Getter ---
     public int getId() { return id; }
     public int getMerchantId() { return merchantId; }
     public String getName() { return name; }
     public String getDescription() { return description; }
-    public String getImageUrls() { return imagePaths; } // 映射 imagePaths
+    public String getImageUrls() { return imagePaths; }
     public String getType() { return type; }
     public String getPrice() { return price; }
     public String getUnit() { return unit; }
+
+    // --- 【请添加下面这个方法来修复报错】 ---
+    public String getFirstImage() {
+        if (imagePaths != null && !imagePaths.isEmpty()) {
+            String[] paths = imagePaths.split(",");
+            if (paths.length > 0) {
+                return paths[0];
+            }
+        }
+        return null;
+    }
 }
