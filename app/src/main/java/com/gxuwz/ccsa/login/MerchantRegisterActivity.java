@@ -36,9 +36,7 @@ public class MerchantRegisterActivity extends AppCompatActivity {
             "悦景小区", "梧桐小区", "阳光小区", "锦园小区", "幸福小区",
             "芳邻小区", "逸景小区", "康城小区", "沁园小区", "静安小区"
     };
-    // 记录选中状态的布尔数组
     private boolean[] checkedCommunities;
-    // 最终选中的小区列表
     private List<String> selectedCommunityList = new ArrayList<>();
 
     @Override
@@ -47,7 +45,6 @@ public class MerchantRegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_merchant_register);
 
         db = AppDatabase.getInstance(this);
-        // 初始化选中状态数组
         checkedCommunities = new boolean[communities.length];
 
         initViews();
@@ -67,41 +64,30 @@ public class MerchantRegisterActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        // 小区多选点击事件
         tvCommunitySelect.setOnClickListener(v -> showCommunityDialog());
 
-        // 性别选择
         rgGender.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rb_male) gender = "男";
             else gender = "女";
         });
 
-        // 注册按钮
         btnRegister.setOnClickListener(v -> register());
     }
 
-    // 弹出多选对话框
     private void showCommunityDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("选择服务小区");
-        builder.setMultiChoiceItems(communities, checkedCommunities, new DialogInterface.OnMultiChoiceClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                // 更新选中状态
-                checkedCommunities[which] = isChecked;
-            }
+        builder.setMultiChoiceItems(communities, checkedCommunities, (dialog, which, isChecked) -> {
+            checkedCommunities[which] = isChecked;
         });
 
         builder.setPositiveButton("确定", (dialog, which) -> {
-            // 清空旧数据
             selectedCommunityList.clear();
-            // 遍历所有选项，将选中的加入列表
             for (int i = 0; i < communities.length; i++) {
                 if (checkedCommunities[i]) {
                     selectedCommunityList.add(communities[i]);
                 }
             }
-            // 更新UI显示
             if (selectedCommunityList.isEmpty()) {
                 tvCommunitySelect.setText("");
                 tvCommunitySelect.setHint("点击选择服务小区 (可多选)");
@@ -121,24 +107,20 @@ public class MerchantRegisterActivity extends AppCompatActivity {
         String phone = etPhone.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // 校验
         if (selectedCommunityList.isEmpty()) {
             Toast.makeText(this, "请至少选择一个服务小区", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (merchantName.isEmpty() || contactName.isEmpty() || phone.isEmpty() ||
-                password.isEmpty()) {
+        if (merchantName.isEmpty() || contactName.isEmpty() || phone.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "请填写完整信息", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 检查是否已注册
         if (db.merchantDao().findByPhone(phone) != null) {
             Toast.makeText(this, "该手机号已注册", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 创建对象
         Merchant merchant = new Merchant(
                 communityStr,
                 merchantName,
@@ -148,13 +130,12 @@ public class MerchantRegisterActivity extends AppCompatActivity {
                 password
         );
 
-        // 插入数据库
         new Thread(() -> {
-            // 【修复关键】：获取插入后生成的ID
+            // 【修复 2】：使用 setId() 方法，且 insert 现在返回 long 类型
             long id = db.merchantDao().insert(merchant);
-            merchant.id = (int) id; // 更新对象ID
+            merchant.setId((int) id); // 修复了 private access 错误
 
-            // 保存登录状态到 SharedPreferences
+            // 保存登录状态
             getSharedPreferences("user_prefs", MODE_PRIVATE)
                     .edit()
                     .putLong("merchant_id", id)
@@ -163,7 +144,7 @@ public class MerchantRegisterActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 Toast.makeText(this, "注册成功", Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(MerchantRegisterActivity.this, MerchantMainActivity.class);
-                intent.putExtra("merchant", merchant); // 此时 merchant 包含正确的 ID
+                intent.putExtra("merchant", merchant);
                 startActivity(intent);
                 finish();
             });

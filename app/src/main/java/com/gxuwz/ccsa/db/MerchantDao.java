@@ -9,8 +9,9 @@ import java.util.List;
 
 @Dao
 public interface MerchantDao {
+    // 【修复 1】：将返回值从 void 改为 long，以便获取自动生成的 ID
     @Insert
-    void insert(Merchant merchant);
+    long insert(Merchant merchant);
 
     @Update
     void update(Merchant merchant);
@@ -24,7 +25,6 @@ public interface MerchantDao {
     @Query("SELECT * FROM merchant WHERE id = :id LIMIT 1")
     Merchant findById(int id);
 
-    // 新增：查询所有提交了审核申请的商家 (状态为 1)
     @Query("SELECT * FROM merchant WHERE qualificationStatus = 1")
     List<Merchant> findPendingAudits();
 }
