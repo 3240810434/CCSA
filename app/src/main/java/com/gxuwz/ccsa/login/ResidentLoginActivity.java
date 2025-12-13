@@ -1,9 +1,9 @@
-// CCSA/app/src/main/java/com/gxuwz/ccsa/login/ResidentLoginActivity.java
 package com.gxuwz.ccsa.login;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -83,18 +83,33 @@ public class ResidentLoginActivity extends AppCompatActivity {
             return;
         }
 
-        // 数据库查询用户（验证账号密码）
-        User user = db.userDao().login(phone, password);
-        if (user != null) {
-            // 登录成功：使用Bundle传递User对象（避免序列化报错）
-            Intent intent = new Intent(ResidentLoginActivity.this, ResidentMainActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putSerializable("user", user); // 显式序列化传递
-            intent.putExtras(bundle);
-            startActivity(intent);
-            finish(); // 关闭登录页面，避免返回
-        } else {
-            Toast.makeText(this, "手机号或密码错误", Toast.LENGTH_SHORT).show();
-        }
+        new Thread(() -> {
+            // 数据库查询用户（验证账号密码）
+            User user = db.userDao().login(phone, password);
+
+            runOnUiThread(() -> {
+                if (user != null) {
+                    // 【关键修复步骤】登录成功，保存用户ID到 SharedPreferences
+                    // 这里的 "user_prefs" 必须和 ResidentProductDetailActivity 中读取的名称一致
+                    SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putLong("user_id", user.getId()); // 保存用户ID
+                    editor.putString("user_name", user.getName()); // 可选：保存用户名方便其他地方显示
+                    editor.apply(); // 提交保存
+
+                    // 登录成功：跳转主页
+                    Intent intent = new Intent(ResidentLoginActivity.this, ResidentMainActivity.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putSerializable("user", user);
+                    intent.putExtras(bundle);
+                    startActivity(intent);
+
+                    Toast.makeText(ResidentLoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+                    finish(); // 关闭登录页面
+                } else {
+                    Toast.makeText(this, "手机号或密码错误", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
     }
 }

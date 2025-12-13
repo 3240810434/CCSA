@@ -15,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Intent;
+import android.content.SharedPreferences; // 导入 SharedPreferences
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
@@ -93,18 +94,23 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
+        // 从 SharedPreferences 获取 userId
+        SharedPreferences sp = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        long userId = sp.getLong("user_id", -1);
+
         new Thread(() -> {
             if (userId != -1) {
                 currentUser = db.userDao().findById(userId);
             }
-            productMerchant = db.merchantDao().findById(product.getMerchantId());
+            if (product != null) {
+                productMerchant = db.merchantDao().findById(product.getMerchantId());
+            }
             runOnUiThread(this::setupUI);
         }).start();
     }
 
     private void setupUI() {
-        if (isDestroyed()) return;
+        if (isDestroyed() || isFinishing()) return;
 
         List<String> imageUrls = new ArrayList<>();
         if (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) {
@@ -126,7 +132,10 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         tvDesc.setText(product.getDescription() != null ? product.getDescription() : "暂无描述");
         productUnit = (product.getUnit() != null && !product.getUnit().isEmpty()) ? product.getUnit() : "份";
 
-        if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
+        // 判断类型，兼容中英文
+        boolean isService = "服务".equals(product.getType()) || "SERVICE".equalsIgnoreCase(product.getType());
+
+        if (isService) {
             tvPrice.setText("¥ " + product.getPrice() + " / " + productUnit);
             tvPrice.setTextSize(18);
             tvTypeInfo.setText("类型：上门服务");
@@ -150,15 +159,19 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     }
 
     private void showPurchaseDialog() {
-        // 如果数据尚未加载完成，提示稍后
+        // 核心检查：如果当前没有加载到用户
         if (currentUser == null) {
             long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
             if (userId == -1) {
-                Toast.makeText(this, "请先登录以获取收货地址", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "未检测到登录状态，请先登录", Toast.LENGTH_SHORT).show();
+                // 可选：跳转回登录页
+                // startActivity(new Intent(this, com.gxuwz.ccsa.login.ResidentLoginActivity.class));
             } else {
-                Toast.makeText(this, "正在获取用户信息，请稍后重试", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "正在加载用户信息，请稍候...", Toast.LENGTH_SHORT).show();
+                // 尝试重新加载
+                loadData();
             }
-            return; // 只有在确实没有用户时才返回，否则继续
+            return;
         }
 
         bottomSheetDialog = new Dialog(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert);
@@ -179,8 +192,8 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
         // 填充用户信息
         if (currentUser != null) {
-            tvAddrName.setText("姓名：" + currentUser.getName());
-            tvAddrPhone.setText("电话：" + currentUser.getPhone());
+            tvAddrName.setText("姓名：" + (currentUser.getName() == null ? "暂无" : currentUser.getName()));
+            tvAddrPhone.setText("电话：" + (currentUser.getPhone() == null ? "暂无" : currentUser.getPhone()));
             String address = String.format("%s %s %s",
                     currentUser.getCommunityName() != null ? currentUser.getCommunityName() : "",
                     currentUser.getBuilding() != null ? currentUser.getBuilding() : "",
@@ -206,7 +219,9 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         currentPrice = 0.0;
         selectedSpecStr = "";
 
-        if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
+        boolean isService = "服务".equals(product.getType()) || "SERVICE".equalsIgnoreCase(product.getType());
+
+        if (isService) {
             containerSpecs.setVisibility(View.GONE);
             containerService.setVisibility(View.VISIBLE);
 
@@ -235,7 +250,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
         btnPay.setOnClickListener(v -> {
             if (currentPrice <= 0) {
-                Toast.makeText(this, "请选择有效的规格", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "请选择有效的规格或数量", Toast.LENGTH_SHORT).show();
                 return;
             }
             showPaymentMethodDialog();
@@ -303,22 +318,19 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     }
 
     private void showPaymentMethodDialog() {
-        // 模拟支付系统，选择微信或支付宝
         final String[] items = {"微信支付", "支付宝"};
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("请选择支付方式");
         builder.setItems(items, (dialog, which) -> {
             String paymentMethod = items[which];
-            // 模拟支付过程
             simulatePaymentProcess(paymentMethod);
         });
         builder.show();
     }
 
     private void simulatePaymentProcess(String paymentMethod) {
-        // 模拟延时
         Dialog loadingDialog = new Dialog(this);
-        loadingDialog.setContentView(R.layout.dialog_loading); // 假设有这个布局，或者用简单的ProgressDialog
+        loadingDialog.setContentView(R.layout.dialog_loading);
         loadingDialog.setCancelable(false);
         loadingDialog.show();
 
@@ -346,7 +358,8 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 order.productType = product.getType();
                 order.productImageUrl = product.getFirstImage();
 
-                if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
+                boolean isService = "服务".equals(product.getType()) || "SERVICE".equalsIgnoreCase(product.getType());
+                if (isService) {
                     order.selectedSpec = "标准服务";
                     order.serviceCount = serviceQuantity;
                 } else {
@@ -356,7 +369,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
                 order.payAmount = String.format("%.2f", currentPrice);
                 order.paymentMethod = payMethod;
-                order.status = "待接单";
+                order.status = "待接单"; // 确保状态符合 MerchantPendingOrderAdapter 的查询逻辑 (pending)
                 order.createTime = DateUtils.getCurrentDateTime();
 
                 db.orderDao().insert(order);
@@ -364,7 +377,6 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(this, "支付成功！订单已生成", Toast.LENGTH_SHORT).show();
                     if (bottomSheetDialog != null) bottomSheetDialog.dismiss();
-                    // 可以选择跳转到订单列表，或者关闭当前页
                     Intent intent = new Intent(this, ResidentOrdersActivity.class);
                     startActivity(intent);
                     finish();
