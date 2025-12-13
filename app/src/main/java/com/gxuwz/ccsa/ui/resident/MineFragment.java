@@ -33,28 +33,23 @@ public class MineFragment extends Fragment {
     private TextView tvAddress;
     private User currentUser;
 
-    // 图片选择启动器
     private ActivityResultLauncher<Intent> imagePickerLauncher;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 初始化图片选择回调
         imagePickerLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
                     if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
                         Uri imageUri = result.getData().getData();
                         if (imageUri != null) {
-                            // 1. 持久化权限（防止重启后无法读取）
                             try {
                                 requireContext().getContentResolver().takePersistableUriPermission(
                                         imageUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
-
-                            // 2. 保存到数据库并更新UI
                             updateAvatar(imageUri.toString());
                         }
                     }
@@ -66,7 +61,6 @@ public class MineFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_mine, container, false);
 
-        // 获取当前用户
         if (getActivity() instanceof ResidentMainActivity) {
             currentUser = ((ResidentMainActivity) getActivity()).getUser();
         }
@@ -85,52 +79,45 @@ public class MineFragment extends Fragment {
     }
 
     private void setupListeners(View view) {
-        // 点击头像或编辑主页 -> 编辑资料
         View.OnClickListener editProfileListener = v -> showEditProfileDialog();
         view.findViewById(R.id.cv_avatar).setOnClickListener(editProfileListener);
         view.findViewById(R.id.btn_edit_profile).setOnClickListener(editProfileListener);
 
-        // 未实现功能提示
+        // --- 修改部分：跳转到我的订单页面 ---
+        view.findViewById(R.id.btn_my_orders).setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), ResidentOrdersActivity.class);
+            startActivity(intent);
+        });
+        // ------------------------------------
+
         View.OnClickListener notImplListener = v ->
                 Toast.makeText(getContext(), "功能暂未开放", Toast.LENGTH_SHORT).show();
-        view.findViewById(R.id.btn_my_orders).setOnClickListener(notImplListener);
         view.findViewById(R.id.btn_watch_history).setOnClickListener(notImplListener);
         view.findViewById(R.id.btn_change_password).setOnClickListener(notImplListener);
-
-        // 已移除：我的报修、联系物业、退出登录 的监听器
     }
 
     private void loadUserData() {
         if (currentUser != null) {
-            tvUsername.setText(currentUser.getName()); // 使用 getName()
-
+            tvUsername.setText(currentUser.getName());
             String address = currentUser.getCommunity() + "-" + currentUser.getBuilding() + "-" + currentUser.getRoom();
             tvAddress.setText(address);
 
-            // 加载头像
             if (currentUser.getAvatar() != null && !currentUser.getAvatar().isEmpty()) {
-                // 如果用户自定义了头像，使用URI加载
                 ivAvatar.setImageURI(Uri.parse(currentUser.getAvatar()));
             } else {
-                // 如果没有自定义，使用新的默认头像 lan
                 ivAvatar.setImageResource(R.drawable.lan);
             }
         }
     }
 
-    /**
-     * 显示编辑资料对话框
-     */
     private void showEditProfileDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
         builder.setTitle("编辑个人资料");
 
-        // 自定义布局：包含修改头像按钮和修改名称输入框
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(50, 40, 50, 40);
 
-        // 修改头像按钮
         TextView btnChangeAvatar = new TextView(getContext());
         btnChangeAvatar.setText("点击更换头像");
         btnChangeAvatar.setTextSize(16);
@@ -139,17 +126,18 @@ public class MineFragment extends Fragment {
         btnChangeAvatar.setOnClickListener(v -> openGallery());
         layout.addView(btnChangeAvatar);
 
-        // 修改用户名输入框
         final EditText etUsername = new EditText(getContext());
         etUsername.setHint("请输入新的用户名");
-        etUsername.setText(currentUser.getName()); // 使用 getName()
+        if (currentUser != null) {
+            etUsername.setText(currentUser.getName());
+        }
         layout.addView(etUsername);
 
         builder.setView(layout);
 
         builder.setPositiveButton("保存", (dialog, which) -> {
             String newName = etUsername.getText().toString().trim();
-            if (!TextUtils.isEmpty(newName)) {
+            if (!TextUtils.isEmpty(newName) && currentUser != null) {
                 updateUsername(newName);
             }
         });
@@ -157,7 +145,6 @@ public class MineFragment extends Fragment {
         builder.show();
     }
 
-    // 打开相册
     private void openGallery() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -165,29 +152,28 @@ public class MineFragment extends Fragment {
         imagePickerLauncher.launch(intent);
     }
 
-    // 更新数据库中的头像
     private void updateAvatar(String uriString) {
+        if (currentUser == null) return;
         currentUser.setAvatar(uriString);
-        ivAvatar.setImageURI(Uri.parse(uriString)); // 立即更新UI
+        ivAvatar.setImageURI(Uri.parse(uriString));
         saveUserToDb();
     }
 
-    // 更新数据库中的用户名
     private void updateUsername(String newName) {
-        currentUser.setName(newName); // 使用 setName()
-        tvUsername.setText(newName); // 立即更新UI
+        if (currentUser == null) return;
+        currentUser.setName(newName);
+        tvUsername.setText(newName);
         saveUserToDb();
     }
 
-    // 异步保存到数据库
     private void saveUserToDb() {
         Executors.newSingleThreadExecutor().execute(() -> {
             AppDatabase.getInstance(getContext()).userDao().update(currentUser);
-            getActivity().runOnUiThread(() ->
-                    Toast.makeText(getContext(), "保存成功", Toast.LENGTH_SHORT).show()
-            );
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() ->
+                        Toast.makeText(getContext(), "保存成功", Toast.LENGTH_SHORT).show()
+                );
+            }
         });
     }
-
-    // 已移除：showLogoutDialog() 方法，因为界面已删除退出入口
 }

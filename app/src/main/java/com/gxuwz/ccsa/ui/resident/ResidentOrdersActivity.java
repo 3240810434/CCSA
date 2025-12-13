@@ -2,6 +2,7 @@ package com.gxuwz.ccsa.ui.resident;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -24,18 +25,17 @@ public class ResidentOrdersActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_resident_orders);
 
-        // 设置标题 (假设布局中有标题栏，如果没有可忽略)
-        try {
-            TextView title = findViewById(R.id.tv_title); // 假设你的通用布局里有这个ID
-            if (title != null) title.setText("我的订单");
-            findViewById(R.id.btn_back).setOnClickListener(v -> finish());
-        } catch (Exception e) {}
+        // 设置简单的标题栏
+        TextView tvTitle = findViewById(R.id.tv_title);
+        if(tvTitle != null) tvTitle.setText("我的订单");
+
+        ImageView btnBack = findViewById(R.id.btn_back);
+        if(btnBack != null) btnBack.setOnClickListener(v -> finish());
 
         userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
         db = AppDatabase.getInstance(this);
 
         recyclerView = findViewById(R.id.recycler_view);
-        // 如果布局里没有 tv_empty，可以在 xml 中添加一个 TextView 默认隐藏
         tvEmpty = findViewById(R.id.tv_empty);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -52,7 +52,6 @@ public class ResidentOrdersActivity extends AppCompatActivity {
 
     private void loadData() {
         new Thread(() -> {
-            // 获取该居民的所有订单，按ID倒序
             List<Order> orders = db.orderDao().getOrdersByResident(String.valueOf(userId));
             runOnUiThread(() -> {
                 if (orders != null && !orders.isEmpty()) {

@@ -1,5 +1,6 @@
 package com.gxuwz.ccsa.adapter;
 
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,16 +40,18 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         Order order = orderList.get(position);
 
-        holder.tvMerchantName.setText(order.merchantName != null ? order.merchantName : "商家ID:" + order.merchantId);
+        holder.tvMerchantName.setText(order.merchantName != null ? order.merchantName : "未知商家");
         holder.tvStatus.setText(order.status);
 
         // 状态颜色处理
         if ("待接单".equals(order.status)) {
-            holder.tvStatus.setTextColor(0xFFFF9800); // Orange
+            holder.tvStatus.setTextColor(Color.parseColor("#FF9800")); // Orange
         } else if ("已完成".equals(order.status)) {
-            holder.tvStatus.setTextColor(0xFF4CAF50); // Green
+            holder.tvStatus.setTextColor(Color.parseColor("#4CAF50")); // Green
+        } else if ("配送中".equals(order.status)) {
+            holder.tvStatus.setTextColor(Color.parseColor("#2196F3")); // Blue
         } else {
-            holder.tvStatus.setTextColor(0xFF2196F3); // Blue
+            holder.tvStatus.setTextColor(Color.GRAY);
         }
 
         holder.tvProductName.setText(order.productName);
