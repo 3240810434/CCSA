@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -44,18 +45,21 @@ public class MerchantMessageFragment extends Fragment {
 
         db = AppDatabase.getInstance(getContext());
 
-        // 获取当前商家ID
+        // 1. 获取当前商家ID
         SharedPreferences sp = getContext().getSharedPreferences("merchant_prefs", Context.MODE_PRIVATE);
-        // 【注意】这里使用 getInt，必须配合 LoginActivity 中的 putInt
+        // 注意：这里使用 getInt，请确保你在 MerchantLoginActivity 中是使用 putInt 保存的 merchant_id
         merchantId = sp.getInt("merchant_id", -1);
 
-        recyclerView = view.findViewById(R.id.recycler_view);
-        // 确保你的 fragment_merchant_message.xml 中有一个 ID 为 recycler_view 的 RecyclerView
-        if (recyclerView != null) {
-            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-            adapter = new MerchantChatAdapter(getContext(), conversationList, merchantId);
-            recyclerView.setAdapter(adapter);
+        if (merchantId == -1) {
+            Toast.makeText(getContext(), "商家登录状态异常", Toast.LENGTH_SHORT).show();
         }
+
+        // 2. 初始化 RecyclerView
+        recyclerView = view.findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        adapter = new MerchantChatAdapter(getContext(), conversationList, merchantId);
+        recyclerView.setAdapter(adapter);
 
         return view;
     }
@@ -63,7 +67,7 @@ public class MerchantMessageFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // 每次页面显示时刷新数据
+        // 每次回到页面时刷新数据
         loadConversations();
     }
 
@@ -71,9 +75,11 @@ public class MerchantMessageFragment extends Fragment {
         if (merchantId == -1) return;
 
         new Thread(() -> {
-            // 查询所有与我(MERCHANT)相关的消息
+            // 3. 查询数据库：查找所有涉及该商家的消息（角色为 MERCHANT）
             // 确保 ChatDao 中有 getAllMyMessages(int id, String role) 方法
             List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(merchantId, "MERCHANT");
+
+            // 使用 Map 去重，只保留与每个用户的最新一条消息
             Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
             for (ChatMessage msg : allMsgs) {
@@ -81,21 +87,24 @@ public class MerchantMessageFragment extends Fragment {
                 String otherRole;
 
                 // 判断对方是谁
+                // 如果我是发送者(且我是商家)，那对方就是接收者
                 if (msg.senderId == merchantId && "MERCHANT".equals(msg.senderRole)) {
                     otherId = msg.receiverId;
                     otherRole = msg.receiverRole;
                 } else {
+                    // 如果我是接收者，对方就是发送者
                     otherId = msg.senderId;
                     otherRole = msg.senderRole;
                 }
 
-                // 组合Key，防止ID重复
+                // 组合Key (Role + ID) 防止不同角色的ID冲突
                 String key = otherRole + "_" + otherId;
 
+                // 因为查询结果是按时间倒序的，所以第一次遇到的 key 就是最新的消息
                 if (!latestMsgMap.containsKey(key)) {
-                    // 如果对方是居民，查询居民信息
+                    // 查询对方（通常是居民 User）的详细信息，用于显示头像和名字
                     if ("RESIDENT".equals(otherRole)) {
-                        User u = db.userDao().findById(otherId); // 确保 UserDao 有 findById
+                        User u = db.userDao().findById(otherId); // 确保 UserDao 有 findById 方法
                         msg.targetName = (u != null) ? u.getName() : "居民";
                         msg.targetAvatar = (u != null) ? u.getAvatar() : "";
                     } else {
@@ -105,17 +114,18 @@ public class MerchantMessageFragment extends Fragment {
                 }
             }
 
+            // 4. 回到主线程更新 UI
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
                     conversationList.clear();
                     conversationList.addAll(latestMsgMap.values());
-                    if (adapter != null) adapter.notifyDataSetChanged();
+                    adapter.notifyDataSetChanged();
                 });
             }
         }).start();
     }
 
-    // 内部类 Adapter
+    // --- 内部类：适配器 ---
     public static class MerchantChatAdapter extends RecyclerView.Adapter<MerchantChatAdapter.ViewHolder> {
         private Context context;
         private List<ChatMessage> list;
@@ -130,6 +140,7 @@ public class MerchantMessageFragment extends Fragment {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            // 复用 item_message_list 布局
             View view = LayoutInflater.from(context).inflate(R.layout.item_message_list, parent, false);
             return new ViewHolder(view);
         }
@@ -139,15 +150,19 @@ public class MerchantMessageFragment extends Fragment {
             ChatMessage msg = list.get(position);
             holder.tvName.setText(msg.targetName);
             holder.tvContent.setText(msg.content);
-            holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
+            holder.tvTime.setText(DateUtils.formatTime(msg.createTime)); //
 
-            Glide.with(context).load(msg.targetAvatar).placeholder(R.drawable.ic_avatar).circleCrop().into(holder.ivAvatar);
+            Glide.with(context)
+                    .load(msg.targetAvatar)
+                    .placeholder(R.drawable.ic_avatar) // 确保有默认头像资源
+                    .circleCrop()
+                    .into(holder.ivAvatar);
 
+            // 点击条目跳转到聊天详情页
             holder.itemView.setOnClickListener(v -> {
                 int targetId;
                 String targetRole;
 
-                // 点击跳转到聊天页面
                 if (msg.senderId == myMerchantId && "MERCHANT".equals(msg.senderRole)) {
                     targetId = msg.receiverId;
                     targetRole = msg.receiverRole;
@@ -156,11 +171,11 @@ public class MerchantMessageFragment extends Fragment {
                     targetRole = msg.senderRole;
                 }
 
-                Intent intent = new Intent(context, ChatActivity.class);
+                Intent intent = new Intent(context, ChatActivity.class); //
                 intent.putExtra("myId", myMerchantId);
-                intent.putExtra("myRole", "MERCHANT");
+                intent.putExtra("myRole", "MERCHANT"); // 这里的身份是商家
                 intent.putExtra("targetId", targetId);
-                intent.putExtra("targetRole", targetRole);
+                intent.putExtra("targetRole", targetRole); // 对方身份通常是 RESIDENT
                 intent.putExtra("targetName", msg.targetName);
                 intent.putExtra("targetAvatar", msg.targetAvatar);
                 context.startActivity(intent);
