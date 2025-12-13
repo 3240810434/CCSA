@@ -61,7 +61,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     private String selectedSpecStr = "";
     private String productUnit = "";
 
-    // 客服按钮容器
+    // 【新增】客服按钮引用
     private View btnContactService;
 
     @Override
@@ -96,26 +96,25 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_buy).setOnClickListener(v -> showPurchaseDialog());
 
-        // 【新增】客服按钮逻辑
-        // 尝试查找布局中的客服按钮，请确保 XML 中有 ID 为 ll_contact_service 的 View
-        // 如果你的XML没有这个ID，你需要添加一个 View 并设置 ID
+        // 【核心修复】绑定客服按钮事件
+        // 此时 XML 中已经有了 android:id="@+id/ll_contact_service"
         btnContactService = findViewById(R.id.ll_contact_service);
-        if (btnContactService == null) {
-            // 兼容性尝试：如果没有找到，试试找图片
-            btnContactService = findViewById(R.id.iv_kefu);
-        }
-
         if (btnContactService != null) {
             btnContactService.setOnClickListener(v -> openChat());
         }
     }
 
-    // 打开聊天页面
+    // 【新增】跳转到聊天页面的方法
     private void openChat() {
         if (currentUser == null) {
-            Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
-            return;
+            // 尝试重新加载或提示
+            loadData();
+            if (currentUser == null) {
+                Toast.makeText(this, "正在获取用户信息，请稍后点击...", Toast.LENGTH_SHORT).show();
+                return;
+            }
         }
+
         if (product == null) return;
 
         Intent intent = new Intent(this, ChatActivity.class);
@@ -127,6 +126,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         intent.putExtra("targetId", product.getMerchantId());
         intent.putExtra("targetRole", "MERCHANT");
 
+        // 传递对方展示信息（名字和头像）
         if (productMerchant != null) {
             intent.putExtra("targetName", productMerchant.getMerchantName());
             intent.putExtra("targetAvatar", productMerchant.getAvatar());

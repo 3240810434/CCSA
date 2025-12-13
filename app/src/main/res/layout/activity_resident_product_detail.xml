@@ -40,11 +40,15 @@
         android:orientation="horizontal">
 
         <LinearLayout
+            android:id="@+id/ll_store"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
 
             <ImageView
                 android:layout_width="24dp"
@@ -59,13 +63,18 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/ll_contact_service"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:gravity="center"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
 
             <ImageView
+                android:id="@+id/iv_kefu"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:src="@drawable/contact" />
@@ -87,7 +96,9 @@
             android:text="立即购买"
             android:textColor="@android:color/white"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true"/>
     </LinearLayout>
 
     <ScrollView
