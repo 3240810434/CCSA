@@ -21,7 +21,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="小区便民服务app"
+            android:text="小区便民服务"
             android:textColor="#FFFFFF"
             android:textSize="32sp"
             android:textStyle="bold"
