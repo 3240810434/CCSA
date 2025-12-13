@@ -53,15 +53,15 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     private ImageView ivMerchantAvatar;
     private TextView tvMerchantName;
 
-    // 购买弹窗相关变量
+    // 购买弹窗相关
     private Button btnPay;
     private LinearLayout containerSpecs;
     private LinearLayout containerService;
     private TextView tvServicePrice;
     private TextView tvServiceCountDisplay;
     private double currentPrice = 0.0;
-    private int serviceQuantity = 1;
-    private String selectedSpecStr = "";
+    private int serviceQuantity = 1; // 服务数量
+    private String selectedSpecStr = ""; // 实物选中的规格描述
     private String productUnit = "";
 
     @Override
@@ -93,20 +93,14 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         tvTags = findViewById(R.id.tv_tags);
         ivMerchantAvatar = findViewById(R.id.iv_merchant_avatar);
         tvMerchantName = findViewById(R.id.tv_merchant_name);
-
-        // 点击底部“购买”按钮
         findViewById(R.id.btn_buy).setOnClickListener(v -> showPurchaseDialog());
     }
 
     private void loadData() {
-        // 获取当前用户ID
         long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
         new Thread(() -> {
-            // 1. 查询当前用户信息（如果未登录，userId为-1，查出来是null）
             currentUser = db.userDao().findById(userId);
-            // 2. 查询商家信息
             productMerchant = db.merchantDao().findById(product.getMerchantId());
-
             runOnUiThread(this::setupUI);
         }).start();
     }
@@ -114,7 +108,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     private void setupUI() {
         if (isDestroyed()) return;
 
-        // 设置轮播图
+        // 1. 轮播图
         List<String> imageUrls = new ArrayList<>();
         if (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) {
             imageUrls.addAll(Arrays.asList(product.getImageUrls().split(",")));
@@ -123,35 +117,48 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         }
         BannerAdapter bannerAdapter = new BannerAdapter(this, imageUrls);
         bannerViewPager.setAdapter(bannerAdapter);
+        tvBannerIndicator.setText("1/" + imageUrls.size());
+        bannerViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                tvBannerIndicator.setText((position + 1) + "/" + imageUrls.size());
+            }
+        });
 
-        // 设置基本信息
+        // 2. 基本信息
         tvName.setText(product.getName());
-        tvDesc.setText(product.getDescription());
+        tvDesc.setText(product.getDescription() != null ? product.getDescription() : "暂无描述");
         productUnit = (product.getUnit() != null && !product.getUnit().isEmpty()) ? product.getUnit() : "份";
 
-        // 根据类型显示价格
+        // 3. 价格与类型显示
         if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
             tvPrice.setText("¥ " + product.getPrice() + " / " + productUnit);
+            tvPrice.setTextSize(18);
             tvTypeInfo.setText("类型：上门服务");
         } else {
+            // 实物
             tvPrice.setText("¥ " + product.getPrice());
+            tvPrice.setTextSize(18);
             String delivery = product.deliveryMethod == 0 ? "商家配送" : "到店自提";
             tvTypeInfo.setText("配送方式：" + delivery);
         }
+        tvTags.setText("标签：" + (product.tag != null ? product.tag : "暂无"));
 
-        // 商家信息
+        // 4. 商家信息
         if (productMerchant != null) {
             tvMerchantName.setText(productMerchant.getMerchantName());
-            Glide.with(this).load(productMerchant.getAvatar()).placeholder(R.drawable.merchant_picture).into(ivMerchantAvatar);
+            Glide.with(this).load(productMerchant.getAvatar())
+                    .placeholder(R.drawable.merchant_picture)
+                    .error(R.drawable.merchant_picture)
+                    .into(ivMerchantAvatar);
+        } else {
+            tvMerchantName.setText("未知商家");
         }
     }
 
-    // =================================================================
-    // 核心代码：显示购买弹窗
-    // =================================================================
+    // === 核心修改：购买弹窗 ===
     private void showPurchaseDialog() {
         bottomSheetDialog = new Dialog(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert);
-        // 使用新创建的布局 dialog_resident_purchase
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_resident_purchase, null);
 
         Window window = bottomSheetDialog.getWindow();
@@ -164,39 +171,32 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             window.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
         }
 
-        // --- 1. 绑定顶部居民信息 (解决不显示的问题) ---
+        // 1. 顶部：居民收货地址信息
         TextView tvAddrName = view.findViewById(R.id.tv_addr_name);
         TextView tvAddrPhone = view.findViewById(R.id.tv_addr_phone);
         TextView tvAddrDetail = view.findViewById(R.id.tv_addr_detail);
 
         if (currentUser != null) {
-            // 已登录：显示真实信息
             tvAddrName.setText("姓名：" + currentUser.getName());
             tvAddrPhone.setText("电话：" + currentUser.getPhone());
-
-            String community = currentUser.getCommunityName() != null ? currentUser.getCommunityName() : "";
-            String building = currentUser.getBuilding() != null ? currentUser.getBuilding() : "";
-            String room = currentUser.getRoomNumber() != null ? currentUser.getRoomNumber() : "";
-
-            // 明文显示地址
-            tvAddrDetail.setText("地址：" + community + " " + building + " " + room);
+            String address = String.format("%s %s %s",
+                    currentUser.getCommunityName() != null ? currentUser.getCommunityName() : "未知小区",
+                    currentUser.getBuilding() != null ? currentUser.getBuilding() : "",
+                    currentUser.getRoomNumber() != null ? currentUser.getRoomNumber() : "");
+            tvAddrDetail.setText("地址：" + address);
         } else {
-            // 未登录：提示登录
-            tvAddrName.setText("未登录");
-            tvAddrPhone.setText("");
             tvAddrDetail.setText("请先登录以获取收货地址");
-            tvAddrDetail.setTextColor(Color.RED);
         }
 
-        // --- 2. 绑定商品基本信息 ---
+        // 2. 中间：商品图和名称
         TextView tvSheetName = view.findViewById(R.id.tv_sheet_name);
         ImageView ivThumb = view.findViewById(R.id.iv_thumb);
+        if (product != null) {
+            tvSheetName.setText(product.getName());
+            Glide.with(this).load(product.getFirstImage()).into(ivThumb);
+        }
 
-        tvSheetName.setText(product.getName());
-        // 加载第一张图
-        Glide.with(this).load(product.getFirstImage()).into(ivThumb);
-
-        // --- 3. 初始化选择区域控件 ---
+        // 3. 选择区域
         containerSpecs = view.findViewById(R.id.ll_spec_container);
         containerService = view.findViewById(R.id.ll_service_container);
         tvServicePrice = view.findViewById(R.id.tv_service_base_price);
@@ -209,9 +209,9 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         currentPrice = 0.0;
         selectedSpecStr = "";
 
-        // --- 4. 区分实物与服务逻辑 ---
+        // 根据类型加载不同逻辑
         if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
-            // ============ 服务商品逻辑 ============
+            // === 服务逻辑 ===
             containerSpecs.setVisibility(View.GONE);
             containerService.setVisibility(View.VISIBLE);
 
@@ -219,13 +219,13 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             try { basePrice = Double.parseDouble(product.getPrice()); } catch (Exception e) { basePrice = 0; }
 
             final double pricePerUnit = basePrice;
-            currentPrice = pricePerUnit * serviceQuantity; // 初始总价
+            currentPrice = pricePerUnit * serviceQuantity; // 初始价格
 
             tvServicePrice.setText("单价: ¥" + pricePerUnit + "/" + productUnit);
             tvServiceCountDisplay.setText(String.valueOf(serviceQuantity));
             updatePayButton();
 
-            // 点击加号，数量增加，价格累加
+            // 价格累加逻辑
             btnServiceAdd.setOnClickListener(v -> {
                 serviceQuantity++;
                 currentPrice = pricePerUnit * serviceQuantity;
@@ -234,33 +234,29 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             });
 
         } else {
-            // ============ 实物商品逻辑 ============
+            // === 实物逻辑 ===
             containerService.setVisibility(View.GONE);
             containerSpecs.setVisibility(View.VISIBLE);
-            // 加载规格表
             loadPhysicalSpecs();
         }
 
-        // --- 5. 支付按钮点击事件 ---
+        // 4. 点击支付按钮，弹出支付方式选择
         btnPay.setOnClickListener(v -> {
+            if (currentPrice <= 0) {
+                Toast.makeText(this, "请选择有效的规格", Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (currentUser == null) {
                 Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
-                // 可以跳转去登录页
-                // startActivity(new Intent(this, ResidentLoginActivity.class));
                 return;
             }
-            if (currentPrice <= 0) {
-                Toast.makeText(this, "请选择商品规格", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            // 弹出支付方式选择
             showPaymentMethodDialog();
         });
 
         bottomSheetDialog.show();
     }
 
-    // 辅助方法：加载实物规格表
+    // 加载实物规格表
     private void loadPhysicalSpecs() {
         containerSpecs.removeAllViews();
         try {
@@ -268,6 +264,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             if (product.priceTableJson != null && !product.priceTableJson.isEmpty()) {
                 jsonArray = new JSONArray(product.priceTableJson);
             } else {
+                // 如果没有json表，构造一个默认的单行
                 jsonArray = new JSONArray();
                 JSONObject defaultObj = new JSONObject();
                 defaultObj.put("desc", "默认规格");
@@ -280,7 +277,8 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 String desc = obj.optString("desc");
                 String priceStr = obj.optString("price");
 
-                // 动态生成一行规格 View
+                // 动态创建每一行：复用 spec_item 布局 或 动态生成 View
+                // 这里使用动态生成简单的布局
                 View rowView = LayoutInflater.from(this).inflate(R.layout.item_spec_row, containerSpecs, false);
                 TextView tvName = rowView.findViewById(R.id.tv_spec_name);
                 TextView tvP = rowView.findViewById(R.id.tv_spec_price);
@@ -289,21 +287,21 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 tvName.setText(desc);
                 tvP.setText("¥" + priceStr);
 
-                // 单选逻辑
+                // 点击事件：单选变红
                 llRoot.setOnClickListener(v -> {
-                    // 1. 重置所有行颜色
+                    // 清除其他选中状态
                     for (int j = 0; j < containerSpecs.getChildCount(); j++) {
                         View child = containerSpecs.getChildAt(j);
-                        child.findViewById(R.id.ll_spec_row).setBackgroundResource(R.drawable.box_bg);
+                        child.findViewById(R.id.ll_spec_row).setBackgroundResource(R.drawable.box_bg); // 默认背景
                         ((TextView) child.findViewById(R.id.tv_spec_name)).setTextColor(Color.BLACK);
                         ((TextView) child.findViewById(R.id.tv_spec_price)).setTextColor(Color.BLACK);
                     }
-                    // 2. 高亮当前行（红框红字）
-                    llRoot.setBackgroundResource(R.drawable.border_red);
+                    // 设置当前选中状态
+                    llRoot.setBackgroundResource(R.drawable.border_red); // 红色边框背景
                     tvName.setTextColor(Color.RED);
                     tvP.setTextColor(Color.RED);
 
-                    // 3. 更新价格和选中项
+                    // 更新价格
                     try {
                         currentPrice = Double.parseDouble(priceStr);
                     } catch (NumberFormatException e) { currentPrice = 0; }
@@ -318,54 +316,49 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         }
     }
 
-    // 更新底部支付按钮文字
     private void updatePayButton() {
         if (btnPay != null) {
             btnPay.setText("立即支付 ¥" + String.format("%.2f", currentPrice));
         }
     }
 
-    // 弹出支付方式选择 (模拟支付系统)
+    // 弹出支付方式选择
     private void showPaymentMethodDialog() {
         String[] methods = {"微信支付", "支付宝"};
         new AlertDialog.Builder(this)
                 .setTitle("选择支付方式")
                 .setItems(methods, (dialog, which) -> {
                     String method = methods[which];
-                    // 处理下单逻辑
                     createOrder(method);
                 })
                 .show();
     }
 
-    // 创建订单写入数据库
+    // 创建订单并写入数据库
     private void createOrder(String payMethod) {
         new Thread(() -> {
             try {
                 Order order = new Order();
-                order.orderNo = "ORD" + System.currentTimeMillis() + (int)(Math.random()*1000);
-
-                // 居民信息
+                order.orderNo = "ORD" + System.currentTimeMillis() + (int)(Math.random()*100);
                 order.residentId = String.valueOf(currentUser.getId());
                 order.residentName = currentUser.getName();
                 order.residentPhone = currentUser.getPhone();
                 order.address = currentUser.getCommunityName() + " " + currentUser.getBuilding() + " " + currentUser.getRoomNumber();
 
-                // 商家与商品信息
                 order.merchantId = String.valueOf(product.getMerchantId());
                 order.merchantName = productMerchant != null ? productMerchant.getMerchantName() : "未知商家";
+
                 order.productId = String.valueOf(product.getId());
                 order.productName = product.getName();
                 order.productType = product.getType();
                 order.productImageUrl = product.getFirstImage();
 
-                // 区分规格/数量
                 if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
-                    order.selectedSpec = "上门服务";
+                    order.selectedSpec = "标准服务";
                     order.serviceCount = serviceQuantity;
                 } else {
                     order.selectedSpec = selectedSpecStr;
-                    order.serviceCount = 1;
+                    order.serviceCount = 1; // 实物默认数量1
                 }
 
                 order.payAmount = String.format("%.2f", currentPrice);
@@ -378,7 +371,8 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(this, "支付成功！订单已生成", Toast.LENGTH_SHORT).show();
                     if (bottomSheetDialog != null) bottomSheetDialog.dismiss();
-                    finish(); // 关闭页面
+                    // 跳转或关闭
+                    finish();
                 });
 
             } catch (Exception e) {
