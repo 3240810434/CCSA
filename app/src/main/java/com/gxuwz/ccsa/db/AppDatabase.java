@@ -55,7 +55,7 @@ import com.gxuwz.ccsa.model.Order;
                 Order.class
         },
         // ========== 3. 数据库版本号升级（从11→12） ==========
-        version = 12,
+        version = 13,
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)

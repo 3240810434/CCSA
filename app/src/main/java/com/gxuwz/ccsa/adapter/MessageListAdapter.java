@@ -32,7 +32,6 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // 使用 item_message_list.xml
         View view = LayoutInflater.from(context).inflate(R.layout.item_message_list, parent, false);
         return new ViewHolder(view);
     }
@@ -41,7 +40,6 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatMessage msg = conversationList.get(position);
 
-        // 显示对方的头像和名字（这些字段在 Activity 中通过 loadConversations 填充了）
         holder.tvName.setText(msg.targetName != null ? msg.targetName : "未知用户");
         holder.tvContent.setText(msg.content);
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
@@ -52,12 +50,31 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
                 .circleCrop()
                 .into(holder.ivAvatar);
 
-        // 点击进入聊天页面
         holder.itemView.setOnClickListener(v -> {
-            int targetId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
+            // 重新计算目标ID和角色
+            int targetId;
+            String targetRole;
+
+            // 逻辑：如果我是发送者，目标就是Receiver
+            if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+                targetId = msg.receiverId;
+                targetRole = msg.receiverRole;
+            } else {
+                targetId = msg.senderId;
+                targetRole = msg.senderRole;
+            }
+
             Intent intent = new Intent(context, ChatActivity.class);
-            intent.putExtra("targetUserId", targetId);
-            intent.putExtra("currentUser", currentUser);
+            // 我是居民
+            intent.putExtra("myId", currentUser.getId());
+            intent.putExtra("myRole", "RESIDENT");
+
+            // 对方信息
+            intent.putExtra("targetId", targetId);
+            intent.putExtra("targetRole", targetRole);
+            intent.putExtra("targetName", msg.targetName);
+            intent.putExtra("targetAvatar", msg.targetAvatar);
+
             context.startActivity(intent);
         });
     }

@@ -12,6 +12,7 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.MessageListAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.ChatMessage;
+import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.User;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ public class MessageListActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // 传递 User 对象作为 "我的身份标识"，在 Adapter 内部会将其识别为 ID=user.id, Role="RESIDENT"
         adapter = new MessageListAdapter(this, conversationList, currentUser);
         recyclerView.setAdapter(adapter);
 
@@ -49,31 +51,43 @@ public class MessageListActivity extends AppCompatActivity {
     }
 
     private void loadConversations() {
-        // 如果当前用户ID有问题，直接返回，避免查询错误
         if (currentUser == null || currentUser.getId() == 0) return;
 
         new Thread(() -> {
-            List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId());
-            Map<Integer, ChatMessage> latestMsgMap = new HashMap<>();
+            // 查询所有和我(RESIDENT)有关的消息
+            List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
+            Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
             for (ChatMessage msg : allMsgs) {
-                // 排除无效ID (ID=0)
-                if (msg.senderId == 0 || msg.receiverId == 0) continue;
+                // 确定对方是谁
+                int otherId;
+                String otherRole;
 
-                int otherId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
+                if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+                    // 我发的，对方是 Receiver
+                    otherId = msg.receiverId;
+                    otherRole = msg.receiverRole;
+                } else {
+                    // 别人发的，对方是 Sender
+                    otherId = msg.senderId;
+                    otherRole = msg.senderRole;
+                }
 
-                if (!latestMsgMap.containsKey(otherId)) {
-                    User target = db.userDao().getUserById(otherId);
-                    if (target != null) {
-                        msg.targetName = target.getName();
-                        msg.targetAvatar = target.getAvatar();
-                        latestMsgMap.put(otherId, msg);
+                // 组合 Key 避免不同 Role 的 ID 冲突
+                String key = otherRole + "_" + otherId;
+
+                if (!latestMsgMap.containsKey(key)) {
+                    // 查询对方详细信息
+                    if ("MERCHANT".equals(otherRole)) {
+                        Merchant m = db.merchantDao().findById(otherId);
+                        msg.targetName = (m != null) ? m.getMerchantName() : "商家(已注销)";
+                        msg.targetAvatar = (m != null) ? m.getAvatar() : "";
                     } else {
-                        // 处理已删除或未找到的用户
-                        msg.targetName = "未知用户";
-                        // 可以选择不添加到列表，或者显示为未知
-                        latestMsgMap.put(otherId, msg);
+                        User u = db.userDao().findById(otherId);
+                        msg.targetName = (u != null) ? u.getName() : "用户";
+                        msg.targetAvatar = (u != null) ? u.getAvatar() : "";
                     }
+                    latestMsgMap.put(key, msg);
                 }
             }
 
@@ -98,9 +112,22 @@ public class MessageListActivity extends AppCompatActivity {
                 if (position < 0 || position >= conversationList.size()) return;
 
                 ChatMessage msg = conversationList.get(position);
-                int targetId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
 
-                new Thread(() -> db.chatDao().deleteConversation(currentUser.getId(), targetId)).start();
+                // 计算目标ID和角色，用于删除
+                int targetId;
+                String targetRole;
+                if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+                    targetId = msg.receiverId;
+                    targetRole = msg.receiverRole;
+                } else {
+                    targetId = msg.senderId;
+                    targetRole = msg.senderRole;
+                }
+
+                final int tId = targetId;
+                final String tRole = targetRole;
+
+                new Thread(() -> db.chatDao().deleteConversation(currentUser.getId(), "RESIDENT", tId, tRole)).start();
 
                 conversationList.remove(position);
                 adapter.notifyItemRemoved(position);

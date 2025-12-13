@@ -9,88 +9,117 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.ChatMessage;
-import com.gxuwz.ccsa.model.User;
+import com.gxuwz.ccsa.util.DateUtils;
 import java.util.List;
 
 public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+
+    private static final int TYPE_LEFT = 0;
+    private static final int TYPE_RIGHT = 1;
+
     private Context context;
-    private List<ChatMessage> list;
-    private User currentUser;
-    private User targetUser; // 聊天对象
+    private List<ChatMessage> messageList;
 
-    private static final int TYPE_SEND = 1;
-    private static final int TYPE_RECEIVE = 2;
+    // 当前登录用户的信息
+    private int myId;
+    private String myRole;
+    private String myAvatar;
 
-    public ChatAdapter(Context context, List<ChatMessage> list, User currentUser, User targetUser) {
+    // 聊天对象的信息
+    private String targetAvatar;
+
+    public ChatAdapter(Context context, List<ChatMessage> messageList) {
         this.context = context;
-        this.list = list;
-        this.currentUser = currentUser;
-        this.targetUser = targetUser;
+        this.messageList = messageList;
+    }
+
+    // 设置我的信息和对方的信息，用于区分左右和显示头像
+    public void setUserInfo(int myId, String myRole, String myAvatar, String targetAvatar) {
+        this.myId = myId;
+        this.myRole = myRole;
+        this.myAvatar = myAvatar;
+        this.targetAvatar = targetAvatar;
+        notifyDataSetChanged();
     }
 
     @Override
     public int getItemViewType(int position) {
-        if (list.get(position).senderId == currentUser.getId()) {
-            return TYPE_SEND;
-        } else {
-            return TYPE_RECEIVE;
+        ChatMessage msg = messageList.get(position);
+        // 如果发送者ID和角色都匹配，那就是我发的 -> 右边
+        if (msg.senderId == myId && msg.senderRole != null && msg.senderRole.equals(myRole)) {
+            return TYPE_RIGHT;
         }
+        return TYPE_LEFT;
     }
 
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        if (viewType == TYPE_SEND) {
+        if (viewType == TYPE_RIGHT) {
             View view = LayoutInflater.from(context).inflate(R.layout.item_chat_right, parent, false);
-            return new SendHolder(view);
+            return new RightViewHolder(view);
         } else {
             View view = LayoutInflater.from(context).inflate(R.layout.item_chat_left, parent, false);
-            return new ReceiveHolder(view);
+            return new LeftViewHolder(view);
         }
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ChatMessage msg = list.get(position);
-        if (holder instanceof SendHolder) {
-            ((SendHolder) holder).tvContent.setText(msg.content);
-            Glide.with(context).load(currentUser.getAvatar()).placeholder(R.drawable.lan)
-                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(100)))
-                    .into(((SendHolder) holder).ivAvatar);
-        } else if (holder instanceof ReceiveHolder) {
-            ((ReceiveHolder) holder).tvContent.setText(msg.content);
-            Glide.with(context).load(targetUser.getAvatar()).placeholder(R.drawable.lan)
-                    .apply(RequestOptions.bitmapTransform(new RoundedCorners(100)))
-                    .into(((ReceiveHolder) holder).ivAvatar);
+        ChatMessage msg = messageList.get(position);
+
+        if (holder instanceof RightViewHolder) {
+            RightViewHolder rightHolder = (RightViewHolder) holder;
+            rightHolder.tvContent.setText(msg.content);
+            rightHolder.tvTime.setText(DateUtils.formatTime(msg.createTime));
+            // 加载我的头像
+            Glide.with(context)
+                    .load(myAvatar)
+                    .placeholder(R.drawable.ic_avatar)
+                    .circleCrop()
+                    .into(rightHolder.ivAvatar);
+
+        } else if (holder instanceof LeftViewHolder) {
+            LeftViewHolder leftHolder = (LeftViewHolder) holder;
+            leftHolder.tvContent.setText(msg.content);
+            leftHolder.tvTime.setText(DateUtils.formatTime(msg.createTime));
+            // 加载对方头像
+            Glide.with(context)
+                    .load(targetAvatar)
+                    .placeholder(R.drawable.ic_avatar)
+                    .circleCrop()
+                    .into(leftHolder.ivAvatar);
         }
     }
 
     @Override
     public int getItemCount() {
-        return list.size();
+        return messageList.size();
     }
 
-    static class SendHolder extends RecyclerView.ViewHolder {
-        TextView tvContent;
+    static class LeftViewHolder extends RecyclerView.ViewHolder {
+        TextView tvTime, tvContent;
         ImageView ivAvatar;
-        SendHolder(View view) {
-            super(view);
-            tvContent = view.findViewById(R.id.tv_content);
-            ivAvatar = view.findViewById(R.id.iv_avatar);
+
+        public LeftViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvTime = itemView.findViewById(R.id.tv_time);
+            tvContent = itemView.findViewById(R.id.tv_content);
+            ivAvatar = itemView.findViewById(R.id.iv_avatar);
         }
     }
 
-    static class ReceiveHolder extends RecyclerView.ViewHolder {
-        TextView tvContent;
+    static class RightViewHolder extends RecyclerView.ViewHolder {
+        TextView tvTime, tvContent;
         ImageView ivAvatar;
-        ReceiveHolder(View view) {
-            super(view);
-            tvContent = view.findViewById(R.id.tv_content);
-            ivAvatar = view.findViewById(R.id.iv_avatar);
+
+        public RightViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvTime = itemView.findViewById(R.id.tv_time);
+            tvContent = itemView.findViewById(R.id.tv_content);
+            ivAvatar = itemView.findViewById(R.id.iv_avatar);
         }
     }
 }

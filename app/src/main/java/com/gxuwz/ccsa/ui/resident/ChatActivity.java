@@ -17,6 +17,7 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.ChatAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.ChatMessage;
+import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.User;
 
 import java.util.ArrayList;
@@ -30,9 +31,15 @@ public class ChatActivity extends AppCompatActivity {
     private ImageView ivBack, ivReport, ivHeaderAvatar;
     private TextView tvHeaderName;
 
-    private User currentUser;
-    private int targetUserId;
-    private User targetUser;
+    private int myId;
+    private String myRole; // "RESIDENT" or "MERCHANT"
+    private int targetId;
+    private String targetRole; // "RESIDENT" or "MERCHANT"
+
+    // 缓存的头像 URL
+    private String myAvatarUrl = "";
+    private String targetAvatarUrl = "";
+    private String targetNameStr = "";
 
     private ChatAdapter adapter;
     private List<ChatMessage> messageList = new ArrayList<>();
@@ -44,45 +51,29 @@ public class ChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_chat);
 
         db = AppDatabase.getInstance(this);
-        currentUser = (User) getIntent().getSerializableExtra("currentUser");
-        targetUserId = getIntent().getIntExtra("targetUserId", -1);
 
-        if (currentUser == null || targetUserId == -1) {
-            Toast.makeText(this, "参数错误", Toast.LENGTH_SHORT).show();
+        // 获取传递的参数
+        myId = getIntent().getIntExtra("myId", -1);
+        myRole = getIntent().getStringExtra("myRole");
+        targetId = getIntent().getIntExtra("targetId", -1);
+        targetRole = getIntent().getStringExtra("targetRole");
+
+        // 尝试获取预传的名称和头像，优化体验
+        if (getIntent().hasExtra("targetName")) {
+            targetNameStr = getIntent().getStringExtra("targetName");
+        }
+        if (getIntent().hasExtra("targetAvatar")) {
+            targetAvatarUrl = getIntent().getStringExtra("targetAvatar");
+        }
+
+        if (myId == -1 || targetId == -1 || TextUtils.isEmpty(myRole) || TextUtils.isEmpty(targetRole)) {
+            Toast.makeText(this, "聊天参数错误", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // 【核心BUG修复】：检测 currentUser 的 ID 是否丢失（为0）
-        // 这种情况常发生在注册后直接使用，或者 User 对象传递过程中数据不完整
-        if (currentUser.getId() == 0) {
-            // 尝试通过手机号在后台重新获取完整的 User 对象
-            recoverUserIdentity();
-        }
-
         initView();
-        loadTargetUserInfo();
-    }
-
-    private void recoverUserIdentity() {
-        new Thread(() -> {
-            // 假设 User 模型中有 getPhone() 方法，且手机号唯一
-            // 如果没有 phone 字段，请确保有其他唯一标识
-            if (!TextUtils.isEmpty(currentUser.getPhone())) {
-                User validUser = db.userDao().findByPhone(currentUser.getPhone());
-                if (validUser != null) {
-                    currentUser = validUser; // 修正 currentUser，此时 ID 应该 > 0
-
-                    // 修正后刷新 Adapter（如果已经初始化）
-                    runOnUiThread(() -> {
-                        if (adapter != null) {
-                            // ChatAdapter 需要有 setCurrentUser 方法，或者重建 Adapter
-                            // 简单起见，这里不需要额外操作，因为发送时会使用最新的 currentUser.getId()
-                        }
-                    });
-                }
-            }
-        }).start();
+        initData();
     }
 
     private void initView() {
@@ -91,61 +82,80 @@ public class ChatActivity extends AppCompatActivity {
         ivHeaderAvatar = findViewById(R.id.iv_header_avatar);
         tvHeaderName = findViewById(R.id.tv_header_name);
 
+        // 设置初始标题
+        tvHeaderName.setText(targetNameStr);
+        if (!TextUtils.isEmpty(targetAvatarUrl)) {
+            Glide.with(this).load(targetAvatarUrl).placeholder(R.drawable.ic_avatar).circleCrop().into(ivHeaderAvatar);
+        }
+
         ivBack.setOnClickListener(v -> finish());
-        ivReport.setOnClickListener(v -> Toast.makeText(this, "举报功能开发中", Toast.LENGTH_SHORT).show());
+        ivReport.setOnClickListener(v -> Toast.makeText(this, "举报", Toast.LENGTH_SHORT).show());
 
         recyclerView = findViewById(R.id.recycler_view);
         etInput = findViewById(R.id.et_input);
         btnSend = findViewById(R.id.btn_send);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        // layoutManager.setStackFromEnd(true);
+        // 让消息从底部开始堆叠
+        layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
+
+        adapter = new ChatAdapter(this, messageList);
+        recyclerView.setAdapter(adapter);
 
         btnSend.setOnClickListener(v -> sendMessage());
     }
 
-    private void loadTargetUserInfo() {
+    private void initData() {
         new Thread(() -> {
-            targetUser = db.userDao().getUserById(targetUserId);
-            runOnUiThread(() -> {
-                if (targetUser != null) {
-                    tvHeaderName.setText(targetUser.getName());
-                    Glide.with(this)
-                            .load(targetUser.getAvatar())
-                            .placeholder(R.drawable.lan)
-                            .into(ivHeaderAvatar);
+            // 1. 查询我的最新信息（为了头像）
+            if ("MERCHANT".equals(myRole)) {
+                Merchant me = db.merchantDao().findById(myId);
+                if (me != null) myAvatarUrl = me.getAvatar();
+            } else {
+                User me = db.userDao().findById(myId);
+                if (me != null) myAvatarUrl = me.getAvatar();
+            }
 
-                    // 初始化 Adapter
-                    adapter = new ChatAdapter(this, messageList, currentUser, targetUser);
-                    recyclerView.setAdapter(adapter);
-                    loadMessages();
-                } else {
-                    Toast.makeText(this, "未找到目标用户", Toast.LENGTH_SHORT).show();
-                    // 可以在这里禁用发送按钮
-                    btnSend.setEnabled(false);
+            // 2. 查询对方最新信息（为了头像和名字）
+            if ("MERCHANT".equals(targetRole)) {
+                Merchant target = db.merchantDao().findById(targetId);
+                if (target != null) {
+                    targetNameStr = target.getMerchantName();
+                    targetAvatarUrl = target.getAvatar();
                 }
+            } else {
+                User target = db.userDao().findById(targetId);
+                if (target != null) {
+                    targetNameStr = target.getName();
+                    targetAvatarUrl = target.getAvatar();
+                }
+            }
+
+            runOnUiThread(() -> {
+                tvHeaderName.setText(targetNameStr);
+                Glide.with(this).load(targetAvatarUrl).placeholder(R.drawable.ic_avatar).circleCrop().into(ivHeaderAvatar);
+
+                // 更新Adapter的配置
+                adapter.setUserInfo(myId, myRole, myAvatarUrl, targetAvatarUrl);
+
+                // 3. 加载消息
+                loadMessages();
             });
         }).start();
     }
 
     private void loadMessages() {
-        // 确保使用最新的 ID 查询
-        int myId = currentUser.getId();
-        if (myId == 0) return; // 如果 ID 还没恢复，暂时不查，避免查出错误数据
-
         new Thread(() -> {
-            List<ChatMessage> msgs = db.chatDao().getChatHistory(myId, targetUserId);
+            List<ChatMessage> msgs = db.chatDao().getChatHistory(myId, myRole, targetId, targetRole);
             runOnUiThread(() -> {
                 messageList.clear();
                 if (msgs != null) {
                     messageList.addAll(msgs);
                 }
-                if (adapter != null) {
-                    adapter.notifyDataSetChanged();
-                    if (!messageList.isEmpty()) {
-                        recyclerView.scrollToPosition(messageList.size() - 1);
-                    }
+                adapter.notifyDataSetChanged();
+                if (!messageList.isEmpty()) {
+                    recyclerView.scrollToPosition(messageList.size() - 1);
                 }
             });
         }).start();
@@ -158,22 +168,11 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
-        if (targetUser == null) {
-            Toast.makeText(this, "正在加载用户信息...", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 【核心防御】：再次检查 ID，防止发送 senderId=0 的消息
-        if (currentUser.getId() == 0) {
-            Toast.makeText(this, "用户信息同步中，请稍后再试", Toast.LENGTH_SHORT).show();
-            // 再次尝试恢复
-            recoverUserIdentity();
-            return;
-        }
-
         ChatMessage msg = new ChatMessage();
-        msg.senderId = currentUser.getId(); // 此时 ID 应该是正确的
-        msg.receiverId = targetUserId;
+        msg.senderId = myId;
+        msg.senderRole = myRole;
+        msg.receiverId = targetId;
+        msg.receiverRole = targetRole;
         msg.content = content;
         msg.createTime = System.currentTimeMillis();
 

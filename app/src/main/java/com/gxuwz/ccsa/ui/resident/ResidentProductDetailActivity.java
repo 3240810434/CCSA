@@ -61,6 +61,9 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     private String selectedSpecStr = "";
     private String productUnit = "";
 
+    // 客服按钮容器
+    private View btnContactService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -90,11 +93,51 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         tvTags = findViewById(R.id.tv_tags);
         ivMerchantAvatar = findViewById(R.id.iv_merchant_avatar);
         tvMerchantName = findViewById(R.id.tv_merchant_name);
+
         findViewById(R.id.btn_buy).setOnClickListener(v -> showPurchaseDialog());
+
+        // 【新增】客服按钮逻辑
+        // 尝试查找布局中的客服按钮，请确保 XML 中有 ID 为 ll_contact_service 的 View
+        // 如果你的XML没有这个ID，你需要添加一个 View 并设置 ID
+        btnContactService = findViewById(R.id.ll_contact_service);
+        if (btnContactService == null) {
+            // 兼容性尝试：如果没有找到，试试找图片
+            btnContactService = findViewById(R.id.iv_kefu);
+        }
+
+        if (btnContactService != null) {
+            btnContactService.setOnClickListener(v -> openChat());
+        }
+    }
+
+    // 打开聊天页面
+    private void openChat() {
+        if (currentUser == null) {
+            Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (product == null) return;
+
+        Intent intent = new Intent(this, ChatActivity.class);
+        // 我是居民
+        intent.putExtra("myId", currentUser.getId());
+        intent.putExtra("myRole", "RESIDENT");
+
+        // 对方是商家
+        intent.putExtra("targetId", product.getMerchantId());
+        intent.putExtra("targetRole", "MERCHANT");
+
+        if (productMerchant != null) {
+            intent.putExtra("targetName", productMerchant.getMerchantName());
+            intent.putExtra("targetAvatar", productMerchant.getAvatar());
+        } else {
+            intent.putExtra("targetName", "商家");
+        }
+
+        startActivity(intent);
     }
 
     private void loadData() {
-        // 从 SharedPreferences 获取 userId
         SharedPreferences sp = getSharedPreferences("user_prefs", MODE_PRIVATE);
         long userId = sp.getLong("user_id", -1);
 
@@ -132,7 +175,6 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         tvDesc.setText(product.getDescription() != null ? product.getDescription() : "暂无描述");
         productUnit = (product.getUnit() != null && !product.getUnit().isEmpty()) ? product.getUnit() : "份";
 
-        // 判断类型，兼容中英文
         boolean isService = "服务".equals(product.getType()) || "SERVICE".equalsIgnoreCase(product.getType());
 
         if (isService) {
@@ -159,7 +201,6 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     }
 
     private void showPurchaseDialog() {
-        // 核心检查：如果当前没有加载到用户
         if (currentUser == null) {
             long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
             if (userId == -1) {
@@ -187,7 +228,6 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         TextView tvAddrPhone = view.findViewById(R.id.tv_addr_phone);
         TextView tvAddrDetail = view.findViewById(R.id.tv_addr_detail);
 
-        // 填充用户信息
         if (currentUser != null) {
             tvAddrName.setText("姓名：" + (currentUser.getName() == null ? "暂无" : currentUser.getName()));
             tvAddrPhone.setText("电话：" + (currentUser.getPhone() == null ? "暂无" : currentUser.getPhone()));
@@ -337,62 +377,48 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         }, 1500);
     }
 
-    /**
-     * 创建订单逻辑 (已更新)
-     */
     private void createOrder(String payMethod) {
         new Thread(() -> {
             try {
                 Order order = new Order();
-                // 基础信息
                 order.orderNo = "ORD" + System.currentTimeMillis() + (int)(Math.random() * 1000);
                 order.createTime = DateUtils.getCurrentDateTime();
                 order.status = "待接单";
 
-                // 居民信息
                 order.residentId = String.valueOf(currentUser.getId());
                 order.residentName = currentUser.getName();
                 order.residentPhone = currentUser.getPhone();
                 order.address = currentUser.getCommunityName() + " " + currentUser.getBuilding() + " " + currentUser.getRoomNumber();
 
-                // 商家信息
                 order.merchantId = String.valueOf(product.getMerchantId());
                 order.merchantName = productMerchant != null ? productMerchant.getMerchantName() : "未知商家";
 
-                // 商品通用信息
                 order.productId = String.valueOf(product.getId());
                 order.productName = product.getName();
                 order.productType = product.getType();
                 order.productImageUrl = product.getFirstImage();
-                order.tags = product.tag; // 保存标签
+                order.tags = product.tag;
 
-                // 区分类型保存详细信息
                 boolean isService = "服务".equals(product.getType()) || "SERVICE".equalsIgnoreCase(product.getType());
                 if (isService) {
-                    // 服务类字段
-                    order.productType = "服务"; // 统一状态文本
+                    order.productType = "服务";
                     order.serviceCount = serviceQuantity;
                     order.productUnit = (product.getUnit() != null && !product.getUnit().isEmpty()) ? product.getUnit() : "次";
-                    // 计算出的单价
                     order.unitPrice = String.format("%.2f", currentPrice / serviceQuantity);
-                    order.selectedSpec = "标准服务"; // 占位，防止空指针
-                    order.deliveryMethod = "上门服务"; // 默认填上门
+                    order.selectedSpec = "标准服务";
+                    order.deliveryMethod = "上门服务";
                 } else {
-                    // 实物类字段
                     order.productType = "实物";
-                    order.selectedSpec = selectedSpecStr; // 用户选的规格
+                    order.selectedSpec = selectedSpecStr;
                     order.serviceCount = 1;
-                    // 配送方式映射：0-商家配送，1-到店自提
                     order.deliveryMethod = product.deliveryMethod == 0 ? "商家配送" : "到店自提";
                     order.productUnit = "份";
                     order.unitPrice = String.format("%.2f", currentPrice);
                 }
 
-                // 支付信息
                 order.payAmount = String.format("%.2f", currentPrice);
                 order.paymentMethod = payMethod;
 
-                // 插入数据库
                 db.orderDao().insert(order);
 
                 runOnUiThread(() -> {
