@@ -25,15 +25,15 @@ public class Order implements Serializable {
     public String productImageUrl;
 
     // 实物特有
-    public String selectedSpec; // 选中的规格（例如：第一行价格表的内容）
+    public String selectedSpec; // 选中的规格
 
     // 服务特有
     public int serviceCount; // 服务次数/数量
 
     public String payAmount; // 支付金额
+    public String paymentMethod; // 新增：付款方式 (微信/支付宝)
     public String status; // "待接单", "配送中", "已完成"
     public String createTime;
 
-    // 标签等辅助信息
     public String tags;
 }
