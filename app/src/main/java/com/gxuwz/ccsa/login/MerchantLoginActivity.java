@@ -3,6 +3,7 @@ package com.gxuwz.ccsa.login;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
+import android.content.SharedPreferences; // 导入 SharedPreferences
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -63,7 +64,17 @@ public class MerchantLoginActivity extends AppCompatActivity {
 
         // 数据库查询
         Merchant merchant = db.merchantDao().login(phone, password);
+
         if (merchant != null) {
+            // ============ 核心修复开始 ============
+            // 登录成功后，务必将 merchant_id 保存到 SharedPreferences
+            // 这里的 "merchant_prefs" 和 "merchant_id" 必须与 PendingOrdersActivity 中读取时一致
+            SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putLong("merchant_id", merchant.id); // 假设 Merchant 类的主键字段名为 id
+            editor.apply();
+            // ============ 核心修复结束 ============
+
             Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(MerchantLoginActivity.this, MerchantMainActivity.class);
             intent.putExtra("merchant", merchant);
