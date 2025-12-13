@@ -2,6 +2,7 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,7 +32,6 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // 使用修改后的 item_product_card 布局
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card, parent, false);
         return new ViewHolder(view);
     }
@@ -40,33 +40,32 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Product product = productList.get(position);
 
-        // --- 1. 处理名称显示 (只显示前5个字) ---
-        String name = product.getName();
-        if (name != null && name.length() > 5) {
-            name = name.substring(0, 5) + "...";
-        }
-        holder.tvName.setText(name);
+        // --- 1. 设置名称 ---
+        // 移除手动截取字符串的逻辑，交给 XML 中的 android:singleLine="true" 和 android:ellipsize="end" 处理
+        // 这样显示更自然，利用率更高
+        holder.tvName.setText(product.getName());
 
-        // --- 2. 处理价格显示 ---
-        String priceStr = "暂无报价";
-        if ("实物".equals(product.getType())) {
-            // 实物商品：价格
-            if (product.getPrice() != null) {
-                // 如果是区间价格，可能包含逗号，这里简单处理
-                priceStr = "¥" + product.getPrice();
-            }
-        } else {
-            // 服务商品：基础价格 + 单位 (例如 50元/次)
+        // --- 2. 区分实物与服务商品的价格显示 ---
+        String priceStr;
+        String type = product.getType(); // 获取类型
+
+        // 严谨判断类型，防止空指针
+        if (type != null && type.trim().equals("实物")) {
+            // 【实物商品】：只显示价格，例如 "¥ 100"
             String price = product.getPrice() != null ? product.getPrice() : "0";
-            String unit = product.getUnit() != null ? product.getUnit() : "次";
+            priceStr = "¥ " + price;
+        } else {
+            // 【服务商品】：显示价格 + 单位，例如 "50元/次"
+            String price = product.getPrice() != null ? product.getPrice() : "0";
+            String unit = !TextUtils.isEmpty(product.getUnit()) ? product.getUnit() : "次";
             priceStr = price + "元/" + unit;
         }
-        holder.tvPrice.setText(priceStr);
 
+        holder.tvPrice.setText(priceStr);
 
         // --- 3. 设置封面图 ---
         String imageUrl = product.getFirstImage();
-        if (imageUrl != null && !imageUrl.isEmpty()) {
+        if (!TextUtils.isEmpty(imageUrl)) {
             Glide.with(context)
                     .load(imageUrl)
                     .placeholder(R.drawable.shopping)
