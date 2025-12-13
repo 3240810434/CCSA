@@ -16,33 +16,36 @@
         android:src="@drawable/ic_add_photo"
         android:background="#E0E0E0"/>
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:paddingHorizontal="8dp"
         android:paddingTop="8dp">
-
-        <TextView
-            android:id="@+id/tv_product_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="商品名称"
-            android:textColor="#333333"
-            android:textSize="14sp"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:textStyle="bold"/>
 
         <TextView
             android:id="@+id/tv_product_price"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
+            android:layout_alignParentEnd="true"
             android:text="¥ 0.00"
             android:textColor="#FF4081"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"/>
-    </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_product_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@id/tv_product_price"
+            android:layout_marginEnd="8dp"
+            android:text="商品名称"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:textStyle="bold"/>
+
+    </RelativeLayout>
 
 </LinearLayout>
