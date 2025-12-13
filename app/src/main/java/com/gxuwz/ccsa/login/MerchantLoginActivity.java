@@ -3,11 +3,12 @@ package com.gxuwz.ccsa.login;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
-import android.content.SharedPreferences; // 导入 SharedPreferences
+import android.content.SharedPreferences;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Merchant;
@@ -63,20 +64,22 @@ public class MerchantLoginActivity extends AppCompatActivity {
         }
 
         // 数据库查询
+        // 注意：如果 AppDatabase 未开启 allowMainThreadQueries()，建议将此操作放入子线程
         Merchant merchant = db.merchantDao().login(phone, password);
 
         if (merchant != null) {
-            // ============ 核心修复开始 ============
-            // 登录成功后，务必将 merchant_id 保存到 SharedPreferences
-            // 这里的 "merchant_prefs" 和 "merchant_id" 必须与 PendingOrdersActivity 中读取时一致
+            // 保存登录状态到 SharedPreferences
             SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
             SharedPreferences.Editor editor = sp.edit();
-            editor.putLong("merchant_id", merchant.id); // 假设 Merchant 类的主键字段名为 id
+
+            // 【修改处】：使用 getId() 方法获取主键，确保与 Merchant 实体类定义一致
+            editor.putLong("merchant_id", merchant.getId());
+
             editor.apply();
-            // ============ 核心修复结束 ============
 
             Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(MerchantLoginActivity.this, MerchantMainActivity.class);
+            // 传递对象到下一个页面
             intent.putExtra("merchant", merchant);
             startActivity(intent);
             finish();
