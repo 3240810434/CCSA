@@ -18,35 +18,31 @@ public class PendingOrdersActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private AppDatabase db;
-    private long merchantId;
+    // 【修改点1】改为 int 类型
+    private int merchantId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_pending_orders);
 
-        // 1. 从 SharedPreferences 获取商家ID
-        merchantId = getSharedPreferences("merchant_prefs", MODE_PRIVATE).getLong("merchant_id", -1);
+        // 【修改点2】使用 getInt 获取 merchant_id
+        merchantId = getSharedPreferences("merchant_prefs", MODE_PRIVATE).getInt("merchant_id", -1);
 
-        // 2. [新增] 校验登录状态
-        // 如果获取不到ID（即为默认值-1），提示错误并关闭页面
+        // 校验登录状态
         if (merchantId == -1) {
             Toast.makeText(this, "登录状态异常，请重新登录", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        // 初始化数据库实例
         db = AppDatabase.getInstance(this);
 
-        // 初始化 RecyclerView
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // 返回按钮逻辑
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
-        // 加载数据
         loadData();
     }
 
@@ -56,24 +52,21 @@ public class PendingOrdersActivity extends AppCompatActivity {
             List<Order> orders = db.orderDao().getPendingOrdersByMerchant(String.valueOf(merchantId));
 
             runOnUiThread(() -> {
-                // 3. [可选] 空数据处理逻辑（此处仅做代码结构保留，可视需求开启Toast）
+                // 如果需要空数据提示，可以在这里处理
                 if (orders == null || orders.isEmpty()) {
                     // Toast.makeText(this, "暂无待接单订单", Toast.LENGTH_SHORT).show();
                 }
 
                 MerchantPendingOrderAdapter adapter = new MerchantPendingOrderAdapter(orders);
 
-                // 设置接单按钮点击事件
                 adapter.setOnOrderActionListener(order -> {
                     new Thread(() -> {
-                        // 更新订单状态
                         order.status = "配送中";
                         db.orderDao().update(order);
 
-                        // 4. [新增] 回到主线程刷新UI并提示用户
                         runOnUiThread(() -> {
                             Toast.makeText(PendingOrdersActivity.this, "已接单，开始配送", Toast.LENGTH_SHORT).show();
-                            loadData(); // 重新加载列表以移除已接单的条目
+                            loadData(); // 重新加载
                         });
                     }).start();
                 });
