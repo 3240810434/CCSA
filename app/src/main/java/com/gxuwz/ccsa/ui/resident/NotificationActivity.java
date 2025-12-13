@@ -16,6 +16,7 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.NotificationAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.ChatMessage;
+import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Notification;
 import com.gxuwz.ccsa.model.UnifiedMessage;
 import com.gxuwz.ccsa.model.User;
@@ -93,34 +94,68 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                 }
 
                 // 2. 获取聊天会话
-                // 此方法需确保在 DAO 中实现：SELECT * FROM chat_message WHERE senderId = :myId OR receiverId = :myId ORDER BY createTime DESC
-                List<ChatMessage> allChatMsgs = db.chatDao().getAllMyMessages(currentUser.getId());
+                // 【修复1】这里传入 "RESIDENT" 作为当前用户的角色
+                List<ChatMessage> allChatMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
 
                 if (allChatMsgs != null) {
-                    Map<Integer, ChatMessage> latestMsgMap = new HashMap<>();
+                    // 使用 String Key (Role + "_" + ID) 防止 ID 冲突
+                    Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
                     for (ChatMessage msg : allChatMsgs) {
-                        // 核心修复：准确计算对方ID
-                        // 如果我是发送者，对方就是receiverId；如果我是接收者，对方就是senderId
-                        int otherId = (msg.senderId == currentUser.getId()) ? msg.receiverId : msg.senderId;
+                        // 确定对方是谁
+                        int otherId;
+                        String otherRole;
 
-                        // 因为查询结果是按时间倒序的，所以第一次遇到的 otherId 对应的消息就是最新一条
-                        if (!latestMsgMap.containsKey(otherId)) {
-                            latestMsgMap.put(otherId, msg);
+                        // 如果我是发送者(且角色匹配)，对方就是接收者；反之亦然
+                        if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+                            otherId = msg.receiverId;
+                            otherRole = msg.receiverRole;
+                        } else {
+                            otherId = msg.senderId;
+                            otherRole = msg.senderRole;
+                        }
+
+                        // 组合Key
+                        String key = otherRole + "_" + otherId;
+
+                        // 因为查询结果是按时间倒序的，所以第一次遇到的就是最新一条
+                        if (!latestMsgMap.containsKey(key)) {
+                            latestMsgMap.put(key, msg);
                         }
                     }
 
                     // 将最新的一条聊天转换为 UnifiedMessage
-                    for (Map.Entry<Integer, ChatMessage> entry : latestMsgMap.entrySet()) {
-                        int targetId = entry.getKey();
-                        ChatMessage msg = entry.getValue();
+                    for (ChatMessage msg : latestMsgMap.values()) {
+                        // 重新解析出对方的 ID 和 Role
+                        int targetId;
+                        String targetRole;
 
-                        // 查询对方用户信息以获取名字和头像 (实现“绑定”功能)
-                        User targetUser = db.userDao().getUserById(targetId);
+                        if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+                            targetId = msg.receiverId;
+                            targetRole = msg.receiverRole;
+                        } else {
+                            targetId = msg.senderId;
+                            targetRole = msg.senderRole;
+                        }
 
-                        // 默认值处理，防止“未知用户”
-                        String titleName = (targetUser != null) ? targetUser.getName() : "邻居 (ID:" + targetId + ")";
-                        String avatar = (targetUser != null) ? targetUser.getAvatar() : null;
+                        String titleName = "未知用户";
+                        String avatar = null;
+
+                        // 【新增】根据角色去查不同的表
+                        if ("MERCHANT".equals(targetRole)) {
+                            Merchant m = db.merchantDao().findById(targetId);
+                            if (m != null) {
+                                titleName = m.getMerchantName();
+                                avatar = m.getAvatar();
+                            }
+                        } else {
+                            // 默认为居民
+                            User u = db.userDao().getUserById(targetId);
+                            if (u != null) {
+                                titleName = u.getName();
+                                avatar = u.getAvatar();
+                            }
+                        }
 
                         unifiedList.add(new UnifiedMessage(msg, titleName, targetId, avatar));
                     }
@@ -133,10 +168,6 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                 runOnUiThread(() -> {
                     if (adapter != null) {
                         adapter.updateData(unifiedList);
-                    }
-                    if (unifiedList.isEmpty()) {
-                        // 可以选择显示空状态视图
-                        // Toast.makeText(this, "暂无消息", Toast.LENGTH_SHORT).show();
                     }
                 });
 
@@ -153,10 +184,34 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
     @Override
     public void onItemClick(UnifiedMessage message) {
         if (message.getType() == UnifiedMessage.TYPE_CHAT_MESSAGE) {
-            // 跳转到聊天页面
+            // 获取原始消息以判断目标角色
+            ChatMessage msg = (ChatMessage) message.getData();
+
+            int targetId;
+            String targetRole;
+
+            if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+                targetId = msg.receiverId;
+                targetRole = msg.receiverRole;
+            } else {
+                targetId = msg.senderId;
+                targetRole = msg.senderRole;
+            }
+
+            // 跳转到通用聊天页面
             Intent intent = new Intent(this, ChatActivity.class);
-            intent.putExtra("currentUser", currentUser);
-            intent.putExtra("targetUserId", message.getChatTargetId());
+            // 传递我的信息
+            intent.putExtra("myId", currentUser.getId());
+            intent.putExtra("myRole", "RESIDENT");
+
+            // 传递对方信息
+            intent.putExtra("targetId", targetId);
+            intent.putExtra("targetRole", targetRole);
+
+            // 传递显示信息（优化体验）
+            intent.putExtra("targetName", message.getTitle());
+            // intent.putExtra("targetAvatar", ...); // 如果 UnifiedMessage 里有也可以传
+
             startActivity(intent);
 
         } else if (message.getType() == UnifiedMessage.TYPE_SYSTEM_NOTICE) {
@@ -165,10 +220,27 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
         }
     }
 
-    // 新增：长按删除功能
+    // 长按删除功能
     @Override
     public void onItemLongClick(UnifiedMessage message) {
         if (message.getType() == UnifiedMessage.TYPE_CHAT_MESSAGE) {
+            ChatMessage msg = (ChatMessage) message.getData();
+
+            // 解析目标信息
+            int targetId;
+            String targetRole;
+            if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+                targetId = msg.receiverId;
+                targetRole = msg.receiverRole;
+            } else {
+                targetId = msg.senderId;
+                targetRole = msg.senderRole;
+            }
+
+            // 需要 final 变量传入 lambda
+            final int tId = targetId;
+            final String tRole = targetRole;
+
             // 弹出确认删除对话框
             new AlertDialog.Builder(this)
                     .setTitle("删除聊天")
@@ -176,22 +248,21 @@ public class NotificationActivity extends AppCompatActivity implements Notificat
                     .setNegativeButton("取消", null)
                     .setPositiveButton("确认", (dialog, which) -> {
                         // 执行删除操作
-                        deleteConversation(message.getChatTargetId());
+                        deleteConversation(tId, tRole);
                     })
                     .show();
         } else {
-            // 系统通知长按也可以做删除处理，这里暂时只做聊天的
             Toast.makeText(this, "系统通知暂不支持删除", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // 执行数据库删除并刷新
-    private void deleteConversation(int targetId) {
+    // 【修复2】执行数据库删除并刷新，增加 targetRole 参数
+    private void deleteConversation(int targetId, String targetRole) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                // 调用 DAO 删除会话 (需确保 ChatDao 中有 deleteConversation 方法)
-                db.chatDao().deleteConversation(currentUser.getId(), targetId);
+                // 调用 DAO 删除会话，传入我的 ID 和 Role，以及对方的 ID 和 Role
+                db.chatDao().deleteConversation(currentUser.getId(), "RESIDENT", targetId, targetRole);
 
                 runOnUiThread(() -> {
                     Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show();
