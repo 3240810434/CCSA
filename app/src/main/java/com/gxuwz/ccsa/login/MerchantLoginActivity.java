@@ -64,26 +64,28 @@ public class MerchantLoginActivity extends AppCompatActivity {
         }
 
         // 数据库查询
-        Merchant merchant = db.merchantDao().login(phone, password);
+        new Thread(() -> {
+            Merchant merchant = db.merchantDao().login(phone, password);
+            runOnUiThread(() -> {
+                if (merchant != null) {
+                    // 保存登录状态到 SharedPreferences
+                    SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sp.edit();
 
-        if (merchant != null) {
-            // 保存登录状态到 SharedPreferences
-            SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
-            SharedPreferences.Editor editor = sp.edit();
+                    // 【核心修改】：改为 putInt，因为 id 是 int 类型
+                    editor.putInt("merchant_id", merchant.getId());
 
-            // 【修复关键点】：Merchant 的 id 是 int 类型，必须用 putInt 保存
-            // 之前错误使用了 putLong，导致读取时报错
-            editor.putInt("merchant_id", merchant.getId());
+                    editor.apply();
 
-            editor.apply();
-
-            Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(MerchantLoginActivity.this, MerchantMainActivity.class);
-            intent.putExtra("merchant", merchant);
-            startActivity(intent);
-            finish();
-        } else {
-            Toast.makeText(this, "账号或密码错误", Toast.LENGTH_SHORT).show();
-        }
+                    Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(MerchantLoginActivity.this, MerchantMainActivity.class);
+                    intent.putExtra("merchant", merchant);
+                    startActivity(intent);
+                    finish();
+                } else {
+                    Toast.makeText(this, "账号或密码错误", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
     }
 }

@@ -46,12 +46,11 @@ public class MerchantMessageFragment extends Fragment {
 
         // 获取当前商家ID
         SharedPreferences sp = getContext().getSharedPreferences("merchant_prefs", Context.MODE_PRIVATE);
-
-        // 【注意】：这里必须使用 getInt 来配合 LoginActivity 中的 putInt
-        // 如果你之前存的是 Long，这里就会崩溃。修改 LoginActivity 后请卸载重装 App。
+        // 【注意】这里使用 getInt，必须配合 LoginActivity 中的 putInt
         merchantId = sp.getInt("merchant_id", -1);
 
         recyclerView = view.findViewById(R.id.recycler_view);
+        // 确保你的 fragment_merchant_message.xml 中有一个 ID 为 recycler_view 的 RecyclerView
         if (recyclerView != null) {
             recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
             adapter = new MerchantChatAdapter(getContext(), conversationList, merchantId);
@@ -64,6 +63,7 @@ public class MerchantMessageFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        // 每次页面显示时刷新数据
         loadConversations();
     }
 
@@ -71,7 +71,8 @@ public class MerchantMessageFragment extends Fragment {
         if (merchantId == -1) return;
 
         new Thread(() -> {
-            // 获取所有与我(MERCHANT)相关的消息
+            // 查询所有与我(MERCHANT)相关的消息
+            // 确保 ChatDao 中有 getAllMyMessages(int id, String role) 方法
             List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(merchantId, "MERCHANT");
             Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
@@ -79,6 +80,7 @@ public class MerchantMessageFragment extends Fragment {
                 int otherId;
                 String otherRole;
 
+                // 判断对方是谁
                 if (msg.senderId == merchantId && "MERCHANT".equals(msg.senderRole)) {
                     otherId = msg.receiverId;
                     otherRole = msg.receiverRole;
@@ -87,11 +89,13 @@ public class MerchantMessageFragment extends Fragment {
                     otherRole = msg.senderRole;
                 }
 
+                // 组合Key，防止ID重复
                 String key = otherRole + "_" + otherId;
 
                 if (!latestMsgMap.containsKey(key)) {
+                    // 如果对方是居民，查询居民信息
                     if ("RESIDENT".equals(otherRole)) {
-                        User u = db.userDao().findById(otherId);
+                        User u = db.userDao().findById(otherId); // 确保 UserDao 有 findById
                         msg.targetName = (u != null) ? u.getName() : "居民";
                         msg.targetAvatar = (u != null) ? u.getAvatar() : "";
                     } else {
@@ -143,6 +147,7 @@ public class MerchantMessageFragment extends Fragment {
                 int targetId;
                 String targetRole;
 
+                // 点击跳转到聊天页面
                 if (msg.senderId == myMerchantId && "MERCHANT".equals(msg.senderRole)) {
                     targetId = msg.receiverId;
                     targetRole = msg.receiverRole;
