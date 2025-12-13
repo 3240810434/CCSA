@@ -2,7 +2,6 @@ package com.gxuwz.ccsa.model;
 
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-
 import java.io.Serializable;
 
 @Entity(tableName = "orders")
@@ -10,30 +9,37 @@ public class Order implements Serializable {
     @PrimaryKey(autoGenerate = true)
     public long id;
 
-    public String orderNo; // 订单编号
-    public String residentId; // 居民ID
+    public String orderNo;       // 订单编号
+    public String createTime;    // 下单时间
+    public String status;        // "待接单", "配送中", "已完成"
+
+    // --- 居民信息 ---
+    public String residentId;
     public String residentName;
     public String residentPhone;
-    public String address; // 完整收货地址
+    public String address;       // 收货地址
 
-    public String merchantId; // 商家ID
+    // --- 商家信息 ---
+    public String merchantId;
     public String merchantName;
 
-    public String productId; // 商品ID
+    // --- 商品快照信息 (严格区分展示用) ---
+    public String productId;
     public String productName;
-    public String productType; // "实物" 或 "服务"
+    public String productType;   // "实物" 或 "服务"
     public String productImageUrl;
+    public String tags;          // 商品标签
 
-    // 实物特有
-    public String selectedSpec; // 选中的规格
+    // 实物特有字段
+    public String selectedSpec;  // 选中的规格 (描述+价格)
+    public String deliveryMethod;// 配送方式 (商家配送/到店自提)
 
-    // 服务特有
-    public int serviceCount; // 服务次数/数量
+    // 服务特有字段
+    public int serviceCount;     // 购买数量
+    public String productUnit;   // 计价单位 (如：次、小时)
+    public String unitPrice;     // 基础单价 (下单时的单价)
 
-    public String payAmount; // 支付金额
-    public String paymentMethod; // 新增：付款方式 (微信/支付宝)
-    public String status; // "待接单", "配送中", "已完成"
-    public String createTime;
-
-    public String tags;
+    // --- 支付信息 ---
+    public String payAmount;     // 总支付金额
+    public String paymentMethod; // 支付方式 (微信/支付宝)
 }

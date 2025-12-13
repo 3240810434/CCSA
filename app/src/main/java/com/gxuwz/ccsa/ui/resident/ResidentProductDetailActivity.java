@@ -15,7 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Intent;
-import android.content.SharedPreferences; // 导入 SharedPreferences
+import android.content.SharedPreferences;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
@@ -164,11 +164,8 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
             if (userId == -1) {
                 Toast.makeText(this, "未检测到登录状态，请先登录", Toast.LENGTH_SHORT).show();
-                // 可选：跳转回登录页
-                // startActivity(new Intent(this, com.gxuwz.ccsa.login.ResidentLoginActivity.class));
             } else {
                 Toast.makeText(this, "正在加载用户信息，请稍候...", Toast.LENGTH_SHORT).show();
-                // 尝试重新加载
                 loadData();
             }
             return;
@@ -340,43 +337,68 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         }, 1500);
     }
 
+    /**
+     * 创建订单逻辑 (已更新)
+     */
     private void createOrder(String payMethod) {
         new Thread(() -> {
             try {
                 Order order = new Order();
-                order.orderNo = "ORD" + System.currentTimeMillis() + (int)(Math.random()*100);
+                // 基础信息
+                order.orderNo = "ORD" + System.currentTimeMillis() + (int)(Math.random() * 1000);
+                order.createTime = DateUtils.getCurrentDateTime();
+                order.status = "待接单";
+
+                // 居民信息
                 order.residentId = String.valueOf(currentUser.getId());
                 order.residentName = currentUser.getName();
                 order.residentPhone = currentUser.getPhone();
                 order.address = currentUser.getCommunityName() + " " + currentUser.getBuilding() + " " + currentUser.getRoomNumber();
 
+                // 商家信息
                 order.merchantId = String.valueOf(product.getMerchantId());
                 order.merchantName = productMerchant != null ? productMerchant.getMerchantName() : "未知商家";
 
+                // 商品通用信息
                 order.productId = String.valueOf(product.getId());
                 order.productName = product.getName();
                 order.productType = product.getType();
                 order.productImageUrl = product.getFirstImage();
+                order.tags = product.tag; // 保存标签
 
+                // 区分类型保存详细信息
                 boolean isService = "服务".equals(product.getType()) || "SERVICE".equalsIgnoreCase(product.getType());
                 if (isService) {
-                    order.selectedSpec = "标准服务";
+                    // 服务类字段
+                    order.productType = "服务"; // 统一状态文本
                     order.serviceCount = serviceQuantity;
+                    order.productUnit = (product.getUnit() != null && !product.getUnit().isEmpty()) ? product.getUnit() : "次";
+                    // 计算出的单价
+                    order.unitPrice = String.format("%.2f", currentPrice / serviceQuantity);
+                    order.selectedSpec = "标准服务"; // 占位，防止空指针
+                    order.deliveryMethod = "上门服务"; // 默认填上门
                 } else {
-                    order.selectedSpec = selectedSpecStr;
+                    // 实物类字段
+                    order.productType = "实物";
+                    order.selectedSpec = selectedSpecStr; // 用户选的规格
                     order.serviceCount = 1;
+                    // 配送方式映射：0-商家配送，1-到店自提
+                    order.deliveryMethod = product.deliveryMethod == 0 ? "商家配送" : "到店自提";
+                    order.productUnit = "份";
+                    order.unitPrice = String.format("%.2f", currentPrice);
                 }
 
+                // 支付信息
                 order.payAmount = String.format("%.2f", currentPrice);
                 order.paymentMethod = payMethod;
-                order.status = "待接单"; // 确保状态符合 MerchantPendingOrderAdapter 的查询逻辑 (pending)
-                order.createTime = DateUtils.getCurrentDateTime();
 
+                // 插入数据库
                 db.orderDao().insert(order);
 
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "支付成功！订单已生成", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "下单成功！", Toast.LENGTH_SHORT).show();
                     if (bottomSheetDialog != null) bottomSheetDialog.dismiss();
+
                     Intent intent = new Intent(this, ResidentOrdersActivity.class);
                     startActivity(intent);
                     finish();
@@ -384,7 +406,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                runOnUiThread(() -> Toast.makeText(this, "订单创建失败：" + e.getMessage(), Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> Toast.makeText(this, "下单失败：" + e.getMessage(), Toast.LENGTH_SHORT).show());
             }
         }).start();
     }
