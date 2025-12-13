@@ -71,14 +71,14 @@ public class MerchantLoginActivity extends AppCompatActivity {
             SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
             SharedPreferences.Editor editor = sp.edit();
 
-            // 使用 getId() 方法获取主键
-            editor.putLong("merchant_id", merchant.getId());
+            // 【修复关键点】：Merchant 的 id 是 int 类型，必须用 putInt 保存
+            // 之前错误使用了 putLong，导致读取时报错
+            editor.putInt("merchant_id", merchant.getId());
 
             editor.apply();
 
             Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(MerchantLoginActivity.this, MerchantMainActivity.class);
-            // 传递对象到下一个页面
             intent.putExtra("merchant", merchant);
             startActivity(intent);
             finish();

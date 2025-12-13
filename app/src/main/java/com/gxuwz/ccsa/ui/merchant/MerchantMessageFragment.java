@@ -1,12 +1,14 @@
 package com.gxuwz.ccsa.ui.merchant;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,8 +24,6 @@ import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.ui.resident.ChatActivity;
 import com.gxuwz.ccsa.util.DateUtils;
 
-import android.widget.ImageView;
-import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,15 +43,20 @@ public class MerchantMessageFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_merchant_message, container, false);
 
         db = AppDatabase.getInstance(getContext());
-        // 从 SharedPreferences 获取当前商家ID
+
+        // 获取当前商家ID
         SharedPreferences sp = getContext().getSharedPreferences("merchant_prefs", Context.MODE_PRIVATE);
+
+        // 【注意】：这里必须使用 getInt 来配合 LoginActivity 中的 putInt
+        // 如果你之前存的是 Long，这里就会崩溃。修改 LoginActivity 后请卸载重装 App。
         merchantId = sp.getInt("merchant_id", -1);
 
         recyclerView = view.findViewById(R.id.recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-        adapter = new MerchantChatAdapter(getContext(), conversationList, merchantId);
-        recyclerView.setAdapter(adapter);
+        if (recyclerView != null) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+            adapter = new MerchantChatAdapter(getContext(), conversationList, merchantId);
+            recyclerView.setAdapter(adapter);
+        }
 
         return view;
     }
@@ -66,7 +71,7 @@ public class MerchantMessageFragment extends Fragment {
         if (merchantId == -1) return;
 
         new Thread(() -> {
-            // 查询所有与我(MERCHANT)相关的消息
+            // 获取所有与我(MERCHANT)相关的消息
             List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(merchantId, "MERCHANT");
             Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
@@ -74,7 +79,6 @@ public class MerchantMessageFragment extends Fragment {
                 int otherId;
                 String otherRole;
 
-                // 判断对方是谁
                 if (msg.senderId == merchantId && "MERCHANT".equals(msg.senderRole)) {
                     otherId = msg.receiverId;
                     otherRole = msg.receiverRole;
@@ -86,13 +90,11 @@ public class MerchantMessageFragment extends Fragment {
                 String key = otherRole + "_" + otherId;
 
                 if (!latestMsgMap.containsKey(key)) {
-                    // 查询居民信息
                     if ("RESIDENT".equals(otherRole)) {
                         User u = db.userDao().findById(otherId);
                         msg.targetName = (u != null) ? u.getName() : "居民";
                         msg.targetAvatar = (u != null) ? u.getAvatar() : "";
                     } else {
-                        // 商家互聊等情况（如有）
                         msg.targetName = "未知用户";
                     }
                     latestMsgMap.put(key, msg);
@@ -103,13 +105,13 @@ public class MerchantMessageFragment extends Fragment {
                 getActivity().runOnUiThread(() -> {
                     conversationList.clear();
                     conversationList.addAll(latestMsgMap.values());
-                    adapter.notifyDataSetChanged();
+                    if (adapter != null) adapter.notifyDataSetChanged();
                 });
             }
         }).start();
     }
 
-    // 内部类：专用 Adapter
+    // 内部类 Adapter
     public static class MerchantChatAdapter extends RecyclerView.Adapter<MerchantChatAdapter.ViewHolder> {
         private Context context;
         private List<ChatMessage> list;
@@ -135,14 +137,9 @@ public class MerchantMessageFragment extends Fragment {
             holder.tvContent.setText(msg.content);
             holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
 
-            Glide.with(context)
-                    .load(msg.targetAvatar)
-                    .placeholder(R.drawable.ic_avatar)
-                    .circleCrop()
-                    .into(holder.ivAvatar);
+            Glide.with(context).load(msg.targetAvatar).placeholder(R.drawable.ic_avatar).circleCrop().into(holder.ivAvatar);
 
             holder.itemView.setOnClickListener(v -> {
-                // 计算目标ID（通常是居民）
                 int targetId;
                 String targetRole;
 
@@ -155,17 +152,12 @@ public class MerchantMessageFragment extends Fragment {
                 }
 
                 Intent intent = new Intent(context, ChatActivity.class);
-                // 我是商家
                 intent.putExtra("myId", myMerchantId);
                 intent.putExtra("myRole", "MERCHANT");
-
-                // 对方是居民
                 intent.putExtra("targetId", targetId);
                 intent.putExtra("targetRole", targetRole);
-
                 intent.putExtra("targetName", msg.targetName);
                 intent.putExtra("targetAvatar", msg.targetAvatar);
-
                 context.startActivity(intent);
             });
         }
