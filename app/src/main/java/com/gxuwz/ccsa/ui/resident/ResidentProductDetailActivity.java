@@ -20,13 +20,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.signature.ObjectKey;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.BannerAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
+import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.model.Product;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.util.DateUtils;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,12 +42,15 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     private Product product;
     private AppDatabase db;
     private User currentUser;
+    private Merchant productMerchant; // 增加商家对象
     private Dialog bottomSheetDialog;
 
     // UI 组件
     private ViewPager2 bannerViewPager;
     private TextView tvBannerIndicator;
     private TextView tvName, tvDesc, tvPrice, tvTypeInfo, tvTags;
+    private ImageView ivMerchantAvatar;
+    private TextView tvMerchantName;
 
     // 购买弹窗相关
     private Button btnPay;
@@ -60,15 +68,16 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_resident_product_detail);
 
         db = AppDatabase.getInstance(this);
-        // 获取当前用户
-        long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
-        new Thread(() -> currentUser = db.userDao().findById(userId)).start();
-
-        // 获取传递的商品对象
         product = (Product) getIntent().getSerializableExtra("product");
 
+        if (product == null) {
+            Toast.makeText(this, "商品数据错误", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
         initView();
-        setupData();
+        loadData();
     }
 
     private void initView() {
@@ -78,45 +87,59 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         // 绑定视图
         bannerViewPager = findViewById(R.id.banner_view_pager);
         tvBannerIndicator = findViewById(R.id.tv_banner_indicator);
+
         tvName = findViewById(R.id.tv_product_name);
         tvDesc = findViewById(R.id.tv_desc);
         tvPrice = findViewById(R.id.tv_price);
         tvTypeInfo = findViewById(R.id.tv_type_info);
         tvTags = findViewById(R.id.tv_tags);
 
+        ivMerchantAvatar = findViewById(R.id.iv_merchant_avatar);
+        tvMerchantName = findViewById(R.id.tv_merchant_name);
+
         // 购买按钮
         findViewById(R.id.btn_buy).setOnClickListener(v -> showPurchaseDialog());
     }
 
-    private void setupData() {
-        if (product == null) return;
+    private void loadData() {
+        // 异步获取数据
+        long userId = getSharedPreferences("user_prefs", MODE_PRIVATE).getLong("user_id", -1);
 
-        // 1. 设置轮播图
+        new Thread(() -> {
+            // 1. 获取当前登录用户（用于下单）
+            currentUser = db.userDao().findById(userId);
+            // 2. 获取该商品的发布商家（用于显示）
+            productMerchant = db.merchantDao().findById(product.getMerchantId());
+
+            // 切回主线程更新UI
+            runOnUiThread(this::setupUI);
+        }).start();
+    }
+
+    private void setupUI() {
+        if (isDestroyed()) return;
+
+        // --- 1. 设置轮播图 ---
         List<String> imageUrls = new ArrayList<>();
         if (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) {
             String[] urls = product.getImageUrls().split(",");
             imageUrls.addAll(Arrays.asList(urls));
-        }
-
-        // 如果没有图片，放一张默认图路径（或者由Adapter处理空情况）
-        if (imageUrls.isEmpty()) {
-            imageUrls.add("");
+        } else {
+            imageUrls.add(""); // 占位
         }
 
         BannerAdapter bannerAdapter = new BannerAdapter(this, imageUrls);
         bannerViewPager.setAdapter(bannerAdapter);
 
-        // 设置轮播图点击事件 -> 查看大图
+        // 查看大图逻辑
         bannerAdapter.setOnBannerClickListener(url -> {
             Intent intent = new Intent(this, ImagePreviewActivity.class);
-            // 传递所有图片列表
             intent.putStringArrayListExtra("images", (ArrayList<String>) imageUrls);
-            // 传递当前点击的位置
             intent.putExtra("position", bannerViewPager.getCurrentItem());
             startActivity(intent);
         });
 
-        // 设置指示器文本 (1/3)
+        // 指示器
         tvBannerIndicator.setText("1/" + imageUrls.size());
         bannerViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
@@ -125,37 +148,90 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             }
         });
 
-        // 2. 设置基本信息
+        // --- 2. 设置基本信息 ---
         tvName.setText(product.getName());
         tvDesc.setText(product.getDescription() != null ? product.getDescription() : "暂无描述");
-        tvTags.setText(product.tag != null && !product.tag.isEmpty() ? product.tag : "暂无标签");
 
-        // 3. 根据类型设置差异化信息
-        if ("实物".equals(product.getType())) {
-            // 实物逻辑
-            tvPrice.setText("¥ " + (product.getPrice() != null ? product.getPrice() : "--"));
+        // --- 3. 根据类型设置差异化信息 (参考 MerchantProductDetailActivity 逻辑) ---
+        if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
+            // === 服务商品 ===
+
+            // 价格 + 单位
+            String unit = (product.getUnit() != null && !product.getUnit().isEmpty()) ? product.getUnit() : "次";
+            tvPrice.setText("¥ " + product.getPrice() + " / " + unit);
+            tvPrice.setTextSize(18);
+
+            // 服务类型解析
+            String serviceMode = "上门服务"; // 默认
+            try {
+                if (product.priceTableJson != null) {
+                    JSONArray ja = new JSONArray(product.priceTableJson);
+                    if (ja.length() > 0) {
+                        serviceMode = ja.getJSONObject(0).optString("mode", "上门服务");
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            tvTypeInfo.setText("服务类型：" + serviceMode);
+            tvTags.setText("服务标签：" + (product.tag != null ? product.tag : "暂无标签"));
+
+        } else {
+            // === 实物商品 ===
+
+            // 价格表解析
+            try {
+                if (product.priceTableJson != null && !product.priceTableJson.isEmpty()) {
+                    JSONArray jsonArray = new JSONArray(product.priceTableJson);
+                    StringBuilder sb = new StringBuilder();
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject obj = jsonArray.getJSONObject(i);
+                        sb.append(obj.optString("desc"))
+                                .append(" : ¥ ")
+                                .append(obj.optString("price"))
+                                .append("\n");
+                    }
+                    tvPrice.setText(sb.toString().trim());
+                    tvPrice.setTextSize(16); // 列表字稍小
+                } else {
+                    tvPrice.setText("¥ " + product.getPrice());
+                    tvPrice.setTextSize(18);
+                }
+            } catch (Exception e) {
+                tvPrice.setText("¥ " + product.getPrice());
+            }
+
+            // 配送方式
             String delivery = product.deliveryMethod == 0 ? "商家配送" : "到店自提";
             tvTypeInfo.setText("配送方式：" + delivery);
+            tvTags.setText("商品标签：" + (product.tag != null ? product.tag : "暂无标签"));
+        }
+
+        // --- 4. 设置商家信息 ---
+        if (productMerchant != null) {
+            tvMerchantName.setText(productMerchant.getMerchantName());
+            String avatarUrl = productMerchant.getAvatar();
+            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                Glide.with(this)
+                        .load(avatarUrl)
+                        .signature(new ObjectKey(String.valueOf(System.currentTimeMillis())))
+                        .placeholder(R.drawable.merchant_picture)
+                        .error(R.drawable.merchant_picture)
+                        .into(ivMerchantAvatar);
+            } else {
+                ivMerchantAvatar.setImageResource(R.drawable.merchant_picture);
+            }
         } else {
-            // 服务逻辑
-            String unit = product.getUnit() != null ? product.getUnit() : "次";
-            String price = product.getPrice() != null ? product.getPrice() : "0";
-            tvPrice.setText("¥ " + price + "/" + unit);
-            tvTypeInfo.setText("服务类型：上门服务"); // 示例
+            tvMerchantName.setText("未知商家");
+            ivMerchantAvatar.setImageResource(R.drawable.merchant_picture);
         }
     }
 
+    // --- 购买弹窗逻辑 (与之前保持一致，为完整性保留) ---
     private void showPurchaseDialog() {
-        // ... (保持您原有的购买弹窗逻辑不变，只需注意上下文和变量引用)
-        // 此处省略这部分代码以节省篇幅，直接复用您提供的 showPurchaseDialog 方法即可
-        // 建议把您原来代码中的 showPurchaseDialog, loadPhysicalSpecs, loadServiceLogic,
-        // updatePayButton, handlePayment 方法完整复制到这里。
-
-        // 下面是您原有代码的简写，请确保完整包含：
         bottomSheetDialog = new Dialog(this, androidx.appcompat.R.style.Theme_AppCompat_Light_Dialog_Alert);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_purchase, null);
 
-        // ... 初始化 Dialog Window ...
         Window window = bottomSheetDialog.getWindow();
         if (window != null) {
             window.setContentView(view);
@@ -164,7 +240,6 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             window.setBackgroundDrawable(new ColorDrawable(Color.WHITE));
         }
 
-        // ... 绑定 Dialog 视图控件 ...
         TextView tvSheetName = view.findViewById(R.id.tv_sheet_name);
         ImageView ivThumb = view.findViewById(R.id.iv_thumb);
         containerSpecs = view.findViewById(R.id.ll_spec_container);
@@ -174,37 +249,37 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         ImageView btnServiceAdd = view.findViewById(R.id.btn_service_add);
         btnPay = view.findViewById(R.id.btn_pay_now);
 
-        // 设置弹窗头部信息
         if (product != null) {
             tvSheetName.setText(product.getName());
             String imgUrl = product.getFirstImage();
             Glide.with(this).load(imgUrl).into(ivThumb);
         }
 
-        // 根据类型加载不同的购买逻辑
-        if ("实物".equals(product.getType())) {
-            containerService.setVisibility(View.GONE);
-            containerSpecs.setVisibility(View.VISIBLE);
-            loadPhysicalSpecs();
-        } else {
+        if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
             containerSpecs.setVisibility(View.GONE);
             containerService.setVisibility(View.VISIBLE);
             loadServiceLogic(tvServicePrice, tvServiceCount, btnServiceAdd);
+        } else {
+            containerService.setVisibility(View.GONE);
+            containerSpecs.setVisibility(View.VISIBLE);
+            loadPhysicalSpecs();
         }
 
         btnPay.setOnClickListener(v -> handlePayment());
         bottomSheetDialog.show();
     }
 
-    // 复用您提供的辅助方法
     private void loadPhysicalSpecs() {
         containerSpecs.removeAllViews();
         try {
             List<String[]> specs = new ArrayList<>();
-            // 如果价格包含逗号，说明有多规格；否则使用模拟数据或单规格
-            if (product.getPrice() != null && product.getPrice().contains(",")) {
-                // 这里应该解析 priceTableJson，简化处理：
-                specs.add(new String[]{"标准规格", product.getPrice()});
+            // 解析 JSON 规格表或使用单一价格
+            if (product.priceTableJson != null && !product.priceTableJson.isEmpty()) {
+                JSONArray jsonArray = new JSONArray(product.priceTableJson);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject obj = jsonArray.getJSONObject(i);
+                    specs.add(new String[]{obj.optString("desc"), obj.optString("price")});
+                }
             } else {
                 specs.add(new String[]{"标准规格", product.getPrice() != null ? product.getPrice() : "0"});
             }
@@ -219,14 +294,12 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 tvP.setText("¥" + spec[1]);
 
                 llRow.setOnClickListener(v -> {
-                    // 重置样式
                     for (int i = 0; i < containerSpecs.getChildCount(); i++) {
                         View child = containerSpecs.getChildAt(i);
                         child.findViewById(R.id.ll_spec_row).setBackgroundResource(R.drawable.box_bg);
                         ((TextView) child.findViewById(R.id.tv_spec_name)).setTextColor(Color.BLACK);
                         ((TextView) child.findViewById(R.id.tv_spec_price)).setTextColor(Color.BLACK);
                     }
-                    // 选中样式
                     llRow.setBackgroundResource(R.drawable.border_red);
                     tvSpec.setTextColor(Color.RED);
                     tvP.setTextColor(Color.RED);
@@ -283,12 +356,8 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // 模拟支付逻辑
         new Thread(() -> {
             try {
-                // 模拟耗时
-                Thread.sleep(500);
-
                 Order order = new Order();
                 order.orderNo = "ORD" + System.currentTimeMillis();
                 if (currentUser != null) {
@@ -297,7 +366,7 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                     order.residentPhone = currentUser.getPhone();
                     order.address = currentUser.getCommunityName() + currentUser.getBuilding() + currentUser.getRoomNumber();
                 } else {
-                    order.residentId = "0"; // 防止空指针
+                    order.residentId = "0";
                     order.address = "未登录";
                 }
 
@@ -307,12 +376,12 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
                 order.productType = product.getType();
                 order.productImageUrl = product.getImageUrls();
 
-                if ("实物".equals(product.getType())) {
-                    order.selectedSpec = selectedSpecStr;
-                    order.serviceCount = 1;
-                } else {
+                if ("服务".equals(product.getType()) || "SERVICE".equals(product.getType())) {
                     order.selectedSpec = "服务";
                     order.serviceCount = serviceQuantity;
+                } else {
+                    order.selectedSpec = selectedSpecStr;
+                    order.serviceCount = 1;
                 }
 
                 order.payAmount = String.format("%.2f", currentPrice);

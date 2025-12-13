@@ -32,6 +32,7 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // 加载修改后的 item_product_card 布局
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_product_card, parent, false);
         return new ViewHolder(view);
     }
@@ -41,23 +42,23 @@ public class ProductAdapter extends RecyclerView.Adapter<ProductAdapter.ViewHold
         Product product = productList.get(position);
 
         // --- 1. 设置名称 ---
-        // 移除手动截取字符串的逻辑，交给 XML 中的 android:singleLine="true" 和 android:ellipsize="end" 处理
-        // 这样显示更自然，利用率更高
         holder.tvName.setText(product.getName());
 
-        // --- 2. 区分实物与服务商品的价格显示 ---
+        // --- 2. 设置价格显示逻辑 ---
         String priceStr;
         String type = product.getType(); // 获取类型
+        String price = product.getPrice() != null ? product.getPrice() : "0";
 
-        // 严谨判断类型，防止空指针
-        if (type != null && type.trim().equals("实物")) {
+        // 判断是否为实物商品 (防止 type 为 null 导致崩溃)
+        // 注意：数据库中存储的类型字符串必须准确，例如 "实物" 或 "PHYSICAL"
+        if (type != null && (type.trim().equals("实物") || type.trim().equalsIgnoreCase("PHYSICAL"))) {
             // 【实物商品】：只显示价格，例如 "¥ 100"
-            String price = product.getPrice() != null ? product.getPrice() : "0";
             priceStr = "¥ " + price;
         } else {
             // 【服务商品】：显示价格 + 单位，例如 "50元/次"
-            String price = product.getPrice() != null ? product.getPrice() : "0";
+            // 如果单位为空，默认为 "次"
             String unit = !TextUtils.isEmpty(product.getUnit()) ? product.getUnit() : "次";
+            // 确保显示格式整洁
             priceStr = price + "元/" + unit;
         }
 
