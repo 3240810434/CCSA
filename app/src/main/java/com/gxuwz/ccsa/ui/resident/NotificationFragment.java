@@ -17,10 +17,15 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.BannerAdapter;
+import com.gxuwz.ccsa.adapter.ProductAdapter;
+import com.gxuwz.ccsa.db.AppDatabase;
+import com.gxuwz.ccsa.model.Product;
 import com.gxuwz.ccsa.model.User;
 
 import java.util.ArrayList;
@@ -33,11 +38,18 @@ public class NotificationFragment extends Fragment {
     private ViewPager2 viewPager;
     private LinearLayout indicatorLayout;
     private BannerAdapter bannerAdapter;
-    // 修正1：将 List<Integer> 改为 List<String> 以匹配新的 Adapter
     private List<String> bannerImages = new ArrayList<>();
     private int currentPage = 0;
-    private Timer timer;
+    private Timer timer; // 轮播图定时器
     private User currentUser;
+
+    // 商品展示相关
+    private RecyclerView rvProducts;
+    private ProductAdapter productAdapter;
+    private List<Product> allProducts = new ArrayList<>();    // 所有的商品列表
+    private List<Product> displayProducts = new ArrayList<>(); // 当前显示的2个商品
+    private Timer productTimer; // 商品刷新定时器
+    private int productDisplayIndex = 0; // 当前展示的商品索引指针
 
     @Nullable
     @Override
@@ -49,9 +61,10 @@ public class NotificationFragment extends Fragment {
             currentUser = ((ResidentMainActivity) getActivity()).getUser();
         }
 
-        // 初始化轮播图和功能按钮
+        // 初始化各个模块
         initBanner(view);
         initFunctionButtons(view);
+        initProductSection(view);
 
         return view;
     }
@@ -61,11 +74,8 @@ public class NotificationFragment extends Fragment {
         viewPager = view.findViewById(R.id.viewPager);
         indicatorLayout = view.findViewById(R.id.indicatorLayout);
 
-        // 修正2：将资源ID转换为 String 路径
-        // 格式：android.resource://包名/资源ID
         String packageName = requireContext().getPackageName();
-
-        bannerImages.clear(); // 避免重复添加
+        bannerImages.clear();
         bannerImages.add("android.resource://" + packageName + "/" + R.drawable.banner1);
         bannerImages.add("android.resource://" + packageName + "/" + R.drawable.banner2);
         bannerImages.add("android.resource://" + packageName + "/" + R.drawable.banner3);
@@ -73,10 +83,8 @@ public class NotificationFragment extends Fragment {
         bannerAdapter = new BannerAdapter(getContext(), bannerImages);
         viewPager.setAdapter(bannerAdapter);
 
-        // 添加指示器
         addIndicators();
 
-        // 设置页面切换监听
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -86,7 +94,6 @@ public class NotificationFragment extends Fragment {
             }
         });
 
-        // 自动轮播
         startAutoSlide();
     }
 
@@ -107,7 +114,6 @@ public class NotificationFragment extends Fragment {
         updateIndicators();
     }
 
-    // 更新指示器状态
     private void updateIndicators() {
         for (int i = 0; i < indicatorLayout.getChildCount(); i++) {
             ImageView indicator = (ImageView) indicatorLayout.getChildAt(i);
@@ -119,12 +125,10 @@ public class NotificationFragment extends Fragment {
         }
     }
 
-    // 启动自动轮播
     private void startAutoSlide() {
         if (timer != null) {
             timer.cancel();
         }
-
         timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -138,7 +142,100 @@ public class NotificationFragment extends Fragment {
                     });
                 }
             }
-        }, 3000, 3000); // 每3秒切换一次
+        }, 3000, 3000);
+    }
+
+    // --- 初始化商品展示区域 ---
+    private void initProductSection(View view) {
+        rvProducts = view.findViewById(R.id.rv_products);
+        // 设置两列网格布局
+        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
+        rvProducts.setLayoutManager(layoutManager);
+
+        // 初始化适配器
+        productAdapter = new ProductAdapter(getContext(), displayProducts);
+        rvProducts.setAdapter(productAdapter);
+
+        // 加载数据
+        loadProducts();
+    }
+
+    // --- 从数据库加载所有商品 ---
+    private void loadProducts() {
+        new Thread(() -> {
+            if (getContext() == null) return;
+            AppDatabase db = AppDatabase.getInstance(getContext());
+            // 获取所有商品
+            List<Product> products = db.productDao().getAllProducts();
+
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    allProducts.clear();
+                    allProducts.addAll(products);
+
+                    // 初始展示
+                    updateDisplayedProducts();
+
+                    // 启动刷新定时器
+                    startProductRefreshTimer();
+                });
+            }
+        }).start();
+    }
+
+    // --- 启动商品刷新定时器 ---
+    private void startProductRefreshTimer() {
+        // 先取消旧的
+        if (productTimer != null) {
+            productTimer.cancel();
+            productTimer = null;
+        }
+
+        // 如果商品总数小于等于2，不刷新，直接停止
+        if (allProducts.size() <= 2) {
+            return;
+        }
+
+        productTimer = new Timer();
+        // 【修改点】：延迟6秒后开始执行，每隔6秒执行一次 (6000ms)
+        productTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (getActivity() != null) {
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        // 移动指针，循环逻辑
+                        productDisplayIndex = (productDisplayIndex + 2) % allProducts.size();
+                        updateDisplayedProducts();
+                    });
+                }
+            }
+        }, 6000, 6000);
+    }
+
+    // --- 更新当前展示的商品列表 ---
+    private void updateDisplayedProducts() {
+        displayProducts.clear();
+
+        if (allProducts.isEmpty()) {
+            // 没有商品，留空
+            productAdapter.notifyDataSetChanged();
+            return;
+        }
+
+        if (allProducts.size() <= 2) {
+            // 小于等于2个，全部显示
+            displayProducts.addAll(allProducts);
+        } else {
+            // 大于2个，取2个
+            // 第一个商品
+            displayProducts.add(allProducts.get(productDisplayIndex % allProducts.size()));
+
+            // 第二个商品 (防止越界，取模)
+            int secondIndex = (productDisplayIndex + 1) % allProducts.size();
+            displayProducts.add(allProducts.get(secondIndex));
+        }
+
+        productAdapter.notifyDataSetChanged();
     }
 
     // 初始化功能按钮点击事件
@@ -258,10 +355,15 @@ public class NotificationFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // 停止自动轮播
+        // 停止轮播图定时器
         if (timer != null) {
             timer.cancel();
             timer = null;
+        }
+        // 停止商品刷新定时器
+        if (productTimer != null) {
+            productTimer.cancel();
+            productTimer = null;
         }
     }
 }
