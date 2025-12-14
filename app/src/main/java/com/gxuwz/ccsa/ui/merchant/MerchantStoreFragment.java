@@ -169,13 +169,11 @@ public class MerchantStoreFragment extends Fragment {
                 int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "接单中").size();
 
                 // 4. 获取待处理的售后订单数量
-                // OrderDao中 getMerchantAfterSalesOrders 返回所有售后相关订单 (status > 0)
-                // 根据 OrderDao 注释，1 代表待处理
                 List<Order> afterSalesOrders = orderDao.getMerchantAfterSalesOrders(merchantIdStr);
                 int pendingAfterSalesCount = 0;
                 for (Order order : afterSalesOrders) {
-                    // 假设 1 代表待处理 (根据 OrderDao 的排序逻辑: 待处理=1)
-                    if (order.getAfterSalesStatus() == 1) {
+                    // 【修复点】直接访问 public 字段 afterSalesStatus，而不是调用 getAfterSalesStatus()
+                    if (order.afterSalesStatus == 1) {
                         pendingAfterSalesCount++;
                     }
                 }
