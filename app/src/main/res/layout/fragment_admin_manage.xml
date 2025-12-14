@@ -50,7 +50,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_pay"/>
+                        android:src="@drawable/management_fee"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="费用标准"/>
@@ -61,7 +61,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_notice"/>
+                        android:src="@drawable/administrator_fee_formula"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="费用公示"/>
@@ -72,7 +72,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_business1"/>
+                        android:src="@drawable/administrator_statistics"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="缴费统计"/>
@@ -83,7 +83,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_appeal"/>
+                        android:src="@drawable/administrator_appeal"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="异常申诉"/>
@@ -103,7 +103,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="社区治理"
+                android:text="便民服务"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#333333"
@@ -120,7 +120,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_notification"/>
+                        android:src="@drawable/posted_by_administrator"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="发布通知"/>
@@ -142,7 +142,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_profile"/>
+                        android:src="@drawable/administrator_resident"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="居民管理"/>
@@ -153,7 +153,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_business2"/>
+                        android:src="@drawable/administrator_manages_merchants"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="商家管理"/>
@@ -170,7 +170,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_manage"/>
+                        android:src="@drawable/administrator_reviews_merchants"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="商家审核"/>
@@ -203,7 +203,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="便民服务"
+                android:text="小区治理"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:textColor="#333333"
@@ -230,7 +230,7 @@
                     style="@style/DashboardItemStyle">
                     <ImageView
                         style="@style/DashboardIconStyle"
-                        android:src="@drawable/ic_dynamic"/>
+                        android:src="@drawable/admin_updates"/>
                     <TextView
                         style="@style/DashboardTextStyle"
                         android:text="生活动态"/>
