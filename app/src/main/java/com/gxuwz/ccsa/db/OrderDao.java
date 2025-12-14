@@ -41,4 +41,6 @@ public interface OrderDao {
     // 再按 id 倒序排 (新订单在前)。这样未处理的永远在最上面。
     @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND afterSalesStatus > 0 ORDER BY afterSalesStatus ASC, id DESC")
     List<Order> getMerchantAfterSalesOrders(String merchantId);
+
+    
 }
