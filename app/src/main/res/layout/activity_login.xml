@@ -140,7 +140,7 @@
         android:id="@+id/tv_admin_login"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="物业管理员登录  ➜"
+        android:text="物业管理员  ➜"
         android:textColor="#666666"
         android:textSize="14sp"
         android:padding="16dp"

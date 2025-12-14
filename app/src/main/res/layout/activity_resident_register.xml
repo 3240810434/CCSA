@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_resident_login_gradient"
     android:padding="16dp"
     tools:context=".login.ResidentRegisterActivity">
 
@@ -24,10 +25,11 @@
                 android:id="@+id/tv_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
                 android:text="居民注册"
+                android:textColor="#FFFFFF"
                 android:textSize="22sp"
                 android:textStyle="bold"
-                android:layout_marginTop="10dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -36,9 +38,9 @@
                 android:id="@+id/tv_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
                 android:text="姓名:"
                 android:textSize="14sp"
-                android:layout_marginTop="15dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_title" />
 
@@ -48,9 +50,9 @@
                 android:layout_height="40dp"
                 android:background="@drawable/bg_edittext_underline"
                 android:hint="请输入姓名"
-                android:textSize="14sp"
                 android:inputType="textPersonName"
                 android:padding="5dp"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_name" />
@@ -59,9 +61,9 @@
                 android:id="@+id/tv_gender"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="性别:"
                 android:textSize="14sp"
-                android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/et_name" />
 
@@ -71,31 +73,31 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_gender" >
+                app:layout_constraintTop_toBottomOf="@id/tv_gender">
 
                 <RadioButton
                     android:id="@+id/rb_male"
                     android:layout_width="wrap_content"
                     android:layout_height="35dp"
+                    android:layout_marginRight="30dp"
                     android:text="男"
-                    android:textSize="14sp"
-                    android:layout_marginRight="30dp"/>
+                    android:textSize="14sp" />
 
                 <RadioButton
                     android:id="@+id/rb_female"
                     android:layout_width="wrap_content"
                     android:layout_height="35dp"
                     android:text="女"
-                    android:textSize="14sp"/>
+                    android:textSize="14sp" />
             </RadioGroup>
 
             <TextView
                 android:id="@+id/tv_phone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="手机号:"
                 android:textSize="14sp"
-                android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/rg_gender" />
 
@@ -105,9 +107,9 @@
                 android:layout_height="40dp"
                 android:background="@drawable/bg_edittext_underline"
                 android:hint="请输入手机号"
-                android:textSize="14sp"
                 android:inputType="phone"
                 android:padding="5dp"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_phone" />
@@ -116,9 +118,9 @@
                 android:id="@+id/tv_password"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="密码:"
                 android:textSize="14sp"
-                android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/et_phone" />
 
@@ -128,9 +130,9 @@
                 android:layout_height="40dp"
                 android:background="@drawable/bg_edittext_underline"
                 android:hint="请输入密码"
-                android:textSize="14sp"
                 android:inputType="textPassword"
                 android:padding="5dp"
+                android:textSize="14sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_password" />
@@ -139,9 +141,9 @@
                 android:id="@+id/tv_community"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="选择小区:"
                 android:textSize="14sp"
-                android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/et_password" />
 
@@ -159,9 +161,9 @@
                 android:id="@+id/tv_building"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="选择楼栋:"
                 android:textSize="14sp"
-                android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/spinner_community" />
 
@@ -179,9 +181,9 @@
                 android:id="@+id/tv_room"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="选择房号:"
                 android:textSize="14sp"
-                android:layout_marginTop="8dp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/spinner_building" />
 
@@ -199,16 +201,18 @@
                 android:id="@+id/btn_register"
                 android:layout_width="match_parent"
                 android:layout_height="45dp"
-                android:background="#4CAF50"
+                android:layout_marginTop="25dp"
+                android:layout_marginBottom="10dp"
                 android:text="注册"
                 android:textColor="#FFFFFF"
                 android:textSize="16sp"
-                android:layout_marginTop="25dp"
-                android:layout_marginBottom="10dp"
+                android:textStyle="bold"
+                app:backgroundTint="#89CFF0"
+                app:cornerRadius="28dp"
+                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/spinner_room"
-                app:layout_constraintBottom_toBottomOf="parent"/>
+                app:layout_constraintTop_toBottomOf="@id/spinner_room" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
