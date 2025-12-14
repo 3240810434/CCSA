@@ -96,5 +96,8 @@
         <activity android:name=".ui.common.VoteDetailActivity" android:exported="false"/>
         <activity android:name=".ui.resident.ResidentCompletedOrdersActivity"/>
         <activity android:name=".ui.resident.ResidentAfterSalesActivity"/>
+        <activity android:name=".ui.resident.ResidentApplyAfterSalesActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.merchant.MerchantAfterSalesListActivity" android:exported="false"/>
+        <activity android:name=".ui.merchant.MerchantAfterSalesDetailActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
     </application>
 </manifest>

@@ -11,23 +11,21 @@ import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.util.SharedPreferencesUtil;
 import java.util.List;
 
-// 假设你有工具类保存登录信息，如果没有请自行替换获取ID的逻辑
 public class MerchantAfterSalesListActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private AppDatabase db;
-    private String merchantId; // 假设ID是String
+    private String merchantId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 确保你已经创建了对应的XML文件，文件名必须完全一致
         setContentView(R.layout.activity_merchant_after_sales_list);
 
-        // 初始化DB
         db = AppDatabase.getInstance(this);
 
-        // 模拟获取当前登录商家ID，实际开发请用 SharedPref
-        // merchantId = SharedPreferencesUtil.getInstance(this).getMerchantId();
-        merchantId = "1"; // 测试用写死
+        // 使用新创建的工具类获取ID
+        merchantId = SharedPreferencesUtil.getInstance(this).getMerchantId();
 
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -40,9 +38,14 @@ public class MerchantAfterSalesListActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        // 查询所有 afterSalesStatus > 0 的订单
-        List<Order> list = db.orderDao().getMerchantAfterSalesOrders(merchantId);
-        MerchantAfterSalesAdapter adapter = new MerchantAfterSalesAdapter(list);
-        recyclerView.setAdapter(adapter);
+        new Thread(() -> {
+            // 查询所有 afterSalesStatus > 0 的订单
+            List<Order> list = db.orderDao().getMerchantAfterSalesOrders(merchantId);
+
+            runOnUiThread(() -> {
+                MerchantAfterSalesAdapter adapter = new MerchantAfterSalesAdapter(list);
+                recyclerView.setAdapter(adapter);
+            });
+        }).start();
     }
 }

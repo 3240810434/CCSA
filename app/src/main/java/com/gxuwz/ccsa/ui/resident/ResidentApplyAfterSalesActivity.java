@@ -67,8 +67,14 @@ public class ResidentApplyAfterSalesActivity extends AppCompatActivity {
         // 异步操作数据库
         new Thread(() -> {
             // 1. 插入售后记录
+            // 修正点：使用 DateUtils.getCurrentDateTime() 替代 getCurrentDate()
             AfterSalesRecord record = new AfterSalesRecord(
-                    orderId, type, reason, description, "", DateUtils.getCurrentDate()
+                    orderId,
+                    type,
+                    reason,
+                    description,
+                    "",
+                    DateUtils.getCurrentDateTime()
             );
             db.afterSalesRecordDao().insert(record);
 
