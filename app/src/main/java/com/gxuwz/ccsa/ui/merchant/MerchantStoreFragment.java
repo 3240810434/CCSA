@@ -55,11 +55,9 @@ public class MerchantStoreFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // 页面可见时，从 Activity 同步最新数据
         syncDataFromActivity();
     }
 
-    // 【修复点1】处理 Fragment show/hide 切换时的刷新
     @Override
     public void onHiddenChanged(boolean hidden) {
         super.onHiddenChanged(hidden);
@@ -68,8 +66,6 @@ public class MerchantStoreFragment extends Fragment {
         }
     }
 
-    // 【修复点2】直接从 Activity 获取内存中最新的对象，而不是查数据库
-    // 这样可以确保"我的"页面修改后，这里立即同步
     private void syncDataFromActivity() {
         if (getActivity() instanceof MerchantMainActivity) {
             Merchant activityMerchant = ((MerchantMainActivity) getActivity()).getCurrentMerchant();
@@ -100,7 +96,10 @@ public class MerchantStoreFragment extends Fragment {
         llPendingOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), PendingOrdersActivity.class)));
         llProcessingOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), ProcessingOrdersActivity.class)));
         llCompletedOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), CompletedOrdersActivity.class)));
-        llAfterSales.setOnClickListener(v -> startActivity(new Intent(getContext(), AfterSalesActivity.class)));
+
+        // 【核心修改】这里改为跳转到 MerchantAfterSalesListActivity，才能看到列表
+        llAfterSales.setOnClickListener(v -> startActivity(new Intent(getContext(), MerchantAfterSalesListActivity.class)));
+
         llProductManagement.setOnClickListener(v -> startActivity(new Intent(getContext(), ProductManagementActivity.class)));
     }
 
@@ -147,7 +146,6 @@ public class MerchantStoreFragment extends Fragment {
         Executors.newSingleThreadExecutor().execute(() -> {
             if (getContext() != null) {
                 AppDatabase.getInstance(getContext()).merchantDao().update(currentMerchant);
-                // 更新后也要同步回 Activity，虽然这里是引用的同一个对象，但为了保险
                 if (getActivity() instanceof MerchantMainActivity) {
                     ((MerchantMainActivity) getActivity()).setCurrentMerchant(currentMerchant);
                 }

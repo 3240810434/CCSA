@@ -28,17 +28,17 @@ public interface OrderDao {
     @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND status = '待接单' ORDER BY id DESC")
     List<Order> getPendingOrdersByMerchant(String merchantId);
 
-    // 商家查询特定状态的订单
-    @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND status = :status ORDER BY id DESC")
+    // 【核心修改】商家查询特定状态的订单
+    // 增加 AND afterSalesStatus = 0 条件
+    // 只有无售后问题的订单才会显示在普通的列表中（如已完成列表）
+    @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND status = :status AND afterSalesStatus = 0 ORDER BY id DESC")
     List<Order> getOrdersByMerchantAndStatus(String merchantId, String status);
-
-    // --- 新增方法 ---
 
     // 更新售后状态
     @Query("UPDATE orders SET afterSalesStatus = :status WHERE id = :orderId")
     void updateAfterSalesStatus(Long orderId, int status);
 
-    // 商家查询所有售后相关的订单 (status不为0)
+    // 商家查询所有售后相关的订单 (status > 0)
     @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND afterSalesStatus > 0 ORDER BY id DESC")
     List<Order> getMerchantAfterSalesOrders(String merchantId);
 }
