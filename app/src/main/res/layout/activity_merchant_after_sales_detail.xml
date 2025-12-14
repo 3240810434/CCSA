@@ -27,17 +27,47 @@
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <TextView android:text="用户诉求" android:textStyle="bold" android:textSize="16sp" android:layout_marginBottom="8dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <TextView
+                android:text="用户诉求"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginBottom="8dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
 
-            <TextView android:id="@+id/tv_record_type" android:text="类型: " android:layout_marginBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/tv_record_reason" android:text="原因: " android:layout_marginBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/tv_record_desc" android:text="描述: " android:textColor="#555" android:layout_marginBottom="4dp" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/tv_record_time" android:text="时间: " android:textSize="12sp" android:textColor="#999" android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/tv_record_type"
+                android:text="类型: "
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/tv_record_reason"
+                android:text="原因: "
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/tv_record_desc"
+                android:text="描述: "
+                android:textColor="#555"
+                android:layout_marginBottom="4dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+            <TextView
+                android:id="@+id/tv_record_time"
+                android:text="时间: "
+                android:textSize="12sp"
+                android:textColor="#999"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
     <TextView
         android:id="@+id/tv_status_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="当前状态：待处理"
         android:textSize="16sp"
         android:textColor="#FF9800"
