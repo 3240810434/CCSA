@@ -18,7 +18,7 @@ import com.gxuwz.ccsa.model.AfterSalesRecord;
 import com.gxuwz.ccsa.model.Notification;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.ui.resident.ChatActivity;
-import com.gxuwz.ccsa.util.SharedPreferencesUtil; // [新增] 用于获取商家ID
+import com.gxuwz.ccsa.util.SharedPreferencesUtil;
 
 import java.util.Date;
 
@@ -59,34 +59,37 @@ public class MerchantAfterSalesDetailActivity extends AppCompatActivity {
         btnAgree.setOnClickListener(v -> showAgreeDialog());
         btnReject.setOnClickListener(v -> showRejectDialog());
 
-        // [核心修改] 联系买家逻辑：补充完整的 Intent 参数
+        // 【核心修复】联系买家逻辑
         btnContact.setOnClickListener(v -> {
             if (currentOrder != null) {
-                // 1. 获取当前登录商家的ID
-                String merchantIdStr = SharedPreferencesUtil.getInstance(this).getMerchantId();
-                int myId = -1;
                 try {
-                    // SharedPreferences 中存的是 String，ChatActivity 需要 int
-                    myId = Integer.parseInt(merchantIdStr);
+                    // 1. 获取当前商家ID (String -> int)
+                    String merchantIdStr = SharedPreferencesUtil.getInstance(this).getMerchantId();
+                    int myId = Integer.parseInt(merchantIdStr);
+
+                    // 2. 获取买家ID (String -> int) 【修复点：这里必须强转，否则 ChatActivity 接收报错】
+                    int targetIdInt = Integer.parseInt(currentOrder.residentId);
+
+                    Intent intent = new Intent(this, ChatActivity.class);
+
+                    // 3. 传递 ChatActivity 必须的 4 个参数 (必须全是正确类型)
+                    intent.putExtra("myId", myId);              // int
+                    intent.putExtra("myRole", "MERCHANT");      // String
+                    intent.putExtra("targetId", targetIdInt);   // int (之前传的是 String 导致崩溃/错误)
+                    intent.putExtra("targetRole", "RESIDENT");  // String
+
+                    // 4. 传递选填参数
+                    intent.putExtra("targetName", currentOrder.residentName);
+
+                    startActivity(intent);
+
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
-                    Toast.makeText(this, "商家ID获取异常", Toast.LENGTH_SHORT).show();
-                    return;
+                    Toast.makeText(this, "ID数据格式错误，无法联系", Toast.LENGTH_SHORT).show();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "启动聊天失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
-
-                Intent intent = new Intent(this, ChatActivity.class);
-
-                // 2. 传递 ChatActivity 必须的 4 个参数
-                intent.putExtra("myId", myId);              // 发送者（商家）ID
-                intent.putExtra("myRole", "MERCHANT");      // 发送者角色
-                intent.putExtra("targetId", currentOrder.residentId); // 接收者（居民）ID
-                intent.putExtra("targetRole", "RESIDENT");  // 接收者角色
-
-                // 3. 传递选填参数（用于聊天页标题显示）
-                // 注意：ChatActivity 接收的 key 是 "targetName"，原代码写的是 "name"
-                intent.putExtra("targetName", currentOrder.residentName);
-
-                startActivity(intent);
             } else {
                 Toast.makeText(this, "订单信息尚未加载", Toast.LENGTH_SHORT).show();
             }
@@ -159,7 +162,6 @@ public class MerchantAfterSalesDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    // 处理状态更新并发送通知
     private void updateStatus(int newStatus, String reply) {
         new Thread(() -> {
             // 1. 更新订单表状态
@@ -184,7 +186,6 @@ public class MerchantAfterSalesDetailActivity extends AppCompatActivity {
                     content = "您的订单 " + currentOrder.orderNo + " 售后申请被拒绝。商家回复：" + reply;
                 }
 
-                // 创建通知对象
                 Notification notification = new Notification(
                         "商家通知", // community / 来源
                         currentOrder.residentPhone, // 接收人手机号
