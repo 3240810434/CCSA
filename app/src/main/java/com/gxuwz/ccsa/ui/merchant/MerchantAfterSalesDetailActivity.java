@@ -14,8 +14,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.AfterSalesRecord;
+import com.gxuwz.ccsa.model.Notification;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.ui.resident.ChatActivity;
+
+import java.util.Date;
 
 public class MerchantAfterSalesDetailActivity extends AppCompatActivity {
 
@@ -58,7 +61,6 @@ public class MerchantAfterSalesDetailActivity extends AppCompatActivity {
         btnContact.setOnClickListener(v -> {
             if (currentOrder != null) {
                 Intent intent = new Intent(this, ChatActivity.class);
-                // 这里的Intent参数需要根据你的ChatActivity实际需求调整
                 intent.putExtra("targetId", currentOrder.residentId);
                 intent.putExtra("name", currentOrder.residentName);
                 startActivity(intent);
@@ -132,15 +134,46 @@ public class MerchantAfterSalesDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    // 【核心修改】处理状态更新并发送通知
     private void updateStatus(int newStatus, String reply) {
         new Thread(() -> {
-            // 1. 更新订单表
+            // 1. 更新订单表状态
             db.orderDao().updateAfterSalesStatus(orderId, newStatus);
-            // 2. 更新记录表的商家回复
+
+            // 2. 更新售后记录表的商家回复
             if (currentRecord != null) {
                 currentRecord.merchantReply = reply;
                 db.afterSalesRecordDao().update(currentRecord);
             }
+
+            // 3. 【新增】发送通知给居民
+            if (currentOrder != null) {
+                String title;
+                String content;
+
+                if (newStatus == 3) {
+                    title = "售后申请已通过";
+                    content = "您的订单 " + currentOrder.orderNo + " 售后申请已被商家同意，退款流程已启动。";
+                } else {
+                    title = "售后申请被拒绝";
+                    content = "您的订单 " + currentOrder.orderNo + " 售后申请被拒绝。商家回复：" + reply;
+                }
+
+                // 创建通知对象
+                // 注意：community 字段此处暂用 "商家通知" 代替，或者如果有小区名可传入
+                Notification notification = new Notification(
+                        "商家通知", // community / 来源
+                        currentOrder.residentPhone, // 接收人手机号 (确保NotificationDao根据此字段查询)
+                        title,
+                        content,
+                        2, // type: 假设 2 代表订单/售后类通知
+                        new Date(),
+                        false // 未读
+                );
+
+                db.notificationDao().insert(notification);
+            }
+
             runOnUiThread(() -> {
                 Toast.makeText(this, "操作成功", Toast.LENGTH_SHORT).show();
                 loadData(); // 刷新界面
