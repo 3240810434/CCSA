@@ -5,6 +5,8 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 import android.content.Context;
+
+// 引入所有的 Model 类
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Admin;
@@ -26,7 +28,7 @@ import com.gxuwz.ccsa.model.HelpPost;
 import com.gxuwz.ccsa.model.HelpPostMedia;
 import com.gxuwz.ccsa.model.Product;
 import com.gxuwz.ccsa.model.Order;
-import com.gxuwz.ccsa.model.AfterSalesRecord; // 引入新实体
+import com.gxuwz.ccsa.model.AfterSalesRecord; // 【1】确保引入了新类
 
 @Database(
         entities = {
@@ -51,15 +53,16 @@ import com.gxuwz.ccsa.model.AfterSalesRecord; // 引入新实体
                 HelpPostMedia.class,
                 Product.class,
                 Order.class,
-                AfterSalesRecord.class // 注册新实体
+                AfterSalesRecord.class // 【2】必须在这里注册新表，否则DAO无法识别表名
         },
-        version = 14, // 版本号升级
+        version = 14, // 数据库版本号，建议+1
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
+    // --- DAO 定义 ---
     public abstract UserDao userDao();
     public abstract MerchantDao merchantDao();
     public abstract AdminDao adminDao();
@@ -78,7 +81,9 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ChatDao chatDao();
     public abstract ProductDao productDao();
     public abstract OrderDao orderDao();
-    public abstract AfterSalesRecordDao afterSalesRecordDao(); // 新增Dao
+
+    // 【3】必须添加这个方法，否则无法获取DAO实例
+    public abstract AfterSalesRecordDao afterSalesRecordDao();
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -89,8 +94,8 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "ccsa_database"
                             )
-                            .allowMainThreadQueries()
-                            .fallbackToDestructiveMigration()
+                            .allowMainThreadQueries() // 允许主线程查询（简化开发）
+                            .fallbackToDestructiveMigration() // 版本升级时清空数据重建
                             .build();
                 }
             }
