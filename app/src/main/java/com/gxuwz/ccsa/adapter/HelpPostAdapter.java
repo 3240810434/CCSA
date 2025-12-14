@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
@@ -51,7 +52,7 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
         screenHeight = dm.heightPixels;
     }
 
-    // 【关键修复】提供方法更新 currentUser，防止 Adapter 持有旧的用户对象
+    // 提供方法更新 currentUser，防止 Adapter 持有旧的用户对象
     public void setCurrentUser(User user) {
         this.currentUser = user;
         notifyDataSetChanged(); // 用户身份变化可能影响“联系”按钮的显示
@@ -186,10 +187,22 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
         } else {
             holder.llContact.setVisibility(View.VISIBLE);
             holder.llContact.setOnClickListener(v -> {
-                // 【关键】：这里传递最新的 currentUser，确保 ID 是正确的
+                if (currentUser == null) {
+                    Toast.makeText(context, "用户信息获取失败，请刷新或重新登录", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                // 【修复部分】：按照 ChatActivity 的要求传递 myId, myRole, targetId, targetRole
                 Intent intent = new Intent(context, ChatActivity.class);
-                intent.putExtra("targetUserId", post.userId);
-                intent.putExtra("currentUser", currentUser);
+                intent.putExtra("myId", currentUser.getId());
+                intent.putExtra("myRole", "RESIDENT"); // 当前用户角色是居民
+                intent.putExtra("targetId", post.userId);
+                intent.putExtra("targetRole", "RESIDENT"); // 帖子发布者也是居民
+
+                // 传递头像和名字，优化聊天页面的加载体验
+                intent.putExtra("targetName", post.userName);
+                intent.putExtra("targetAvatar", post.userAvatar);
+
                 context.startActivity(intent);
             });
         }
