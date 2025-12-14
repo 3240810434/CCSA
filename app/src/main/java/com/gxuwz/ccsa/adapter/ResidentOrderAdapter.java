@@ -5,7 +5,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -46,12 +48,16 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
         // 状态颜色处理
         if ("待接单".equals(order.status)) {
             holder.tvStatus.setTextColor(Color.parseColor("#FF9800")); // Orange
+            holder.layoutActionButtons.setVisibility(View.GONE);
         } else if ("已完成".equals(order.status)) {
             holder.tvStatus.setTextColor(Color.parseColor("#4CAF50")); // Green
+            holder.layoutActionButtons.setVisibility(View.VISIBLE); // 显示操作按钮
         } else if ("配送中".equals(order.status)) {
             holder.tvStatus.setTextColor(Color.parseColor("#2196F3")); // Blue
+            holder.layoutActionButtons.setVisibility(View.GONE);
         } else {
             holder.tvStatus.setTextColor(Color.GRAY);
+            holder.layoutActionButtons.setVisibility(View.GONE);
         }
 
         holder.tvProductName.setText(order.productName);
@@ -75,6 +81,15 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
                     .placeholder(R.drawable.ic_launcher_background)
                     .into(holder.ivProductImg);
         }
+
+        // 按钮点击事件（暂未实现功能）
+        holder.btnEvaluate.setOnClickListener(v -> {
+            Toast.makeText(v.getContext(), "评价功能开发中", Toast.LENGTH_SHORT).show();
+        });
+
+        holder.btnApply.setOnClickListener(v -> {
+            Toast.makeText(v.getContext(), "售后申请功能开发中", Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override
@@ -86,6 +101,9 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
         TextView tvMerchantName, tvStatus, tvProductName, tvSpecInfo;
         TextView tvPayAmount, tvPayMethod, tvCreateTime, tvOrderNo;
         ImageView ivProductImg;
+        // 新增控件
+        LinearLayout layoutActionButtons;
+        TextView btnEvaluate, btnApply;
 
         public OrderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -98,6 +116,11 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
             tvCreateTime = itemView.findViewById(R.id.tv_create_time);
             tvOrderNo = itemView.findViewById(R.id.tv_order_no);
             ivProductImg = itemView.findViewById(R.id.iv_product_img);
+
+            // 绑定新控件
+            layoutActionButtons = itemView.findViewById(R.id.layout_action_buttons);
+            btnEvaluate = itemView.findViewById(R.id.btn_evaluate);
+            btnApply = itemView.findViewById(R.id.btn_apply);
         }
     }
 }

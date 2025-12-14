@@ -94,6 +94,7 @@
         <!-- 可选：若有支付确认页，可补充注册 -->
         <!-- <activity android:name=".ui.resident.PaymentConfirmActivity" android:exported="false"/> -->
         <activity android:name=".ui.common.VoteDetailActivity" android:exported="false"/>
-
+        <activity android:name=".ui.resident.ResidentCompletedOrdersActivity"/>
+        <activity android:name=".ui.resident.ResidentAfterSalesActivity"/>
     </application>
 </manifest>

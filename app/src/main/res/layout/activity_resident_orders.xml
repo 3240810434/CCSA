@@ -8,16 +8,76 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:background="@color/white">
+        android:background="@color/white"
+        android:paddingHorizontal="15dp">
+
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:src="@drawable/ic_arrow_right"
+            android:rotation="180"
+            android:padding="10dp"
+            android:layout_centerVertical="true"
+            android:visibility="gone"/>
+
         <TextView
+            android:id="@+id/tv_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="我的订单"
             android:textSize="18sp"
             android:textColor="#333"
             android:textStyle="bold"
-            android:layout_centerInParent="true"/>
+            android:layout_centerVertical="true"
+            android:layout_alignParentStart="true"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/btn_completed_orders"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="已完成订单"
+                android:textSize="14sp"
+                android:textColor="#666"
+                android:gravity="center"
+                android:paddingHorizontal="10dp"
+                android:background="?attr/selectableItemBackground"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="15dp"
+                android:background="#DDD"/>
+
+            <TextView
+                android:id="@+id/btn_after_sales"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="售后"
+                android:textSize="14sp"
+                android:textColor="#666"
+                android:gravity="center"
+                android:paddingHorizontal="10dp"
+                android:background="?attr/selectableItemBackground"/>
+        </LinearLayout>
+
     </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tv_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="暂无进行中的订单"
+        android:gravity="center"
+        android:padding="20dp"
+        android:textColor="#999"
+        android:visibility="gone"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_view"
