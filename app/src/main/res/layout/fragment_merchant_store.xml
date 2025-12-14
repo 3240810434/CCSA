@@ -93,6 +93,7 @@
                     android:padding="8dp">
 
                     <TextView
+                        android:id="@+id/tv_pending_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -121,6 +122,7 @@
                     android:padding="8dp">
 
                     <TextView
+                        android:id="@+id/tv_processing_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -175,6 +177,7 @@
                     android:padding="8dp">
 
                     <TextView
+                        android:id="@+id/tv_after_sales_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
@@ -210,6 +213,7 @@
                     android:padding="8dp">
 
                     <TextView
+                        android:id="@+id/tv_product_count"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"

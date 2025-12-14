@@ -18,8 +18,12 @@ import androidx.fragment.app.Fragment;
 
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
+import com.gxuwz.ccsa.db.OrderDao;
+import com.gxuwz.ccsa.db.ProductDao;
 import com.gxuwz.ccsa.model.Merchant;
+import com.gxuwz.ccsa.model.Order;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 
 public class MerchantStoreFragment extends Fragment {
@@ -27,6 +31,12 @@ public class MerchantStoreFragment extends Fragment {
     private ImageView ivStoreAvatar;
     private TextView tvStoreName;
     private ImageView ivStoreStatus;
+
+    // 统计数据显示控件
+    private TextView tvPendingCount;
+    private TextView tvProcessingCount;
+    private TextView tvAfterSalesCount;
+    private TextView tvProductCount;
 
     private LinearLayout llPendingOrders;
     private LinearLayout llProcessingOrders;
@@ -48,6 +58,8 @@ public class MerchantStoreFragment extends Fragment {
         initViews(view);
         setupListeners();
         updateUI();
+        // 初始加载统计数据
+        refreshDashboardCounts();
 
         return view;
     }
@@ -56,6 +68,8 @@ public class MerchantStoreFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncDataFromActivity();
+        // 每次界面恢复显示时（例如从子页面返回），刷新统计数据
+        refreshDashboardCounts();
     }
 
     @Override
@@ -63,6 +77,7 @@ public class MerchantStoreFragment extends Fragment {
         super.onHiddenChanged(hidden);
         if (!hidden) {
             syncDataFromActivity();
+            refreshDashboardCounts();
         }
     }
 
@@ -81,6 +96,12 @@ public class MerchantStoreFragment extends Fragment {
         tvStoreName = view.findViewById(R.id.tv_store_name);
         ivStoreStatus = view.findViewById(R.id.iv_store_status);
 
+        // 初始化统计数字的TextView
+        tvPendingCount = view.findViewById(R.id.tv_pending_count);
+        tvProcessingCount = view.findViewById(R.id.tv_processing_count);
+        tvAfterSalesCount = view.findViewById(R.id.tv_after_sales_count);
+        tvProductCount = view.findViewById(R.id.tv_product_count);
+
         llPendingOrders = view.findViewById(R.id.ll_pending_orders);
         llProcessingOrders = view.findViewById(R.id.ll_processing_orders);
         llCompletedOrders = view.findViewById(R.id.ll_completed_orders);
@@ -97,7 +118,6 @@ public class MerchantStoreFragment extends Fragment {
         llProcessingOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), ProcessingOrdersActivity.class)));
         llCompletedOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), CompletedOrdersActivity.class)));
 
-        // 【核心修改】这里改为跳转到 MerchantAfterSalesListActivity，才能看到列表
         llAfterSales.setOnClickListener(v -> startActivity(new Intent(getContext(), MerchantAfterSalesListActivity.class)));
 
         llProductManagement.setOnClickListener(v -> startActivity(new Intent(getContext(), ProductManagementActivity.class)));
@@ -124,6 +144,61 @@ public class MerchantStoreFragment extends Fragment {
         } else {
             ivStoreStatus.setImageResource(R.drawable.close);
         }
+    }
+
+    /**
+     * 异步刷新仪表盘上的计数
+     */
+    private void refreshDashboardCounts() {
+        if (currentMerchant == null || getContext() == null) return;
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                AppDatabase db = AppDatabase.getInstance(getContext());
+                OrderDao orderDao = db.orderDao();
+                ProductDao productDao = db.productDao();
+                String merchantIdStr = String.valueOf(currentMerchant.getId());
+
+                // 1. 获取商品数量
+                int productCount = productDao.getProductsByMerchantId(currentMerchant.getId()).size();
+
+                // 2. 获取待接单数量
+                int pendingOrderCount = orderDao.getPendingOrdersByMerchant(merchantIdStr).size();
+
+                // 3. 获取接单中数量
+                int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "接单中").size();
+
+                // 4. 获取待处理的售后订单数量
+                // OrderDao中 getMerchantAfterSalesOrders 返回所有售后相关订单 (status > 0)
+                // 根据 OrderDao 注释，1 代表待处理
+                List<Order> afterSalesOrders = orderDao.getMerchantAfterSalesOrders(merchantIdStr);
+                int pendingAfterSalesCount = 0;
+                for (Order order : afterSalesOrders) {
+                    // 假设 1 代表待处理 (根据 OrderDao 的排序逻辑: 待处理=1)
+                    if (order.getAfterSalesStatus() == 1) {
+                        pendingAfterSalesCount++;
+                    }
+                }
+
+                // 切换到主线程更新UI
+                int finalProductCount = productCount;
+                int finalPendingOrderCount = pendingOrderCount;
+                int finalProcessingOrderCount = processingOrderCount;
+                int finalPendingAfterSalesCount = pendingAfterSalesCount;
+
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (tvProductCount != null) tvProductCount.setText(String.valueOf(finalProductCount));
+                        if (tvPendingCount != null) tvPendingCount.setText(String.valueOf(finalPendingOrderCount));
+                        if (tvProcessingCount != null) tvProcessingCount.setText(String.valueOf(finalProcessingOrderCount));
+                        if (tvAfterSalesCount != null) tvAfterSalesCount.setText(String.valueOf(finalPendingAfterSalesCount));
+                    });
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void showToggleStatusDialog() {
