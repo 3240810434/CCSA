@@ -24,10 +24,9 @@ import com.gxuwz.ccsa.model.Comment;
 import com.gxuwz.ccsa.model.ChatMessage;
 import com.gxuwz.ccsa.model.HelpPost;
 import com.gxuwz.ccsa.model.HelpPostMedia;
-// --- 新增引入 ---
 import com.gxuwz.ccsa.model.Product;
-// ========== 1. 新增Order实体导入 ==========
 import com.gxuwz.ccsa.model.Order;
+import com.gxuwz.ccsa.model.AfterSalesRecord; // 引入新实体
 
 @Database(
         entities = {
@@ -51,18 +50,16 @@ import com.gxuwz.ccsa.model.Order;
                 HelpPost.class,
                 HelpPostMedia.class,
                 Product.class,
-                // ========== 2. 新增Order实体到数据库实体列表 ==========
-                Order.class
+                Order.class,
+                AfterSalesRecord.class // 注册新实体
         },
-        // ========== 3. 数据库版本号升级（从11→12） ==========
-        version = 13,
+        version = 14, // 版本号升级
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static volatile AppDatabase INSTANCE;
 
-    // 原有DAO
     public abstract UserDao userDao();
     public abstract MerchantDao merchantDao();
     public abstract AdminDao adminDao();
@@ -80,9 +77,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract HelpPostDao helpPostDao();
     public abstract ChatDao chatDao();
     public abstract ProductDao productDao();
-
-    // ========== 4. 新增OrderDao抽象方法 ==========
     public abstract OrderDao orderDao();
+    public abstract AfterSalesRecordDao afterSalesRecordDao(); // 新增Dao
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {

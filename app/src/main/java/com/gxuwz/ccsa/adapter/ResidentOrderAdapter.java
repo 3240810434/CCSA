@@ -1,5 +1,7 @@
 package com.gxuwz.ccsa.adapter;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.Order;
+import com.gxuwz.ccsa.ui.resident.ResidentApplyAfterSalesActivity;
 
 import java.util.List;
 
@@ -41,6 +44,7 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
     @Override
     public void onBindViewHolder(@NonNull OrderViewHolder holder, int position) {
         Order order = orderList.get(position);
+        Context context = holder.itemView.getContext();
 
         holder.tvMerchantName.setText(order.merchantName != null ? order.merchantName : "未知商家");
         holder.tvStatus.setText(order.status);
@@ -62,7 +66,6 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
 
         holder.tvProductName.setText(order.productName);
 
-        // 显示规格或服务数量
         if ("服务".equals(order.productType) || "SERVICE".equals(order.productType)) {
             holder.tvSpecInfo.setText("服务数量：" + order.serviceCount);
         } else {
@@ -71,24 +74,59 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
 
         holder.tvPayAmount.setText("¥ " + order.payAmount);
         holder.tvPayMethod.setText(order.paymentMethod != null ? order.paymentMethod : "在线支付");
-
         holder.tvCreateTime.setText("下单时间：" + order.createTime);
         holder.tvOrderNo.setText("订单号：" + order.orderNo);
 
         if (order.productImageUrl != null) {
-            Glide.with(holder.itemView.getContext())
+            Glide.with(context)
                     .load(order.productImageUrl)
                     .placeholder(R.drawable.ic_launcher_background)
                     .into(holder.ivProductImg);
         }
 
-        // 按钮点击事件（暂未实现功能）
+        // --- 核心：售后状态流转逻辑 ---
+        if ("已完成".equals(order.status)) {
+            // 根据 afterSalesStatus 改变按钮状态
+            switch (order.afterSalesStatus) {
+                case 0: // 无售后 -> 显示“申请售后”
+                    holder.btnApply.setText("申请售后");
+                    holder.btnApply.setTextColor(Color.parseColor("#666666")); // 灰色字
+                    holder.btnApply.setOnClickListener(v -> {
+                        Intent intent = new Intent(context, ResidentApplyAfterSalesActivity.class);
+                        intent.putExtra("orderId", order.id);
+                        context.startActivity(intent);
+                    });
+                    break;
+                case 1: // 待处理
+                    holder.btnApply.setText("售后待处理");
+                    holder.btnApply.setTextColor(Color.parseColor("#FF9800")); // 橙色
+                    holder.btnApply.setOnClickListener(v -> {
+                        Toast.makeText(context, "您的申请正在等待商家处理", Toast.LENGTH_SHORT).show();
+                    });
+                    break;
+                case 2: // 协商中
+                    holder.btnApply.setText("售后协商中");
+                    holder.btnApply.setTextColor(Color.RED);
+                    holder.btnApply.setOnClickListener(v -> {
+                        // 可以跳转到聊天页面，这里简单提示
+                        Toast.makeText(context, "请查看消息并与商家沟通", Toast.LENGTH_SHORT).show();
+                    });
+                    break;
+                case 3: // 成功
+                    holder.btnApply.setText("售后成功");
+                    holder.btnApply.setTextColor(Color.parseColor("#4CAF50")); // 绿色
+                    holder.btnApply.setOnClickListener(null);
+                    break;
+                case 4: // 关闭
+                    holder.btnApply.setText("售后已关闭");
+                    holder.btnApply.setTextColor(Color.GRAY);
+                    holder.btnApply.setOnClickListener(null);
+                    break;
+            }
+        }
+
         holder.btnEvaluate.setOnClickListener(v -> {
             Toast.makeText(v.getContext(), "评价功能开发中", Toast.LENGTH_SHORT).show();
-        });
-
-        holder.btnApply.setOnClickListener(v -> {
-            Toast.makeText(v.getContext(), "售后申请功能开发中", Toast.LENGTH_SHORT).show();
         });
     }
 
@@ -101,7 +139,6 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
         TextView tvMerchantName, tvStatus, tvProductName, tvSpecInfo;
         TextView tvPayAmount, tvPayMethod, tvCreateTime, tvOrderNo;
         ImageView ivProductImg;
-        // 新增控件
         LinearLayout layoutActionButtons;
         TextView btnEvaluate, btnApply;
 
@@ -116,8 +153,6 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
             tvCreateTime = itemView.findViewById(R.id.tv_create_time);
             tvOrderNo = itemView.findViewById(R.id.tv_order_no);
             ivProductImg = itemView.findViewById(R.id.iv_product_img);
-
-            // 绑定新控件
             layoutActionButtons = itemView.findViewById(R.id.layout_action_buttons);
             btnEvaluate = itemView.findViewById(R.id.btn_evaluate);
             btnApply = itemView.findViewById(R.id.btn_apply);

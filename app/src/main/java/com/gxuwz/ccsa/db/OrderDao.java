@@ -17,6 +17,9 @@ public interface OrderDao {
     @Update
     void update(Order order);
 
+    @Query("SELECT * FROM orders WHERE id = :id")
+    Order getOrderById(long id);
+
     // 居民查询自己的订单
     @Query("SELECT * FROM orders WHERE residentId = :residentId ORDER BY id DESC")
     List<Order> getOrdersByResident(String residentId);
@@ -25,7 +28,17 @@ public interface OrderDao {
     @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND status = '待接单' ORDER BY id DESC")
     List<Order> getPendingOrdersByMerchant(String merchantId);
 
-    // 商家查询特定状态的订单 (用于扩展处理中/已完成)
+    // 商家查询特定状态的订单
     @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND status = :status ORDER BY id DESC")
     List<Order> getOrdersByMerchantAndStatus(String merchantId, String status);
+
+    // --- 新增方法 ---
+
+    // 更新售后状态
+    @Query("UPDATE orders SET afterSalesStatus = :status WHERE id = :orderId")
+    void updateAfterSalesStatus(Long orderId, int status);
+
+    // 商家查询所有售后相关的订单 (status不为0)
+    @Query("SELECT * FROM orders WHERE merchantId = :merchantId AND afterSalesStatus > 0 ORDER BY id DESC")
+    List<Order> getMerchantAfterSalesOrders(String merchantId);
 }
