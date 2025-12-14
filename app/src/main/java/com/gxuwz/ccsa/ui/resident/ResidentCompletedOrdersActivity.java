@@ -55,10 +55,13 @@ public class ResidentCompletedOrdersActivity extends AppCompatActivity {
             List<Order> allOrders = db.orderDao().getOrdersByResident(String.valueOf(userId));
             List<Order> completedOrders = new ArrayList<>();
 
-            // 过滤逻辑：只显示 已完成
+            // 过滤逻辑修改：
+            // 1. 状态必须是 "已完成"
+            // 2. 并且 afterSalesStatus 必须是 0 (无售后)
+            // 这样，申请了售后的订单就会从这里消失，出现在售后页面
             if (allOrders != null) {
                 for (Order order : allOrders) {
-                    if ("已完成".equals(order.status)) {
+                    if ("已完成".equals(order.status) && order.afterSalesStatus == 0) {
                         completedOrders.add(order);
                     }
                 }
