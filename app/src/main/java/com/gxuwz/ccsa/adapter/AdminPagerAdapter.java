@@ -1,5 +1,6 @@
 package com.gxuwz.ccsa.adapter;
 
+import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -28,7 +29,9 @@ public class AdminPagerAdapter extends FragmentStateAdapter {
                 return AdminManageFragment.newInstance(community, adminAccount);
             case 1:
                 ProfileFragment profileFragment = new ProfileFragment();
-                profileFragment.getArguments().putString("adminAccount", adminAccount);
+                Bundle args = new Bundle();
+                args.putString("adminAccount", adminAccount);
+                profileFragment.setArguments(args);
                 return profileFragment;
             default:
                 return AdminManageFragment.newInstance(community, adminAccount);
