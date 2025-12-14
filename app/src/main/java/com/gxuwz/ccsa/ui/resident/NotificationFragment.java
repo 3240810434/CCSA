@@ -197,7 +197,7 @@ public class NotificationFragment extends Fragment {
         }
 
         productTimer = new Timer();
-        // 【修改点】：延迟6秒后开始执行，每隔6秒执行一次 (6000ms)
+        // 【修改点】：延迟5秒后开始执行，每隔5秒执行一次 (5000ms)
         productTimer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -209,7 +209,7 @@ public class NotificationFragment extends Fragment {
                     });
                 }
             }
-        }, 6000, 6000);
+        }, 5000, 5000);
     }
 
     // --- 更新当前展示的商品列表 ---
