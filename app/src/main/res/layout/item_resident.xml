@@ -6,15 +6,17 @@
     android:paddingVertical="12dp"
     android:paddingHorizontal="4dp"
     android:gravity="center_vertical"
-    android:background="@drawable/bg_business_item"> <TextView
-    android:id="@+id/tv_name"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_weight="1"
-    android:gravity="center"
-    android:text="张三"
-    android:textSize="13sp"
-    android:textColor="#333333"/>
+    android:background="@drawable/bg_business_item">
+
+    <TextView
+        android:id="@+id/tv_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:text="张三"
+        android:textSize="13sp"
+        android:textColor="#333333"/>
 
     <TextView
         android:id="@+id/tv_gender"
@@ -59,7 +61,7 @@
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_weight="2.2"
+        android:layout_weight="1.2"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -72,18 +74,7 @@
             android:textColor="@android:color/white"
             android:background="@drawable/red_rounded_btn"
             android:gravity="center"
-            android:paddingHorizontal="8dp"
-            android:layout_marginEnd="4dp"/>
+            android:paddingHorizontal="12dp"/>
 
-        <TextView
-            android:id="@+id/btn_chat"
-            android:layout_width="wrap_content"
-            android:layout_height="28dp"
-            android:text="发消息"
-            android:textSize="11sp"
-            android:textColor="@android:color/white"
-            android:background="@drawable/blue_rounded_btn"
-            android:gravity="center"
-            android:paddingHorizontal="8dp"/>
     </LinearLayout>
 </LinearLayout>

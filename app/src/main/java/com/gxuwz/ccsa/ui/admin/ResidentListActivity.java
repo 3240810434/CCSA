@@ -1,7 +1,6 @@
 package com.gxuwz.ccsa.ui.admin;
 
 import android.app.AlertDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -12,7 +11,6 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.ResidentListAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.User;
-import com.gxuwz.ccsa.ui.resident.ChatActivity;
 import java.util.List;
 
 public class ResidentListActivity extends AppCompatActivity {
@@ -64,15 +62,11 @@ public class ResidentListActivity extends AppCompatActivity {
                         mRecyclerView.setAdapter(null);
                     } else {
                         // 初始化适配器并传入监听器
+                        // 修改：删除了 onChatClick 回调
                         mAdapter = new ResidentListAdapter(mResidents, new ResidentListAdapter.OnItemClickListener() {
                             @Override
                             public void onDeleteClick(User user) {
                                 showDeleteConfirmDialog(user);
-                            }
-
-                            @Override
-                            public void onChatClick(User user) {
-                                goToChat(user);
                             }
                         });
                         mRecyclerView.setAdapter(mAdapter);
@@ -109,23 +103,5 @@ public class ResidentListActivity extends AppCompatActivity {
         }).start();
     }
 
-    // 跳转到聊天页面
-    private void goToChat(User user) {
-        Intent intent = new Intent(this, ChatActivity.class);
-
-        // --- 关键参数配置 ---
-        // 1. 设置管理员身份 (ID设为1，角色设为ADMIN)
-        intent.putExtra("myId", 1);
-        intent.putExtra("myRole", "ADMIN");
-
-        // 2. 设置目标居民身份
-        intent.putExtra("targetId", user.getId());
-        intent.putExtra("targetRole", "RESIDENT"); // 用户表中角色通常是居民
-
-        // 3. 传递用于显示的头像和名称（ChatActivity会优先使用这些）
-        intent.putExtra("targetName", user.getName());
-        intent.putExtra("targetAvatar", user.getAvatar());
-
-        startActivity(intent);
-    }
+    // 已删除 goToChat 方法
 }
