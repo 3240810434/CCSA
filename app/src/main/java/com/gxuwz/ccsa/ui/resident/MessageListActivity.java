@@ -62,7 +62,7 @@ public class MessageListActivity extends AppCompatActivity {
                     int otherId;
                     String otherRole;
 
-                    // 严谨的判断逻辑：如果是我发的(ID相同且角色是RESIDENT)，那对方就是接收者；否则对方是发送者
+                    // 严谨的判断逻辑
                     if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                         otherId = msg.receiverId;
                         otherRole = msg.receiverRole;
@@ -71,34 +71,30 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 2. 生成唯一Key，区分不同角色的同ID用户
-                    // 【Bug修复】增加 trim() 去除空格，防止数据库存储 "ADMIN " 导致匹配失败
+                    // 2. 生成唯一Key
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
                     String key = safeRole + "_" + otherId;
 
                     if (!latestMsgMap.containsKey(key)) {
-                        // --- 【强制修复核心】 ---
+                        // --- 【修复核心】 ---
 
-                        // 优先判断：如果是管理员，直接写死，不需要查库！
-                        if ("ADMIN".equals(safeRole) || "ADMINISTRATOR".equals(safeRole)) {
+                        // 1. 优先判断管理员：使用 contains 放宽条件，防止角色名差异（如 "ADMINISTRATOR" vs "ADMIN"）
+                        if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER") || safeRole.contains("SYSTEM")) {
                             msg.targetName = "管理员";
-                            // 设置一个特殊标记，Adapter 里识别这个标记
-                            msg.targetAvatar = "local_admin_resource";
+                            msg.targetAvatar = "local_admin_resource"; // 设置特殊标记
                         }
-                        // 其次判断：如果是商家
-                        else if ("MERCHANT".equals(safeRole)) {
+                        // 2. 其次判断商家
+                        else if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             msg.targetName = (m != null) ? m.getMerchantName() : "商家(已注销)";
                             msg.targetAvatar = (m != null) ? m.getAvatar() : "";
                         }
-                        // 最后：既不是管理员也不是商家，那肯定是普通用户（RESIDENT）
+                        // 3. 最后是普通用户
                         else {
                             User u = db.userDao().findById(otherId);
-                            // 如果查到了，用查到的名字；查不到（可能是数据错误）就显示“用户”
                             msg.targetName = (u != null) ? u.getName() : "用户";
                             msg.targetAvatar = (u != null) ? u.getAvatar() : "";
                         }
-
                         // --- 【修复结束】 ---
 
                         latestMsgMap.put(key, msg);

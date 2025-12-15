@@ -40,33 +40,33 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatMessage msg = conversationList.get(position);
 
-        // 显示名字
+        // 先设置默认显示内容（可能会被后续逻辑覆盖）
         holder.tvName.setText(msg.targetName != null ? msg.targetName : "未知用户");
         holder.tvContent.setText(msg.content);
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
 
-        // --- 【强制显示管理员头像】 ---
-        // 只要名字是“管理员” 或者 头像标记是我们Activity里设定的那个特殊字符串
-        // 或者是消息角色包含 ADMIN (作为双重保险)
+        // --- 【修复核心：强制管理员显示逻辑】 ---
+        // 判断是否为管理员：检查名字、检查头像标记、或者检查发送者角色字段
         boolean isAdmin = "管理员".equals(msg.targetName) ||
                 "local_admin_resource".equals(msg.targetAvatar) ||
                 (msg.senderRole != null && msg.senderRole.toUpperCase().contains("ADMIN") && msg.senderId != currentUser.getId());
 
         if (isAdmin) {
-            // 强制加载本地 drawable 资源
+            // 1. 强制显示管理员头像
             holder.ivAvatar.setImageResource(R.drawable.admin);
+            // 2. 【关键修复】强制显示名字为“管理员”，防止显示成“未知用户”
+            holder.tvName.setText("管理员");
         } else {
-            // 普通用户或商家，使用 Glide 加载网络/本地路径图片
+            // 普通用户或商家，使用 Glide 加载
             Glide.with(context)
                     .load(msg.targetAvatar)
-                    .placeholder(R.drawable.ic_avatar) // 默认头像
-                    .error(R.drawable.ic_avatar)       // 加载失败显示默认头像
+                    .placeholder(R.drawable.ic_avatar)
+                    .error(R.drawable.ic_avatar)
                     .circleCrop()
                     .into(holder.ivAvatar);
         }
 
         holder.itemView.setOnClickListener(v -> {
-            // 点击跳转逻辑
             int targetId;
             String targetRole;
 
@@ -85,9 +85,14 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             intent.putExtra("targetId", targetId);
             intent.putExtra("targetRole", targetRole);
 
-            // 将强制修正后的名字和头像传给聊天页面，确保聊天页面标题也显示“管理员”
-            intent.putExtra("targetName", msg.targetName);
-            intent.putExtra("targetAvatar", msg.targetAvatar);
+            // 如果识别出是管理员，强制传正确的数据给聊天页面
+            if (isAdmin) {
+                intent.putExtra("targetName", "管理员");
+                intent.putExtra("targetAvatar", "local_admin_resource");
+            } else {
+                intent.putExtra("targetName", msg.targetName);
+                intent.putExtra("targetAvatar", msg.targetAvatar);
+            }
 
             context.startActivity(intent);
         });
