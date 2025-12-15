@@ -56,6 +56,15 @@
         <activity android:name=".ui.admin.MerchantAuditDetailActivity" android:exported="false"/>
         <activity android:name=".ui.admin.SetFeeStandardActivity" android:exported="false"/>
         <activity android:name=".ui.admin.FeeAnnouncementActivity" android:exported="false"/>
+
+        <activity
+            android:name=".ui.admin.FeeAnnouncementPublishActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+
+        <activity
+            android:name=".ui.admin.FeeAnnouncementDetailActivity"
+            android:exported="false"/>
         <activity android:name=".ui.admin.PaymentStatisticsActivity" android:exported="false"/>
         <activity android:name=".ui.admin.PaymentAppealListActivity" android:exported="false"/>
         <activity android:name=".ui.admin.ResidentListActivity" android:exported="false"/>
@@ -86,13 +95,9 @@
         <activity android:name=".ui.resident.ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.resident.MessageListActivity" android:exported="false"/>
         <activity android:name=".ui.resident.ResidentProductBrowsingActivity" android:exported="false"/>
-        <!-- ========== 新增Activity注册 ========== -->
-        <!-- 居民商品详情页 -->
+
         <activity android:name=".ui.resident.ResidentProductDetailActivity" android:exported="false"/>
-        <!-- 居民订单页 -->
         <activity android:name=".ui.resident.ResidentOrdersActivity" android:exported="false"/>
-        <!-- 可选：若有支付确认页，可补充注册 -->
-        <!-- <activity android:name=".ui.resident.PaymentConfirmActivity" android:exported="false"/> -->
         <activity android:name=".ui.common.VoteDetailActivity" android:exported="false"/>
         <activity android:name=".ui.resident.ResidentCompletedOrdersActivity"/>
         <activity android:name=".ui.resident.ResidentAfterSalesActivity"/>
