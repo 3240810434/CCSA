@@ -20,42 +20,64 @@
             android:layout_height="60dp"
             app:cardCornerRadius="30dp"
             app:cardElevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintTop_toTopOf="parent">
 
             <ImageView
                 android:id="@+id/iv_store_avatar"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/merchant_picture"
-                android:scaleType="centerCrop" />
+                android:scaleType="centerCrop"
+                android:src="@drawable/merchant_picture" />
         </androidx.cardview.widget.CardView>
 
         <TextView
             android:id="@+id/tv_store_name"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="1"
             android:text="商家名称"
             android:textColor="@android:color/black"
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="@id/cv_store_avatar"
+            app:layout_constraintEnd_toStartOf="@+id/ll_status_container"
             app:layout_constraintStart_toEndOf="@id/cv_store_avatar"
             app:layout_constraintTop_toTopOf="@id/cv_store_avatar" />
 
-        <ImageView
-            android:id="@+id/iv_store_status"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/open"
+        <LinearLayout
+            android:id="@+id/ll_status_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"
+            android:padding="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/iv_store_status"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/open" />
+
+            <TextView
+                android:id="@+id/tv_status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="营业中"
+                android:textSize="10sp"
+                android:textColor="#666666"
+                android:layout_marginTop="2dp"/>
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -63,9 +85,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
+        app:cardBackgroundColor="@android:color/white"
         app:cardCornerRadius="8dp"
         app:cardElevation="2dp"
-        app:cardBackgroundColor="@android:color/white"
         app:layout_constraintTop_toBottomOf="@id/cl_header">
 
         <LinearLayout
@@ -85,11 +107,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:orientation="vertical"
                     android:padding="8dp">
 
                     <TextView
@@ -97,16 +119,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="待接单"
-                        android:textSize="12sp"
                         android:textColor="#999999"
-                        android:layout_marginTop="4dp"/>
+                        android:textSize="12sp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -114,11 +137,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:orientation="vertical"
                     android:padding="8dp">
 
                     <TextView
@@ -126,16 +149,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="接单中"
-                        android:textSize="12sp"
                         android:textColor="#999999"
-                        android:layout_marginTop="4dp"/>
+                        android:textSize="12sp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -143,25 +167,26 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:orientation="vertical"
                     android:padding="8dp">
 
                     <ImageView
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:src="@drawable/order_completed"
-                        android:scaleType="fitCenter"/>
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/order_completed" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="已完成"
-                        android:textSize="12sp"
                         android:textColor="#999999"
-                        android:layout_marginTop="4dp"/>
+                        android:textSize="12sp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -169,11 +194,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:gravity="center"
-                    android:orientation="vertical"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:orientation="vertical"
                     android:padding="8dp">
 
                     <TextView
@@ -181,16 +206,17 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
+
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="售后"
-                        android:textSize="12sp"
                         android:textColor="#999999"
-                        android:layout_marginTop="4dp"/>
+                        android:textSize="12sp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -205,11 +231,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.25"
-                    android:gravity="center"
-                    android:orientation="vertical"
+                    android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:gravity="center"
+                    android:orientation="vertical"
                     android:padding="8dp">
 
                     <TextView
@@ -217,23 +243,23 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="0"
+                        android:textColor="@android:color/black"
                         android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:textColor="@android:color/black"/>
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="商品管理"
-                        android:textSize="12sp"
                         android:textColor="#999999"
-                        android:layout_marginTop="4dp"/>
+                        android:textSize="12sp" />
                 </LinearLayout>
 
                 <View
                     android:layout_width="0dp"
                     android:layout_height="1dp"
-                    android:layout_weight="0.75"/>
+                    android:layout_weight="0.75" />
             </LinearLayout>
 
         </LinearLayout>

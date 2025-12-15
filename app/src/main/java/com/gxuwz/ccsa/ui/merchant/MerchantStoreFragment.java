@@ -30,7 +30,11 @@ public class MerchantStoreFragment extends Fragment {
 
     private ImageView ivStoreAvatar;
     private TextView tvStoreName;
+
+    // 状态相关控件
     private ImageView ivStoreStatus;
+    private TextView tvStatusText;
+    private LinearLayout llStatusContainer;
 
     // 统计数据显示控件
     private TextView tvPendingCount;
@@ -92,13 +96,19 @@ public class MerchantStoreFragment extends Fragment {
     private void initViews(View view) {
         ivStoreAvatar = view.findViewById(R.id.iv_store_avatar);
         tvStoreName = view.findViewById(R.id.tv_store_name);
-        ivStoreStatus = view.findViewById(R.id.iv_store_status);
 
+        // 状态相关
+        ivStoreStatus = view.findViewById(R.id.iv_store_status);
+        tvStatusText = view.findViewById(R.id.tv_status_text);
+        llStatusContainer = view.findViewById(R.id.ll_status_container);
+
+        // 统计数据
         tvPendingCount = view.findViewById(R.id.tv_pending_count);
         tvProcessingCount = view.findViewById(R.id.tv_processing_count);
         tvAfterSalesCount = view.findViewById(R.id.tv_after_sales_count);
         tvProductCount = view.findViewById(R.id.tv_product_count);
 
+        // 功能入口
         llPendingOrders = view.findViewById(R.id.ll_pending_orders);
         llProcessingOrders = view.findViewById(R.id.ll_processing_orders);
         llCompletedOrders = view.findViewById(R.id.ll_completed_orders);
@@ -118,6 +128,16 @@ public class MerchantStoreFragment extends Fragment {
     }
 
     private void setupListeners() {
+        // 点击整个状态容器触发开关店逻辑
+        if (llStatusContainer != null) {
+            llStatusContainer.setOnClickListener(v -> {
+                if (checkQualification()) {
+                    showToggleStatusDialog();
+                }
+            });
+        }
+
+        // 兼容旧代码，如果只点击图标也能触发
         if (ivStoreStatus != null) {
             ivStoreStatus.setOnClickListener(v -> {
                 if (checkQualification()) {
@@ -173,10 +193,15 @@ public class MerchantStoreFragment extends Fragment {
 
         tvStoreName.setText(currentMerchant.getMerchantName());
 
+        // 更新营业状态 UI
         if (currentMerchant.isOpen()) {
-            ivStoreStatus.setImageResource(R.drawable.open);
+            ivStoreStatus.setImageResource(R.drawable.open); // 建议是一张彩色的开启图标
+            tvStatusText.setText("营业中");
+            tvStatusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark, null));
         } else {
-            ivStoreStatus.setImageResource(R.drawable.close);
+            ivStoreStatus.setImageResource(R.drawable.close); // 建议是一张灰色的关闭图标
+            tvStatusText.setText("休息中");
+            tvStatusText.setTextColor(getResources().getColor(android.R.color.darker_gray, null));
         }
     }
 
@@ -226,9 +251,13 @@ public class MerchantStoreFragment extends Fragment {
         if (currentMerchant == null) return;
 
         boolean isOpen = currentMerchant.isOpen();
-        String message = isOpen ? "是否关闭店铺？" : "是否开启店铺？";
+        String title = isOpen ? "暂停营业" : "开始营业";
+        String message = isOpen ?
+                "确定要关闭店铺吗？\n关闭后，居民将无法看到您的商品，但您仍可处理进行中的订单。" :
+                "确定要开启店铺吗？\n开启后，您的商品将重新上架，居民可以进行购买。";
 
         new AlertDialog.Builder(getContext())
+                .setTitle(title)
                 .setMessage(message)
                 .setPositiveButton("确定", (dialog, which) -> toggleStoreStatus(!isOpen))
                 .setNegativeButton("取消", null)
@@ -237,17 +266,22 @@ public class MerchantStoreFragment extends Fragment {
 
     private void toggleStoreStatus(boolean newStatus) {
         currentMerchant.setOpen(newStatus);
-        updateUI();
+        updateUI(); // 立即更新 UI，提升响应速度
 
         Executors.newSingleThreadExecutor().execute(() -> {
             if (getContext() != null) {
+                // 1. 更新数据库中的商家状态
                 AppDatabase.getInstance(getContext()).merchantDao().update(currentMerchant);
+
+                // 2. 同步 Activity 中的缓存
                 if (getActivity() instanceof MerchantMainActivity) {
                     ((MerchantMainActivity) getActivity()).setCurrentMerchant(currentMerchant);
                 }
+
+                // 3. UI 提示
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        String statusMsg = newStatus ? "店铺已开启" : "店铺已关闭";
+                        String statusMsg = newStatus ? "店铺已开启，祝您生意兴隆！" : "店铺已关闭，注意休息！";
                         Toast.makeText(getContext(), statusMsg, Toast.LENGTH_SHORT).show();
                     });
                 }
