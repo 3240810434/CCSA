@@ -2,9 +2,22 @@ package com.gxuwz.ccsa.util;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.text.TextUtils;
+import android.util.Base64;
+
+import com.gxuwz.ccsa.model.User;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 public class SharedPreferencesUtil {
     private static final String PREF_NAME = "ccsa_prefs";
+    private static final String KEY_USER = "user_data";
+    private static final String KEY_MERCHANT_ID = "merchant_id";
+
     private static SharedPreferencesUtil instance;
     private final SharedPreferences sharedPreferences;
 
@@ -19,15 +32,66 @@ public class SharedPreferencesUtil {
         return instance;
     }
 
-    // 获取当前登录商家的ID (假设存储的是String类型的ID)
+    // --- 商家相关 ---
     public String getMerchantId() {
-        // 这里的key "merchant_id" 需要和你登录时保存的key一致
-        // 如果你登录时还没保存，可以暂时返回默认测试ID "1"
-        return sharedPreferences.getString("merchant_id", "1");
+        return sharedPreferences.getString(KEY_MERCHANT_ID, "1");
     }
 
-    // 保存商家ID (供登录页面使用)
     public void saveMerchantId(String id) {
-        sharedPreferences.edit().putString("merchant_id", id).apply();
+        sharedPreferences.edit().putString(KEY_MERCHANT_ID, id).apply();
+    }
+
+    // --- 用户相关 (静态方法，适配 MyDynamicsActivity 等调用) ---
+
+    /**
+     * 保存用户信息
+     */
+    public static void saveUser(Context context, User user) {
+        SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        if (user == null) {
+            sp.edit().remove(KEY_USER).apply();
+            return;
+        }
+
+        // 将 User 对象序列化为 String 保存
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(user);
+            String userBase64 = new String(Base64.encode(baos.toByteArray(), Base64.DEFAULT));
+            sp.edit().putString(KEY_USER, userBase64).apply();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 获取用户信息
+     */
+    public static User getUser(Context context) {
+        SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        String userBase64 = sp.getString(KEY_USER, "");
+
+        if (TextUtils.isEmpty(userBase64)) {
+            return null;
+        }
+
+        try {
+            byte[] mobileBytes = Base64.decode(userBase64.getBytes(), Base64.DEFAULT);
+            ByteArrayInputStream bais = new ByteArrayInputStream(mobileBytes);
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            return (User) ois.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 清除用户信息 (退出登录时使用)
+     */
+    public static void clearUser(Context context) {
+        SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        sp.edit().remove(KEY_USER).apply();
     }
 }

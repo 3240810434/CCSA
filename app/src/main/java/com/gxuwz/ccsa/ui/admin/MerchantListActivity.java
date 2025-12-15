@@ -60,7 +60,7 @@ public class MerchantListActivity extends AppCompatActivity {
                         Toast.makeText(this, "该小区暂无商家入驻", Toast.LENGTH_SHORT).show();
                         mRecyclerView.setAdapter(null);
                     } else {
-                        // 初始化适配器
+                        // 初始化适配器，传入删除回调
                         mAdapter = new MerchantManagementAdapter(mMerchants, this::showDeleteConfirmDialog);
                         mRecyclerView.setAdapter(mAdapter);
                     }
