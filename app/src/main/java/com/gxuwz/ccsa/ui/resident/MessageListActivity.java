@@ -1,7 +1,6 @@
 package com.gxuwz.ccsa.ui.resident;
 
 import android.os.Bundle;
-import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -16,10 +15,8 @@ import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.User;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class MessageListActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -56,39 +53,6 @@ public class MessageListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // =================================================================
-                // 【核心修复：构建终极屏蔽黑名单】
-                // =================================================================
-                Set<Integer> adminIdBlacklist = new HashSet<>();
-
-                // 1. 尝试从数据库获取所有管理员 (不区分小区，全部拉取)
-                try {
-                    List<Admin> allAdmins = db.adminDao().getAll();
-                    if (allAdmins != null) {
-                        for (Admin a : allAdmins) {
-                            adminIdBlacklist.add(a.getId());
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e("MessageList", "获取管理员列表失败", e);
-                }
-
-                // 2. 【双重保险】手动添加已知的默认管理员ID (对应 App.java 中的初始化)
-                // 即使数据库没查到，这些 ID 也会被强制屏蔽
-                adminIdBlacklist.add(1);          // 悦景
-                adminIdBlacklist.add(11);         // 梧桐
-                adminIdBlacklist.add(111);        // 阳光
-                adminIdBlacklist.add(1111);       // 锦园
-                adminIdBlacklist.add(11111);      // 幸福
-                adminIdBlacklist.add(111111);     // 芳邻
-                adminIdBlacklist.add(1111111);    // 逸景
-                adminIdBlacklist.add(11111111);   // 康城
-
-                Log.d("MessageList", "屏蔽名单ID数量: " + adminIdBlacklist.size());
-
-                // =================================================================
-                // 3. 获取消息并过滤
-                // =================================================================
                 List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
                 Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
@@ -96,7 +60,6 @@ public class MessageListActivity extends AppCompatActivity {
                     int otherId;
                     String otherRole;
 
-                    // 判断对方是谁
                     if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                         otherId = msg.receiverId;
                         otherRole = msg.receiverRole;
@@ -105,52 +68,59 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 规范化角色字符串
+                    // 生成唯一Key (Role + ID)
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
-
-                    // -------------------------------------------------------------
-                    // 【过滤条件 A】按角色名屏蔽 (如果数据库存了 ADMIN)
-                    // -------------------------------------------------------------
-                    if (safeRole.contains("ADMIN") || safeRole.contains("PROPERTY")) {
-                        continue;
-                    }
-
-                    // -------------------------------------------------------------
-                    // 【过滤条件 B】按 ID 黑名单屏蔽 (核弹级过滤)
-                    // 逻辑：如果对方ID在管理员名单里，且对方不是明确的 居民/商家，则直接视为管理员并隐藏
-                    // -------------------------------------------------------------
-                    boolean isExplicitlySafe = safeRole.contains("RESIDENT") || safeRole.contains("MERCHANT");
-
-                    if (adminIdBlacklist.contains(otherId) && !isExplicitlySafe) {
-                        Log.d("MessageList", "隐藏了管理员消息 ID: " + otherId);
-                        continue;
-                    }
-
-                    // -------------------------------------------------------------
-                    // 通过过滤，添加到显示列表
-                    // -------------------------------------------------------------
                     String key = safeRole + "_" + otherId;
 
                     if (!latestMsgMap.containsKey(key)) {
-                        // 补充头像和名称
-                        if (safeRole.contains("MERCHANT")) {
+                        boolean isIdentifyAsAdmin = false;
+
+                        // --- 核心修复：优先通过 ID 强制识别管理员 ---
+                        // 这里包含了 ID 为 1 (悦景) 以及您列出的其他可能的管理员账号 ID
+                        // 注意：如果您的数据库 ID 是自增的，账号 "11" 的 ID 可能不是 11，但这里我们根据账号逻辑做全量匹配以防万一
+                        if (otherId == 1 || otherId == 11 || otherId == 111 ||
+                                otherId == 1111 || otherId == 11111 || otherId == 111111 ||
+                                otherId == 1111111 || otherId == 11111111) {
+                            isIdentifyAsAdmin = true;
+                        }
+                        // 补充判断：通过 Role 字段
+                        else if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER")) {
+                            isIdentifyAsAdmin = true;
+                        }
+                        // 补充判断：查库兜底
+                        else {
+                            Admin admin = db.adminDao().findById(otherId);
+                            if (admin != null) {
+                                isIdentifyAsAdmin = true;
+                            }
+                        }
+
+                        // --- 填充显示数据 ---
+                        if (isIdentifyAsAdmin) {
+                            // 强制设置为管理员信息
+                            msg.targetName = "管理员";
+                            msg.targetAvatar = "local_admin_resource";
+                        } else if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
                                 msg.targetName = m.getMerchantName();
                                 msg.targetAvatar = m.getAvatar();
                             } else {
                                 msg.targetName = "商家";
+                                msg.targetAvatar = "";
                             }
                         } else {
-                            // 默认为普通居民
+                            // 普通居民
                             User u = db.userDao().findById(otherId);
                             if (u != null) {
                                 msg.targetName = u.getName();
                                 msg.targetAvatar = u.getAvatar();
                             } else {
-                                msg.targetName = "用户 " + otherId;
+                                msg.targetName = "未知用户";
+                                msg.targetAvatar = "";
                             }
                         }
+
                         latestMsgMap.put(key, msg);
                     }
                 }
@@ -188,11 +158,9 @@ public class MessageListActivity extends AppCompatActivity {
                     targetId = msg.senderId;
                     targetRole = msg.senderRole;
                 }
-
                 final int tId = targetId;
                 final String tRole = targetRole;
                 new Thread(() -> db.chatDao().deleteConversation(currentUser.getId(), "RESIDENT", tId, tRole)).start();
-
                 conversationList.remove(position);
                 adapter.notifyItemRemoved(position);
             }
