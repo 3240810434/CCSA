@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore; // 1. 导入 Ignore
 import androidx.room.PrimaryKey;
 import androidx.room.ColumnInfo;
 import java.io.Serializable;
@@ -11,29 +12,31 @@ public class AfterSalesRecord implements Serializable {
     public int id;
 
     @ColumnInfo(name = "order_id")
-    public Long orderId; // 关联的订单ID
+    public Long orderId;
 
     @ColumnInfo(name = "type")
-    public String type; // 售后类型：仅退款/退货退款/换货
+    public String type;
 
     @ColumnInfo(name = "reason")
-    public String reason; // 申请原因
+    public String reason;
 
     @ColumnInfo(name = "description")
-    public String description; // 详细描述
+    public String description;
 
     @ColumnInfo(name = "image_paths")
-    public String imagePaths; // 图片路径，多个用分号分隔
+    public String imagePaths;
 
     @ColumnInfo(name = "merchant_reply")
-    public String merchantReply; // 商家拒绝理由或回复
+    public String merchantReply;
 
     @ColumnInfo(name = "create_time")
-    public String createTime; // 申请时间
+    public String createTime;
 
-    // 空构造函数供Room使用
+    // Room 默认使用这个无参构造函数
     public AfterSalesRecord() {}
 
+    // 2. 添加 @Ignore，消除警告
+    @Ignore
     public AfterSalesRecord(Long orderId, String type, String reason, String description, String imagePaths, String createTime) {
         this.orderId = orderId;
         this.type = type;

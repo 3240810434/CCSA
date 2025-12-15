@@ -1,4 +1,4 @@
-// app/src/main/java/com/gxuwz/ccsa/adapter/ResidentListAdapter.java
+// CCSA/app/src/main/java/com/gxuwz/ccsa/adapter/ResidentListAdapter.java
 package com.gxuwz.ccsa.adapter;
 
 import android.view.LayoutInflater;
@@ -16,12 +16,12 @@ public class ResidentListAdapter extends RecyclerView.Adapter<ResidentListAdapte
     private List<User> mResidentList;
     private OnItemClickListener mListener;
 
-    // 定义点击事件接口
     public interface OnItemClickListener {
         void onDeleteClick(User user);
         void onChatClick(User user);
     }
 
+    // 构造函数保持不变
     public ResidentListAdapter(List<User> residentList, OnItemClickListener listener) {
         mResidentList = residentList;
         mListener = listener;
@@ -44,19 +44,22 @@ public class ResidentListAdapter extends RecyclerView.Adapter<ResidentListAdapte
         holder.tvBuilding.setText(user.getBuilding());
         holder.tvRoom.setText(user.getRoom());
 
-        // 绑定注销按钮事件
-        holder.btnDelete.setOnClickListener(v -> {
-            if (mListener != null) {
-                mListener.onDeleteClick(user);
-            }
-        });
+        // --- 关键修改：根据是否有监听器来决定是否显示操作按钮 ---
+        if (mListener == null) {
+            // 居民端查看：隐藏操作按钮 (假设 btnDelete 和 btnChat 在布局中是可见的)
+            // 注意：如果在 item_resident.xml 中这些按钮是在一个父容器里，最好隐藏父容器
+            // 这里假设直接隐藏按钮，或者您可以检查布局里是否有一个LinearLayout包裹了它们
+            holder.btnDelete.setVisibility(View.GONE);
+            holder.btnChat.setVisibility(View.GONE);
+            // 如果有父容器包裹按钮，建议 holder.layoutActions.setVisibility(View.GONE);
+        } else {
+            // 管理员端查看：显示按钮并绑定事件
+            holder.btnDelete.setVisibility(View.VISIBLE);
+            holder.btnChat.setVisibility(View.VISIBLE);
 
-        // 绑定发消息按钮事件
-        holder.btnChat.setOnClickListener(v -> {
-            if (mListener != null) {
-                mListener.onChatClick(user);
-            }
-        });
+            holder.btnDelete.setOnClickListener(v -> mListener.onDeleteClick(user));
+            holder.btnChat.setOnClickListener(v -> mListener.onChatClick(user));
+        }
     }
 
     @Override
@@ -75,7 +78,6 @@ public class ResidentListAdapter extends RecyclerView.Adapter<ResidentListAdapte
             tvPhone = itemView.findViewById(R.id.tv_phone);
             tvBuilding = itemView.findViewById(R.id.tv_building);
             tvRoom = itemView.findViewById(R.id.tv_room);
-            // 绑定新按钮
             btnDelete = itemView.findViewById(R.id.btn_delete);
             btnChat = itemView.findViewById(R.id.btn_chat);
         }
