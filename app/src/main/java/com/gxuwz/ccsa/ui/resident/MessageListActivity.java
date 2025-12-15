@@ -53,15 +53,18 @@ public class MessageListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // 获取所有与我相关的消息
+                // 1. 获取所有与我相关的消息（按时间倒序）
                 List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
+
+                // 用于去重，只显示每个会话的最新一条消息
+                // Key 格式建议为: Role_Id (例如 MERCHANT_5, RESIDENT_3)
                 Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
                 for (ChatMessage msg : allMsgs) {
                     int otherId;
                     String otherRole;
 
-                    // 判断对方是谁
+                    // 判断对方是谁（如果是发件人是我，那对方就是收件人；反之亦然）
                     if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                         otherId = msg.receiverId;
                         otherRole = msg.receiverRole;
@@ -70,45 +73,38 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 生成用于判断角色的字符串
+                    // 统一角色字符串格式，防止空指针
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
 
-                    // ============================================================
-                    // 【核心修改】过滤逻辑：如果对方是管理员，直接跳过 (continue)
-                    // ============================================================
-
-                    // 1. 检查角色字段是否包含 ADMIN
+                    // ====================================================================================
+                    // 【核心逻辑】隐藏管理员会话
+                    // 如果对方的角色是 ADMIN（物业/系统管理员），则跳过，不显示在列表中。
+                    // ====================================================================================
                     if (safeRole.contains("ADMIN")) {
-                        continue; // 直接跳过，不显示
+                        continue;
                     }
 
-                    // 2. 检查 ID 是否在已知的管理员 ID 列表中 (保留您原有的硬编码逻辑以防万一)
+                    // 额外的硬编码ID过滤（如果您的系统有固定管理员ID，保留此项以防角色字段缺失）
                     if (otherId == 1 || otherId == 11 || otherId == 111 ||
-                            otherId == 1111 || otherId == 11111 || otherId == 111111 ||
-                            otherId == 1111111 || otherId == 11111111) {
-                        continue; // 直接跳过，不显示
+                            otherId == 1111 || otherId == 11111) {
+                        continue;
                     }
 
-                    // 3. (可选) 检查角色是否包含 MANAGER
-                    if (safeRole.contains("MANAGER")) {
-                        continue; // 直接跳过
+                    // (可选) 如果角色是 UNKNOWN，可以查库兜底确认是否为管理员（防止数据异常导致漏删）
+                    if ("UNKNOWN".equals(safeRole)) {
+                        Admin adminCheck = db.adminDao().findById(otherId);
+                        if (adminCheck != null) {
+                            continue; // 确认为管理员，跳过
+                        }
                     }
+                    // ====================================================================================
 
-                    // 4. (兜底) 查询 Admin 数据库表，确认是否为管理员
-                    // 这一步比较耗时，前面的检查如果能拦截最好，拦截不到再查库
-                    Admin adminCheck = db.adminDao().findById(otherId);
-                    if (adminCheck != null) {
-                        continue; // 是管理员，跳过
-                    }
-
-                    // ============================================================
-                    // 只有通过了上面的过滤（不是管理员），才添加到显示列表
-                    // ============================================================
-
+                    // 生成唯一Key，用于识别同一个聊天对象
                     String key = safeRole + "_" + otherId;
 
+                    // 如果这个人的消息还没添加过（因为是倒序，第一条就是最新的），则添加
                     if (!latestMsgMap.containsKey(key)) {
-                        // 处理普通用户或商家的显示信息
+                        // 补充对方的头像和名称信息，用于列表显示
                         if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
@@ -116,21 +112,18 @@ public class MessageListActivity extends AppCompatActivity {
                                 msg.targetAvatar = m.getAvatar();
                             } else {
                                 msg.targetName = "商家";
-                                msg.targetAvatar = "";
                             }
                         } else {
-                            // 默认为普通居民 (RESIDENT)
+                            // 默认为普通居民
                             User u = db.userDao().findById(otherId);
                             if (u != null) {
                                 msg.targetName = u.getName();
                                 msg.targetAvatar = u.getAvatar();
                             } else {
                                 msg.targetName = "未知用户";
-                                msg.targetAvatar = "";
                             }
                         }
 
-                        // 加入到 Map 中以去重（只保留最新的一条）
                         latestMsgMap.put(key, msg);
                     }
                 }
@@ -161,6 +154,8 @@ public class MessageListActivity extends AppCompatActivity {
                 ChatMessage msg = conversationList.get(position);
                 int targetId;
                 String targetRole;
+
+                // 解析删除对象的ID和角色
                 if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                     targetId = msg.receiverId;
                     targetRole = msg.receiverRole;
@@ -168,9 +163,14 @@ public class MessageListActivity extends AppCompatActivity {
                     targetId = msg.senderId;
                     targetRole = msg.senderRole;
                 }
+
                 final int tId = targetId;
                 final String tRole = targetRole;
+
+                // 从数据库逻辑删除
                 new Thread(() -> db.chatDao().deleteConversation(currentUser.getId(), "RESIDENT", tId, tRole)).start();
+
+                // 从UI移除
                 conversationList.remove(position);
                 adapter.notifyItemRemoved(position);
             }
