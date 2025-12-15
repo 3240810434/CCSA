@@ -85,7 +85,6 @@ public class AdminManageFragment extends Fragment {
         btnLifeDynamics = view.findViewById(R.id.btn_life_dynamics);
         btnNeighborHelp = view.findViewById(R.id.btn_neighbor_help);
 
-
     }
 
     private void setupButtonListeners() {

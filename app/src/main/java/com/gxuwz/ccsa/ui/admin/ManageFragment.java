@@ -47,8 +47,7 @@ public class ManageFragment extends Fragment {
     private void initViews(View view) {
         btnResidentList = view.findViewById(R.id.btn_resident_list);
         btnInitiateVote = view.findViewById(R.id.btn_initiate_vote);
-        // 新增绑定
-        btnMerchantManage = view.findViewById(R.id.btn_merchant_manage);
+
     }
 
     private void setupButtonListeners() {
