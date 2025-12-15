@@ -11,8 +11,6 @@ import android.widget.Toast;
 import androidx.fragment.app.Fragment;
 
 import com.gxuwz.ccsa.R;
-// 确保导入了 MerchantAuditListActivity，如果包名不同请自行调整
-// import com.gxuwz.ccsa.ui.admin.MerchantAuditListActivity;
 
 public class AdminManageFragment extends Fragment {
 
@@ -20,23 +18,25 @@ public class AdminManageFragment extends Fragment {
     private String mCommunity;
     private String mAdminAccount;
 
-    // 使用 View 而不是 Button，适配自定义的 LinearLayout 布局
-    private View btnInitiateVote;
+    // 按钮视图
     private View btnSetFeeStandard;
     private View btnPublishFee;
     private View btnViewStatistics;
     private View btnHandleAppeal;
-    private View btnResidentList;
-    private View btnResidentRepair;
 
-    // 新增：绑定剩余的功能按钮，保证代码完整性
     private View btnPublishNotice;
-    private View btnMerchantList;
+    private View btnInitiateVote;
+    private View btnResidentList;
+    private View btnMerchantList; // 商家管理（图标入口）
     private View btnMerchantAudit;
+
+    private View btnResidentRepair;
     private View btnLifeDynamics;
     private View btnNeighborHelp;
 
-    // 实例化方法
+    // 【新增】底部的“商家账号管理”按钮
+    private View btnMerchantManage;
+
     public static AdminManageFragment newInstance(String community, String adminAccount) {
         if (community == null || community.isEmpty() || adminAccount == null || adminAccount.isEmpty()) {
             throw new IllegalArgumentException("小区信息和管理员账号不能为空");
@@ -55,7 +55,6 @@ public class AdminManageFragment extends Fragment {
         if (getArguments() != null) {
             mCommunity = getArguments().getString("community");
             mAdminAccount = getArguments().getString("adminAccount");
-            Log.d(TAG, "Fragment初始化 - 小区：" + mCommunity + "，管理员账号：" + mAdminAccount);
         }
     }
 
@@ -85,17 +84,19 @@ public class AdminManageFragment extends Fragment {
         btnResidentRepair = view.findViewById(R.id.btn_resident_repair);
         btnLifeDynamics = view.findViewById(R.id.btn_life_dynamics);
         btnNeighborHelp = view.findViewById(R.id.btn_neighbor_help);
+
+
     }
 
     private void setupButtonListeners() {
-        // 1. 设置物业费标准
+        // ... (其他按钮监听保持不变) ...
+
         setListener(btnSetFeeStandard, v -> {
             Intent intent = new Intent(requireActivity(), SetFeeStandardActivity.class);
             intent.putExtra("community", mCommunity);
             startActivity(intent);
         });
 
-        // 2. 相关费用公示
         setListener(btnPublishFee, v -> {
             Intent intent = new Intent(requireActivity(), FeeAnnouncementActivity.class);
             intent.putExtra("community", mCommunity);
@@ -103,14 +104,12 @@ public class AdminManageFragment extends Fragment {
             startActivity(intent);
         });
 
-        // 3. 查看缴费统计
         setListener(btnViewStatistics, v -> {
             Intent intent = new Intent(requireActivity(), PaymentStatisticsActivity.class);
             intent.putExtra("community", mCommunity);
             startActivity(intent);
         });
 
-        // 4. 缴费异常申诉处理
         setListener(btnHandleAppeal, v -> {
             Intent intent = new Intent(requireActivity(), PaymentAppealListActivity.class);
             intent.putExtra("community", mCommunity);
@@ -118,21 +117,18 @@ public class AdminManageFragment extends Fragment {
             startActivity(intent);
         });
 
-        // 5. 发起小区投票
         setListener(btnInitiateVote, v -> {
             Intent intent = new Intent(requireActivity(), CreateVoteActivity.class);
             intent.putExtra("community", mCommunity);
             startActivity(intent);
         });
 
-        // 6. 居民列表
         setListener(btnResidentList, v -> {
             Intent intent = new Intent(requireActivity(), ResidentListActivity.class);
             intent.putExtra("community", mCommunity);
             startActivity(intent);
         });
 
-        // 7. 居民报修处理
         setListener(btnResidentRepair, v -> {
             Intent intent = new Intent(requireActivity(), AdminRepairListActivity.class);
             intent.putExtra("community", mCommunity);
@@ -140,22 +136,30 @@ public class AdminManageFragment extends Fragment {
             startActivity(intent);
         });
 
-        // --- 新增/修改：商家审核跳转逻辑 ---
         setListener(btnMerchantAudit, v -> {
             Intent intent = new Intent(requireActivity(), MerchantAuditListActivity.class);
             startActivity(intent);
         });
 
-        // --- 以下为原代码中未实现逻辑的按钮，保持提示 ---
+        // 【修复】商家管理（图标入口）：跳转到商家列表
+        setListener(btnMerchantList, v -> {
+            Intent intent = new Intent(requireActivity(), MerchantListActivity.class);
+            intent.putExtra("community", mCommunity); // 传递小区信息
+            startActivity(intent);
+        });
+
+        // 【修复】商家账号管理（底部大按钮）：跳转到商家列表
+        setListener(btnMerchantManage, v -> {
+            Intent intent = new Intent(requireActivity(), MerchantListActivity.class);
+            intent.putExtra("community", mCommunity); // 传递小区信息
+            startActivity(intent);
+        });
 
         setListener(btnPublishNotice, v -> showToast("发布通知功能开发中"));
-        setListener(btnMerchantList, v -> showToast("商家列表功能开发中"));
-        // btnMerchantAudit 已上方实现
         setListener(btnLifeDynamics, v -> showToast("生活动态功能开发中"));
         setListener(btnNeighborHelp, v -> showToast("邻里互助功能开发中"));
     }
 
-    // 辅助方法：统一设置监听器并检查小区信息
     private void setListener(View view, View.OnClickListener listener) {
         if (view != null) {
             view.setOnClickListener(v -> {
@@ -179,6 +183,8 @@ public class AdminManageFragment extends Fragment {
     }
 
     private void showToast(String msg) {
-        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+        if (getContext() != null) {
+            Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+        }
     }
 }

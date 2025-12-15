@@ -106,5 +106,6 @@
         <activity android:name=".ui.resident.ResidentApplyAfterSalesActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.merchant.MerchantAfterSalesListActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.MerchantAfterSalesDetailActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.admin.MerchantListActivity" android:exported="false"/>
     </application>
 </manifest>
