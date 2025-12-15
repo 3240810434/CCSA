@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.gxuwz.ccsa.ui.admin.AdminManageFragment;
+import com.gxuwz.ccsa.ui.admin.AdminMessageFragment;
 import com.gxuwz.ccsa.ui.admin.ProfileFragment;
 
 public class AdminPagerAdapter extends FragmentStateAdapter {
@@ -25,9 +26,13 @@ public class AdminPagerAdapter extends FragmentStateAdapter {
     public Fragment createFragment(int position) {
         switch (position) {
             case 0:
-                // 修复：使用AdminManageFragment并传递完整参数
+                // 管理页面
                 return AdminManageFragment.newInstance(community, adminAccount);
             case 1:
+                // 信息页面 (新增)
+                return AdminMessageFragment.newInstance(adminAccount);
+            case 2:
+                // 个人中心页面
                 ProfileFragment profileFragment = new ProfileFragment();
                 Bundle args = new Bundle();
                 args.putString("adminAccount", adminAccount);
@@ -40,6 +45,6 @@ public class AdminPagerAdapter extends FragmentStateAdapter {
 
     @Override
     public int getItemCount() {
-        return 2;
+        return 3; // 修改为3个页面
     }
 }

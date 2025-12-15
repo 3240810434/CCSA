@@ -1,10 +1,7 @@
 package com.gxuwz.ccsa.ui.admin;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.view.View;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.viewpager2.widget.ViewPager2;
@@ -25,42 +22,32 @@ public class AdminMainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_main);
 
-        // 1. 从登录页面获取并验证传递的参数
+        // 1. 获取参数
         adminAccount = getIntent().getStringExtra("adminAccount");
         community = getIntent().getStringExtra("community");
 
-        // 参数校验与兜底处理
-        if (adminAccount == null || adminAccount.isEmpty()) {
-            adminAccount = "admin"; // 临时默认值，实际应从登录逻辑严格获取
-        }
-        if (community == null || community.isEmpty()) {
-            community = "未知小区"; // 兜底值，避免空指针
-        }
+        if (adminAccount == null) adminAccount = "admin";
+        if (community == null) community = "未知小区";
 
         // 2. 初始化控件
         initViews();
-        // 3. 设置ViewPager2及适配器（传递完整参数）
+        // 3. 设置ViewPager
         setupViewPager();
-        // 4. 设置底部导航与ViewPager联动
+        // 4. 设置监听
         setupNavigationListener();
     }
 
     private void initViews() {
         viewPager = findViewById(R.id.view_pager);
         bottomNavigationView = findViewById(R.id.bottom_navigation);
-
-        // 移除对不存在控件btn_resident_repair的引用
     }
 
     private void setupViewPager() {
-        // 初始化适配器并传递必要参数
         AdminPagerAdapter adapter = new AdminPagerAdapter(this, adminAccount, community);
         viewPager.setAdapter(adapter);
+        viewPager.setUserInputEnabled(false); // 禁止滑动，防止手势冲突
 
-        // 禁止ViewPager滑动（可选，根据需求）
-        viewPager.setUserInputEnabled(false);
-
-        // 监听ViewPager页面变化，同步底部导航选中状态
+        // 联动底部导航栏状态
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -76,10 +63,13 @@ public class AdminMainActivity extends AppCompatActivity {
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                 int itemId = item.getItemId();
                 if (itemId == R.id.nav_manage) {
-                    viewPager.setCurrentItem(0); // 管理页面（AdminManageFragment）
+                    viewPager.setCurrentItem(0);
+                    return true;
+                } else if (itemId == R.id.nav_message) {
+                    viewPager.setCurrentItem(1); // 切换到信息页面
                     return true;
                 } else if (itemId == R.id.nav_profile) {
-                    viewPager.setCurrentItem(1); // 个人中心页面
+                    viewPager.setCurrentItem(2); // 切换到我的页面
                     return true;
                 }
                 return false;
