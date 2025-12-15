@@ -32,18 +32,25 @@ public class MyDynamicsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_resident_list); // 复用通用的列表布局
+        // 【关键修改】使用新的通用布局 activity_common_list
+        setContentView(R.layout.activity_common_list);
 
         initView();
         loadData();
     }
 
     private void initView() {
+        // 设置标题
         TextView title = findViewById(R.id.tv_title);
-        if(title != null) title.setText("我的动态");
+        if (title != null) title.setText("我的动态");
 
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+        // 返回按钮逻辑 (ID现在匹配了)
+        View btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        }
 
+        // 初始化列表和空视图
         recyclerView = findViewById(R.id.recycler_view);
         tvEmpty = findViewById(R.id.tv_empty);
 
@@ -66,8 +73,13 @@ public class MyDynamicsActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        if (currentUser == null) return;
+        if (currentUser == null) {
+            Toast.makeText(this, "用户未登录", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Executors.newSingleThreadExecutor().execute(() -> {
+            // 获取我的帖子
             List<Post> posts = AppDatabase.getInstance(this).postDao().getMyPosts(currentUser.getId());
             // 填充媒体信息
             for (Post post : posts) {
@@ -79,12 +91,13 @@ public class MyDynamicsActivity extends AppCompatActivity {
                 myPosts.addAll(posts);
                 adapter.notifyDataSetChanged();
 
+                // 控制空状态显示
                 if (myPosts.isEmpty() && tvEmpty != null) {
                     tvEmpty.setVisibility(View.VISIBLE);
                     tvEmpty.setText("暂无动态");
                     recyclerView.setVisibility(View.GONE);
                 } else {
-                    if(tvEmpty != null) tvEmpty.setVisibility(View.GONE);
+                    if (tvEmpty != null) tvEmpty.setVisibility(View.GONE);
                     recyclerView.setVisibility(View.VISIBLE);
                 }
             });
@@ -102,6 +115,7 @@ public class MyDynamicsActivity extends AppCompatActivity {
                 Toast.makeText(this, "删除成功", Toast.LENGTH_SHORT).show();
                 myPosts.remove(post);
                 adapter.notifyDataSetChanged();
+
                 if (myPosts.isEmpty() && tvEmpty != null) {
                     tvEmpty.setVisibility(View.VISIBLE);
                     tvEmpty.setText("暂无动态");

@@ -32,17 +32,23 @@ public class MyHelpActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_resident_list); // 复用通用的列表布局
+        // 【关键修改】使用新的通用布局 activity_common_list
+        setContentView(R.layout.activity_common_list);
 
         initView();
         loadData();
     }
 
     private void initView() {
+        // 设置标题
         TextView title = findViewById(R.id.tv_title);
         if (title != null) title.setText("我的互助");
 
-        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
+        // 返回按钮
+        View btnBack = findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        }
 
         recyclerView = findViewById(R.id.recycler_view);
         tvEmpty = findViewById(R.id.tv_empty);
@@ -66,7 +72,11 @@ public class MyHelpActivity extends AppCompatActivity {
     }
 
     private void loadData() {
-        if (currentUser == null) return;
+        if (currentUser == null) {
+            Toast.makeText(this, "用户未登录", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Executors.newSingleThreadExecutor().execute(() -> {
             List<HelpPost> posts = AppDatabase.getInstance(this).helpPostDao().getMyHelpPosts(currentUser.getId());
 
@@ -86,7 +96,7 @@ public class MyHelpActivity extends AppCompatActivity {
                     tvEmpty.setText("暂无互助贴");
                     recyclerView.setVisibility(View.GONE);
                 } else {
-                    if(tvEmpty != null) tvEmpty.setVisibility(View.GONE);
+                    if (tvEmpty != null) tvEmpty.setVisibility(View.GONE);
                     recyclerView.setVisibility(View.VISIBLE);
                 }
             });
@@ -101,6 +111,7 @@ public class MyHelpActivity extends AppCompatActivity {
                 Toast.makeText(this, "删除成功", Toast.LENGTH_SHORT).show();
                 myHelpPosts.remove(post);
                 adapter.notifyDataSetChanged();
+
                 if (myHelpPosts.isEmpty() && tvEmpty != null) {
                     tvEmpty.setVisibility(View.VISIBLE);
                     tvEmpty.setText("暂无互助贴");
