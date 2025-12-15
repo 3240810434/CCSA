@@ -72,8 +72,8 @@ public class MessageListActivity extends AppCompatActivity {
                     }
 
                     // 2. 生成唯一Key，区分不同角色的同ID用户
-                    // 比如 ADMIN_1 和 RESIDENT_1 是两个人
-                    String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.toUpperCase();
+                    // 【Bug修复】增加 trim() 去除空格，防止数据库存储 "ADMIN " 导致匹配失败
+                    String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
                     String key = safeRole + "_" + otherId;
 
                     if (!latestMsgMap.containsKey(key)) {

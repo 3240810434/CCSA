@@ -82,11 +82,7 @@ public class ChatActivity extends AppCompatActivity {
         ivHeaderAvatar = findViewById(R.id.iv_header_avatar);
         tvHeaderName = findViewById(R.id.tv_header_name);
 
-        // 设置标题栏显示的对方信息
-        tvHeaderName.setText(targetNameStr);
-        if (!TextUtils.isEmpty(targetAvatarUrl)) {
-            Glide.with(this).load(targetAvatarUrl).placeholder(R.drawable.ic_avatar).circleCrop().into(ivHeaderAvatar);
-        }
+        updateHeaderUI(); // 抽取UI更新逻辑，初始化时调用一次
 
         ivBack.setOnClickListener(v -> finish());
         ivReport.setOnClickListener(v -> Toast.makeText(this, "举报", Toast.LENGTH_SHORT).show());
@@ -105,6 +101,28 @@ public class ChatActivity extends AppCompatActivity {
         btnSend.setOnClickListener(v -> sendMessage());
     }
 
+    // 【Bug修复】统一处理头部 UI 更新，处理管理员特殊头像
+    private void updateHeaderUI() {
+        if (tvHeaderName == null || ivHeaderAvatar == null) return;
+
+        tvHeaderName.setText(targetNameStr);
+
+        if ("local_admin_resource".equals(targetAvatarUrl)) {
+            // 是管理员，强制显示本地资源
+            ivHeaderAvatar.setImageResource(R.drawable.admin);
+        } else if (!TextUtils.isEmpty(targetAvatarUrl)) {
+            // 普通用户或商家，加载 URL
+            Glide.with(this)
+                    .load(targetAvatarUrl)
+                    .placeholder(R.drawable.ic_avatar)
+                    .circleCrop()
+                    .into(ivHeaderAvatar);
+        } else {
+            // 默认头像
+            ivHeaderAvatar.setImageResource(R.drawable.ic_avatar);
+        }
+    }
+
     private void initData() {
         new Thread(() -> {
             // 1. 查询我的最新信息（为了头像）
@@ -112,35 +130,36 @@ public class ChatActivity extends AppCompatActivity {
                 Merchant me = db.merchantDao().findById(myId);
                 if (me != null) myAvatarUrl = me.getAvatar();
             } else if ("ADMIN".equals(myRole)) {
-                // 【修复点1】如果是管理员，不查数据库，直接标记为空或特定值
-                // 管理员头像是本地资源，不需要 URL
-                myAvatarUrl = "";
+                myAvatarUrl = ""; // 管理员无网络头像
             } else {
-                // 只有不是商家且不是管理员时，才去查居民表
                 User me = db.userDao().findById(myId);
                 if (me != null) myAvatarUrl = me.getAvatar();
             }
 
             // 2. 查询对方最新信息（为了标题栏头像和名字）
-            // 注意：如果对方是管理员，也需要类似处理，但目前这里主要是管理员发给居民
-            if ("MERCHANT".equals(targetRole)) {
+            String tRole = targetRole != null ? targetRole.trim().toUpperCase() : "";
+
+            if ("MERCHANT".equals(tRole)) {
                 Merchant target = db.merchantDao().findById(targetId);
                 if (target != null) {
                     targetNameStr = target.getMerchantName();
                     targetAvatarUrl = target.getAvatar();
                 }
-            } else if ("RESIDENT".equals(targetRole)) {
+            } else if ("RESIDENT".equals(tRole)) {
                 User target = db.userDao().findById(targetId);
                 if (target != null) {
                     targetNameStr = target.getName();
                     targetAvatarUrl = target.getAvatar();
                 }
+            } else if ("ADMIN".equals(tRole) || "ADMINISTRATOR".equals(tRole)) {
+                // 【Bug修复】增加管理员角色的判断逻辑
+                targetNameStr = "管理员";
+                targetAvatarUrl = "local_admin_resource"; // 特殊标记
             }
 
             runOnUiThread(() -> {
                 // 再次更新标题栏（以防数据库信息比Intent传过来的新）
-                tvHeaderName.setText(targetNameStr);
-                Glide.with(this).load(targetAvatarUrl).placeholder(R.drawable.ic_avatar).circleCrop().into(ivHeaderAvatar);
+                updateHeaderUI();
 
                 // 更新Adapter的配置
                 adapter.setUserInfo(myId, myRole, myAvatarUrl, targetAvatarUrl);
