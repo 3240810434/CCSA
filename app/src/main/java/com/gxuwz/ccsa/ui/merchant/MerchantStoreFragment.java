@@ -58,7 +58,6 @@ public class MerchantStoreFragment extends Fragment {
         initViews(view);
         setupListeners();
         updateUI();
-        // 初始加载统计数据
         refreshDashboardCounts();
 
         return view;
@@ -68,7 +67,6 @@ public class MerchantStoreFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncDataFromActivity();
-        // 每次界面恢复显示时（例如从子页面返回），刷新统计数据
         refreshDashboardCounts();
     }
 
@@ -96,7 +94,6 @@ public class MerchantStoreFragment extends Fragment {
         tvStoreName = view.findViewById(R.id.tv_store_name);
         ivStoreStatus = view.findViewById(R.id.iv_store_status);
 
-        // 初始化统计数字的TextView
         tvPendingCount = view.findViewById(R.id.tv_pending_count);
         tvProcessingCount = view.findViewById(R.id.tv_processing_count);
         tvAfterSalesCount = view.findViewById(R.id.tv_after_sales_count);
@@ -109,18 +106,55 @@ public class MerchantStoreFragment extends Fragment {
         llProductManagement = view.findViewById(R.id.ll_product_management);
     }
 
+    // 检查资质认证状态
+    private boolean checkQualification() {
+        if (currentMerchant == null) return false;
+        // qualificationStatus: 0=未认证, 1=审核中, 2=已通过, 3=未通过
+        if (currentMerchant.getQualificationStatus() != 2) {
+            Toast.makeText(getContext(), "您尚未通过商家资质认证，暂时无法使用此功能。请前往【我的-商家资质】进行认证。", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
+
     private void setupListeners() {
         if (ivStoreStatus != null) {
-            ivStoreStatus.setOnClickListener(v -> showToggleStatusDialog());
+            ivStoreStatus.setOnClickListener(v -> {
+                if (checkQualification()) {
+                    showToggleStatusDialog();
+                }
+            });
         }
 
-        llPendingOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), PendingOrdersActivity.class)));
-        llProcessingOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), ProcessingOrdersActivity.class)));
-        llCompletedOrders.setOnClickListener(v -> startActivity(new Intent(getContext(), CompletedOrdersActivity.class)));
+        llPendingOrders.setOnClickListener(v -> {
+            if (checkQualification()) {
+                startActivity(new Intent(getContext(), PendingOrdersActivity.class));
+            }
+        });
 
-        llAfterSales.setOnClickListener(v -> startActivity(new Intent(getContext(), MerchantAfterSalesListActivity.class)));
+        llProcessingOrders.setOnClickListener(v -> {
+            if (checkQualification()) {
+                startActivity(new Intent(getContext(), ProcessingOrdersActivity.class));
+            }
+        });
 
-        llProductManagement.setOnClickListener(v -> startActivity(new Intent(getContext(), ProductManagementActivity.class)));
+        llCompletedOrders.setOnClickListener(v -> {
+            if (checkQualification()) {
+                startActivity(new Intent(getContext(), CompletedOrdersActivity.class));
+            }
+        });
+
+        llAfterSales.setOnClickListener(v -> {
+            if (checkQualification()) {
+                startActivity(new Intent(getContext(), MerchantAfterSalesListActivity.class));
+            }
+        });
+
+        llProductManagement.setOnClickListener(v -> {
+            if (checkQualification()) {
+                startActivity(new Intent(getContext(), ProductManagementActivity.class));
+            }
+        });
     }
 
     private void updateUI() {
@@ -146,9 +180,6 @@ public class MerchantStoreFragment extends Fragment {
         }
     }
 
-    /**
-     * 异步刷新仪表盘上的计数
-     */
     private void refreshDashboardCounts() {
         if (currentMerchant == null || getContext() == null) return;
 
@@ -159,26 +190,18 @@ public class MerchantStoreFragment extends Fragment {
                 ProductDao productDao = db.productDao();
                 String merchantIdStr = String.valueOf(currentMerchant.getId());
 
-                // 1. 获取商品数量
                 int productCount = productDao.getProductsByMerchantId(currentMerchant.getId()).size();
-
-                // 2. 获取待接单数量
                 int pendingOrderCount = orderDao.getPendingOrdersByMerchant(merchantIdStr).size();
-
-                // 3. 获取接单中数量
                 int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "接单中").size();
 
-                // 4. 获取待处理的售后订单数量
                 List<Order> afterSalesOrders = orderDao.getMerchantAfterSalesOrders(merchantIdStr);
                 int pendingAfterSalesCount = 0;
                 for (Order order : afterSalesOrders) {
-                    // 【修复点】直接访问 public 字段 afterSalesStatus，而不是调用 getAfterSalesStatus()
                     if (order.afterSalesStatus == 1) {
                         pendingAfterSalesCount++;
                     }
                 }
 
-                // 切换到主线程更新UI
                 int finalProductCount = productCount;
                 int finalPendingOrderCount = pendingOrderCount;
                 int finalProcessingOrderCount = processingOrderCount;

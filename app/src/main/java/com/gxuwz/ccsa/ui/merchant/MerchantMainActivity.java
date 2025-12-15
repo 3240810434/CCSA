@@ -8,12 +8,13 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 import com.gxuwz.ccsa.R;
+import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Merchant;
+import java.util.concurrent.Executors;
 
 public class MerchantMainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private ViewPager2 viewPager;
-    // 底部导航按钮 (注意：XML中需保证这些ID存在)
     private View btnStore, btnMessage, btnProfile;
     private Merchant currentMerchant;
 
@@ -31,10 +32,31 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
         setupViewPager();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 每次页面显示时，从数据库刷新最新的商家状态
+        // 确保资质认证状态更新后，商家能立即获得权限
+        reloadMerchantData();
+    }
+
+    private void reloadMerchantData() {
+        if (currentMerchant == null) return;
+
+        Executors.newSingleThreadExecutor().execute(() -> {
+            Merchant freshMerchant = AppDatabase.getInstance(this)
+                    .merchantDao()
+                    .findById(currentMerchant.getId());
+
+            if (freshMerchant != null) {
+                currentMerchant = freshMerchant;
+            }
+        });
+    }
+
     private void initViews() {
         viewPager = findViewById(R.id.view_pager_merchant);
 
-        // 绑定底部导航栏的点击区域 (id 需与 merchant_navigation_bottom.xml 一致)
         btnStore = findViewById(R.id.btn_store);
         btnMessage = findViewById(R.id.btn_message);
         btnProfile = findViewById(R.id.btn_profile);
@@ -51,7 +73,6 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             public Fragment createFragment(int position) {
                 switch (position) {
                     case 0:
-                        // 首页展示店铺 Fragment
                         return new MerchantStoreFragment();
                     case 1:
                         return new MerchantMessageFragment();
@@ -66,7 +87,6 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             }
         });
 
-        // 页面切换回调
         viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
             public void onPageSelected(int position) {
@@ -75,9 +95,7 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
             }
         });
 
-        // 设置预加载页面数量，防止频繁销毁重建
         viewPager.setOffscreenPageLimit(3);
-        // 默认选中第一页
         updateBottomNavState(0);
     }
 
@@ -94,7 +112,6 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
     }
 
     private void updateBottomNavState(int position) {
-        // 更新底部导航选中状态
         if (btnStore != null) btnStore.setSelected(false);
         if (btnMessage != null) btnMessage.setSelected(false);
         if (btnProfile != null) btnProfile.setSelected(false);
@@ -112,13 +129,10 @@ public class MerchantMainActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
-    // 供 Fragment 调用的公共方法 - 获取当前商家
     public Merchant getCurrentMerchant() {
         return currentMerchant;
     }
 
-    // 【新增修复】供 Fragment 调用的公共方法 - 更新当前商家
-    // 解决 "找不到符号: 方法 setCurrentMerchant(Merchant)" 错误
     public void setCurrentMerchant(Merchant merchant) {
         this.currentMerchant = merchant;
     }

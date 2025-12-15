@@ -1,5 +1,7 @@
 package com.gxuwz.ccsa.ui.admin;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import androidx.annotation.NonNull;
@@ -29,12 +31,23 @@ public class AdminMainActivity extends AppCompatActivity {
         if (adminAccount == null) adminAccount = "admin";
         if (community == null) community = "未知小区";
 
+        // 保存管理员信息到 SharedPreferences，方便其他页面（如审核列表）获取
+        saveAdminInfo();
+
         // 2. 初始化控件
         initViews();
         // 3. 设置ViewPager
         setupViewPager();
         // 4. 设置监听
         setupNavigationListener();
+    }
+
+    private void saveAdminInfo() {
+        SharedPreferences sp = getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+        editor.putString("admin_account", adminAccount);
+        editor.putString("admin_community", community);
+        editor.apply();
     }
 
     private void initViews() {
