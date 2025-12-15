@@ -101,6 +101,8 @@
         <activity android:name=".ui.common.VoteDetailActivity" android:exported="false"/>
         <activity android:name=".ui.resident.ResidentCompletedOrdersActivity"/>
         <activity android:name=".ui.resident.ResidentAfterSalesActivity"/>
+        <activity android:name=".ui.resident.ResidentAppealListActivity" android:exported="false" android:label="我的申诉记录"/>
+        <activity android:name=".ui.resident.ResidentAppealDetailActivity" android:exported="false" android:label="申诉详情"/>
         <activity android:name=".ui.resident.ResidentApplyAfterSalesActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.merchant.MerchantAfterSalesListActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.MerchantAfterSalesDetailActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
