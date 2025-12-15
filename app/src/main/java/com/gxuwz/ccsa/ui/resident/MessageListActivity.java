@@ -16,8 +16,10 @@ import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.User;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class MessageListActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
@@ -54,24 +56,39 @@ public class MessageListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // 1. 获取当前用户的最新信息
-                User freshUser = db.userDao().findById(currentUser.getId());
-                if (freshUser == null) freshUser = currentUser;
+                // =================================================================
+                // 【核心修复：构建终极屏蔽黑名单】
+                // =================================================================
+                Set<Integer> adminIdBlacklist = new HashSet<>();
 
-                // 2. 获取当前小区所有物业管理员ID
-                List<Integer> propertyAdminIds = new ArrayList<>();
-                if (freshUser.getCommunity() != null) {
-                    // 查询该小区的所有管理员
-                    List<Admin> admins = db.adminDao().findAllByCommunity(freshUser.getCommunity());
-                    if (admins != null && !admins.isEmpty()) {
-                        for (Admin admin : admins) {
-                            propertyAdminIds.add(admin.getId());
-                            Log.d("MessageList", "Found Property Admin ID to hide: " + admin.getId());
+                // 1. 尝试从数据库获取所有管理员 (不区分小区，全部拉取)
+                try {
+                    List<Admin> allAdmins = db.adminDao().getAll();
+                    if (allAdmins != null) {
+                        for (Admin a : allAdmins) {
+                            adminIdBlacklist.add(a.getId());
                         }
                     }
+                } catch (Exception e) {
+                    Log.e("MessageList", "获取管理员列表失败", e);
                 }
 
-                // 3. 获取所有消息
+                // 2. 【双重保险】手动添加已知的默认管理员ID (对应 App.java 中的初始化)
+                // 即使数据库没查到，这些 ID 也会被强制屏蔽
+                adminIdBlacklist.add(1);          // 悦景
+                adminIdBlacklist.add(11);         // 梧桐
+                adminIdBlacklist.add(111);        // 阳光
+                adminIdBlacklist.add(1111);       // 锦园
+                adminIdBlacklist.add(11111);      // 幸福
+                adminIdBlacklist.add(111111);     // 芳邻
+                adminIdBlacklist.add(1111111);    // 逸景
+                adminIdBlacklist.add(11111111);   // 康城
+
+                Log.d("MessageList", "屏蔽名单ID数量: " + adminIdBlacklist.size());
+
+                // =================================================================
+                // 3. 获取消息并过滤
+                // =================================================================
                 List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
                 Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
@@ -88,24 +105,34 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 防止空指针
+                    // 规范化角色字符串
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
 
-                    // 过滤逻辑：如果是管理员或物业相关账号，不显示在消息中心
-                    boolean isAdmin = safeRole.contains("ADMIN") ||
-                            safeRole.contains("PROPERTY") ||
-                            propertyAdminIds.contains(otherId);
-
-                    // 如果是管理员，则跳过不添加到列表
-                    if (isAdmin) {
+                    // -------------------------------------------------------------
+                    // 【过滤条件 A】按角色名屏蔽 (如果数据库存了 ADMIN)
+                    // -------------------------------------------------------------
+                    if (safeRole.contains("ADMIN") || safeRole.contains("PROPERTY")) {
                         continue;
                     }
 
-                    // 通过过滤后，添加到显示列表
+                    // -------------------------------------------------------------
+                    // 【过滤条件 B】按 ID 黑名单屏蔽 (核弹级过滤)
+                    // 逻辑：如果对方ID在管理员名单里，且对方不是明确的 居民/商家，则直接视为管理员并隐藏
+                    // -------------------------------------------------------------
+                    boolean isExplicitlySafe = safeRole.contains("RESIDENT") || safeRole.contains("MERCHANT");
+
+                    if (adminIdBlacklist.contains(otherId) && !isExplicitlySafe) {
+                        Log.d("MessageList", "隐藏了管理员消息 ID: " + otherId);
+                        continue;
+                    }
+
+                    // -------------------------------------------------------------
+                    // 通过过滤，添加到显示列表
+                    // -------------------------------------------------------------
                     String key = safeRole + "_" + otherId;
 
                     if (!latestMsgMap.containsKey(key)) {
-                        // 补充显示信息
+                        // 补充头像和名称
                         if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
@@ -121,7 +148,7 @@ public class MessageListActivity extends AppCompatActivity {
                                 msg.targetName = u.getName();
                                 msg.targetAvatar = u.getAvatar();
                             } else {
-                                msg.targetName = "未知用户";
+                                msg.targetName = "用户 " + otherId;
                             }
                         }
                         latestMsgMap.put(key, msg);
@@ -152,8 +179,6 @@ public class MessageListActivity extends AppCompatActivity {
                 if (position < 0 || position >= conversationList.size()) return;
 
                 ChatMessage msg = conversationList.get(position);
-
-                // 解析删除对象
                 int targetId;
                 String targetRole;
                 if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {

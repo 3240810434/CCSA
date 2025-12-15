@@ -29,4 +29,15 @@ public interface ProductDao {
 
     @Query("SELECT * FROM product WHERE id = :productId")
     Product getProductById(int productId);
+
+    /**
+     * 新增方法：根据住户所在小区筛选商品
+     * 原理：内连接 Merchant 表，查找商家服务小区字段 (community) 中包含住户小区名称 (userCommunity) 的所有商品
+     * 使用 || 进行字符串拼接，匹配如 "%小区A%"
+     */
+    @Query("SELECT product.* FROM product " +
+            "INNER JOIN merchant ON product.merchantId = merchant.id " +
+            "WHERE merchant.community LIKE '%' || :userCommunity || '%' " +
+            "ORDER BY product.createTime DESC")
+    List<Product> getProductsByCommunity(String userCommunity);
 }

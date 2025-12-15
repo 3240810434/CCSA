@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.ui.resident;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.TextView;
 
@@ -12,6 +13,8 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.ProductAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Product;
+import com.gxuwz.ccsa.model.User;
+import com.gxuwz.ccsa.util.SharedPreferencesUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +38,7 @@ public class ResidentProductBrowsingActivity extends AppCompatActivity {
         // 使用 GridLayoutManager 实现每行两个卡片 (context, spanCount)
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
 
-        // 关键点：这里调用我们在 Adapter 中定义的构造函数
+        // 初始化适配器
         adapter = new ProductAdapter(this, productList);
         recyclerView.setAdapter(adapter);
 
@@ -56,18 +59,30 @@ public class ResidentProductBrowsingActivity extends AppCompatActivity {
 
     private void loadData() {
         new Thread(() -> {
-            // 数据库操作
+            // 获取数据库实例
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
-            // 确保 ProductDao 中有 getAllProducts() 方法
-            List<Product> products = db.productDao().getAllProducts();
 
+            // 1. 获取当前登录用户信息
+            User currentUser = SharedPreferencesUtil.getUser(getApplicationContext());
+
+            List<Product> products;
+
+            // 2. 根据用户小区筛选商品
+            if (currentUser != null && !TextUtils.isEmpty(currentUser.getCommunity())) {
+                // 如果用户已登录且有小区信息，调用筛选方法
+                products = db.productDao().getProductsByCommunity(currentUser.getCommunity());
+            } else {
+                // 如果未登录或无小区信息，默认显示所有商品（或根据需求显示空）
+                products = db.productDao().getAllProducts();
+            }
+
+            // 3. 更新 UI
             runOnUiThread(() -> {
                 productList.clear();
                 if (products != null) {
                     productList.addAll(products);
                 }
 
-                // 刷新数据，此时 adapter 已经是 RecyclerView.Adapter 的子类，包含此方法
                 if (adapter != null) {
                     adapter.notifyDataSetChanged();
                 }

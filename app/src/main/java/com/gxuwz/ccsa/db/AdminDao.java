@@ -30,4 +30,5 @@ public interface AdminDao {
 
     @Update
     void update(Admin admin);
+
 }
