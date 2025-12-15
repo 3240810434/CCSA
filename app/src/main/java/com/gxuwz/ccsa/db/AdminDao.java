@@ -4,21 +4,26 @@ import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
-
 import com.gxuwz.ccsa.model.Admin;
+import java.util.List; // 记得导入 List
 
 @Dao
 public interface AdminDao {
     @Query("SELECT * FROM admin WHERE account = :account")
     Admin findByAccount(String account);
 
-    // 根据ID查找管理员
     @Query("SELECT * FROM admin WHERE id = :id")
     Admin findById(int id);
 
-    // 【新增】根据小区名称查找该小区的管理员 (假设每个小区有一个主管理员)
     @Query("SELECT * FROM admin WHERE community = :community LIMIT 1")
     Admin findByCommunity(String community);
+
+    @Query("SELECT * FROM admin WHERE community = :community")
+    List<Admin> findAllByCommunity(String community);
+
+    // 【新增】获取所有管理员，用于构建屏蔽名单
+    @Query("SELECT * FROM admin")
+    List<Admin> getAll();
 
     @Insert
     void insert(Admin admin);

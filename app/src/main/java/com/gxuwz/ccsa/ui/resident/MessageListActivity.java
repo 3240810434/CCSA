@@ -54,18 +54,20 @@ public class MessageListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // 1. 为了保险起见，重新查询一次当前用户的最新信息（确保小区字段准确）
+                // 1. 获取当前用户的最新信息
                 User freshUser = db.userDao().findById(currentUser.getId());
                 if (freshUser == null) freshUser = currentUser;
 
-                // 2. 【核心修复】获取当前小区对应的物业管理员 ID
-                // 不依赖消息里的 Role 字符串，直接查人
-                int propertyAdminId = -1; // -1 代表未找到或无效
+                // 2. 获取当前小区所有物业管理员ID
+                List<Integer> propertyAdminIds = new ArrayList<>();
                 if (freshUser.getCommunity() != null) {
-                    Admin admin = db.adminDao().findByCommunity(freshUser.getCommunity());
-                    if (admin != null) {
-                        propertyAdminId = admin.getId();
-                        Log.d("MessageList", "Found Property Admin ID to hide: " + propertyAdminId);
+                    // 查询该小区的所有管理员
+                    List<Admin> admins = db.adminDao().findAllByCommunity(freshUser.getCommunity());
+                    if (admins != null && !admins.isEmpty()) {
+                        for (Admin admin : admins) {
+                            propertyAdminIds.add(admin.getId());
+                            Log.d("MessageList", "Found Property Admin ID to hide: " + admin.getId());
+                        }
                     }
                 }
 
@@ -89,29 +91,17 @@ public class MessageListActivity extends AppCompatActivity {
                     // 防止空指针
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
 
-                    // ============================================================
-                    // 【强力过滤逻辑】
-                    // ============================================================
+                    // 过滤逻辑：如果是管理员或物业相关账号，不显示在消息中心
+                    boolean isAdmin = safeRole.contains("ADMIN") ||
+                            safeRole.contains("PROPERTY") ||
+                            propertyAdminIds.contains(otherId);
 
-                    // A. ID 精准匹配：如果对方ID等于该小区的物业管理员ID，直接隐藏
-                    if (propertyAdminId != -1 && otherId == propertyAdminId) {
+                    // 如果是管理员，则跳过不添加到列表
+                    if (isAdmin) {
                         continue;
                     }
 
-                    // B. 角色字符串匹配：如果角色包含 ADMIN，隐藏
-                    if (safeRole.contains("ADMIN")) {
-                        continue;
-                    }
-
-                    // C. 常见管理员ID硬编码过滤（兜底）
-                    if (otherId == 1 || otherId == 11 || otherId == 11111) {
-                        continue;
-                    }
-
-                    // ============================================================
-                    // 通过过滤后，才添加到显示列表
-                    // ============================================================
-
+                    // 通过过滤后，添加到显示列表
                     String key = safeRole + "_" + otherId;
 
                     if (!latestMsgMap.containsKey(key)) {
