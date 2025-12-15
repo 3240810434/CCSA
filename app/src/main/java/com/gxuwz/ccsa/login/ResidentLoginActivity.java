@@ -14,9 +14,10 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.ui.resident.ResidentMainActivity;
+import com.gxuwz.ccsa.util.SharedPreferencesUtil;
 
 /**
- * 居民登录页面
+ * 居民登录页面 - 已修复登录状态同步问题
  */
 public class ResidentLoginActivity extends AppCompatActivity {
 
@@ -89,15 +90,18 @@ public class ResidentLoginActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 if (user != null) {
-                    // 【关键修复步骤】登录成功，保存用户ID到 SharedPreferences
-                    // 这里的 "user_prefs" 必须和 ResidentProductDetailActivity 中读取的名称一致
+                    // 1. 【保留原有逻辑】为了兼容 ResidentProductDetailActivity 等可能直接读取 "user_prefs" 的旧代码
                     SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putLong("user_id", user.getId()); // 保存用户ID
-                    editor.putString("user_name", user.getName()); // 可选：保存用户名方便其他地方显示
-                    editor.apply(); // 提交保存
+                    editor.putLong("user_id", user.getId());
+                    editor.putString("user_name", user.getName());
+                    editor.apply();
 
-                    // 登录成功：跳转主页
+                    // 2. 【核心修复】使用 SharedPreferencesUtil 保存完整的 User 对象
+                    // 这解决了 "MyDynamicsActivity" 和 "MyHelpActivity" 提示未登录的问题
+                    SharedPreferencesUtil.saveUser(ResidentLoginActivity.this, user);
+
+                    // 3. 登录成功：跳转主页
                     Intent intent = new Intent(ResidentLoginActivity.this, ResidentMainActivity.class);
                     Bundle bundle = new Bundle();
                     bundle.putSerializable("user", user);
