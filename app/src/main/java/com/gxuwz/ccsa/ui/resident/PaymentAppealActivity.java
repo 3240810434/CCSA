@@ -1,11 +1,12 @@
 package com.gxuwz.ccsa.ui.resident;
 
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gxuwz.ccsa.R;
@@ -24,13 +25,13 @@ public class PaymentAppealActivity extends AppCompatActivity {
     private EditText etAmount;
     private EditText etContent;
     private Button btnSubmit;
+    private TextView tvRecords; // 新增
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_payment_appeal);
 
-        // 获取当前用户信息
         currentUser = (User) getIntent().getSerializableExtra("user");
 
         if (currentUser == null) {
@@ -49,19 +50,26 @@ public class PaymentAppealActivity extends AppCompatActivity {
         etAmount = findViewById(R.id.et_amount);
         etContent = findViewById(R.id.et_content);
         btnSubmit = findViewById(R.id.btn_submit);
+        tvRecords = findViewById(R.id.tv_records); // 绑定新增按钮
     }
 
     private void setupListeners() {
         btnSubmit.setOnClickListener(v -> submitAppeal());
+
+        // 点击跳转到申诉记录列表
+        tvRecords.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ResidentAppealListActivity.class);
+            intent.putExtra("user", currentUser);
+            startActivity(intent);
+        });
     }
 
     private void submitAppeal() {
-        String appealType = spinnerAppealType.getSelectedItem().toString();
+        String appealType = spinnerAppealType.getSelectedItem() != null ? spinnerAppealType.getSelectedItem().toString() : "其他";
         String period = etPeriod.getText().toString().trim();
         String amountStr = etAmount.getText().toString().trim();
         String content = etContent.getText().toString().trim();
 
-        // 输入验证
         if (period.isEmpty() || amountStr.isEmpty() || content.isEmpty()) {
             Toast.makeText(this, "请填写完整申诉信息", Toast.LENGTH_SHORT).show();
             return;
@@ -75,9 +83,8 @@ public class PaymentAppealActivity extends AppCompatActivity {
             return;
         }
 
-        // 创建申诉记录
         PaymentAppeal appeal = new PaymentAppeal(
-                currentUser.getPhone(),
+                currentUser.getPhone(), // 假设Phone作为userId
                 currentUser.getName(),
                 currentUser.getCommunity(),
                 currentUser.getBuilding(),
@@ -86,20 +93,18 @@ public class PaymentAppealActivity extends AppCompatActivity {
                 content,
                 period,
                 amount,
-                0, // 待处理状态
+                0, // 0-待处理
                 System.currentTimeMillis(),
-                "", // 回复内容为空
-                0, // 回复时间为0
-                "" // 处理人为空
+                "",
+                0,
+                ""
         );
 
-        // 保存到数据库
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             AppDatabase.getInstance(this).paymentAppealDao().insert(appeal);
-
             runOnUiThread(() -> {
-                Toast.makeText(this, "申诉提交成功，请等待处理", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "申诉提交成功，请在申诉记录中查看进度", Toast.LENGTH_SHORT).show();
                 finish();
             });
         });

@@ -79,6 +79,8 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_repair.xml " value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_repair_detail.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_resident_after_sales.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_resident_appeal_detail.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_resident_appeal_list.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_resident_apply_after_sales.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_resident_completed_orders.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_resident_list.xml" value="0.24114583333333334" />
@@ -155,6 +157,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_product_card_merchant.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_repair.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_resident.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_resident_appeal.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_resident_order.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_resident_order_card.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_room_area.xml" value="0.24048913043478262" />
