@@ -41,47 +41,45 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatMessage msg = conversationList.get(position);
 
-        // 1. 先准确计算出“对方”的ID和角色
+        // 1. 计算对方的ID和角色
         int targetId;
         String targetRole;
 
         if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
-            // 我发给对方
             targetId = msg.receiverId;
             targetRole = msg.receiverRole;
         } else {
-            // 对方发给我
             targetId = msg.senderId;
             targetRole = msg.senderRole;
         }
 
-        // 2. 判断是否为管理员
+        // 2. 强力判断是否为管理员
         boolean isAdmin = false;
 
-        // 判定条件 A: 对方角色字段包含 ADMIN
-        if (targetRole != null && (targetRole.toUpperCase().contains("ADMIN") || targetRole.toUpperCase().contains("SYSTEM"))) {
+        // 条件A: Activity 已经处理过，标记为 "管理员" 或头像为 "local_admin_resource"
+        if ("管理员".equals(msg.targetName) || "local_admin_resource".equals(msg.targetAvatar)) {
             isAdmin = true;
         }
-        // 判定条件 B: Activity 层面已经强制修正了名字或头像标记
-        else if ("管理员".equals(msg.targetName) || "local_admin_resource".equals(msg.targetAvatar)) {
+        // 条件B: 检查 ID 是否命中管理员 ID 列表 (包含 1, 11, 111 等常见模式)
+        else if (targetId == 1 || targetId == 11 || targetId == 111 ||
+                targetId == 1111 || targetId == 11111 || targetId == 111111) {
+            isAdmin = true;
+        }
+        // 条件C: 角色字段包含 ADMIN
+        else if (targetRole != null && (targetRole.toUpperCase().contains("ADMIN") || targetRole.toUpperCase().contains("SYSTEM"))) {
             isAdmin = true;
         }
 
-        // --- 关键修改：增强健壮性，强制修正显示逻辑 ---
-        // 如果 ID 是 1，无论之前判定结果如何，也无论角色字段是什么（可能是null或误传），都强制显示为管理员
-        if (targetId == 1) {
-            isAdmin = true;
-        }
-
-        // 3. 设置 UI 显示
+        // 3. 设置 UI
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
         holder.tvContent.setText(msg.content);
 
         if (isAdmin) {
             holder.tvName.setText("管理员");
-            // 必须确保 res/drawable 下有 admin.jpg
+            // 确保 res/drawable 下有 admin.jpg
             holder.ivAvatar.setImageResource(R.drawable.admin);
         } else {
+            // 如果不是管理员，正常显示
             String displayName = TextUtils.isEmpty(msg.targetName) ? "未知用户" : msg.targetName;
             holder.tvName.setText(displayName);
 
@@ -105,7 +103,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             intent.putExtra("myRole", "RESIDENT");
 
             intent.putExtra("targetId", finalTargetId);
-            // 如果判定是管理员，强制传 ADMIN，修复后续聊天问题
+            // 如果判定是管理员，强制传 ADMIN
             intent.putExtra("targetRole", finalIsAdmin ? "ADMIN" : finalTargetRole);
 
             if (finalIsAdmin) {

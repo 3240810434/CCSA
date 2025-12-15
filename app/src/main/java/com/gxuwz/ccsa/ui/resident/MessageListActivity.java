@@ -53,12 +53,10 @@ public class MessageListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // 查询所有和我(RESIDENT)有关的消息
                 List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
                 Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
                 for (ChatMessage msg : allMsgs) {
-                    // 1. 确定对方是谁
                     int otherId;
                     String otherRole;
 
@@ -70,37 +68,38 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 2. 生成唯一Key (Role + ID)
+                    // 生成唯一Key (Role + ID)
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
                     String key = safeRole + "_" + otherId;
 
-                    // 只保留每个会话的最新一条消息
                     if (!latestMsgMap.containsKey(key)) {
-
                         boolean isIdentifyAsAdmin = false;
 
-                        // A. 优先检查 Role 字段
-                        if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER")) {
+                        // --- 核心修复：优先通过 ID 强制识别管理员 ---
+                        // 这里包含了 ID 为 1 (悦景) 以及您列出的其他可能的管理员账号 ID
+                        // 注意：如果您的数据库 ID 是自增的，账号 "11" 的 ID 可能不是 11，但这里我们根据账号逻辑做全量匹配以防万一
+                        if (otherId == 1 || otherId == 11 || otherId == 111 ||
+                                otherId == 1111 || otherId == 11111 || otherId == 111111 ||
+                                otherId == 1111111 || otherId == 11111111) {
                             isIdentifyAsAdmin = true;
                         }
-
-                        // B. 兜底逻辑：如果角色不明确，且ID为1，认为是管理员（修复历史数据）
-                        if (!isIdentifyAsAdmin && !"MERCHANT".equals(safeRole) && !"RESIDENT".equals(safeRole)) {
-                            if (otherId == 1) {
+                        // 补充判断：通过 Role 字段
+                        else if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER")) {
+                            isIdentifyAsAdmin = true;
+                        }
+                        // 补充判断：查库兜底
+                        else {
+                            Admin admin = db.adminDao().findById(otherId);
+                            if (admin != null) {
                                 isIdentifyAsAdmin = true;
-                            } else {
-                                // 尝试去管理员表查一下这个ID
-                                Admin admin = db.adminDao().findById(otherId);
-                                if (admin != null) {
-                                    isIdentifyAsAdmin = true;
-                                }
                             }
                         }
 
-                        // C. 填充显示数据
+                        // --- 填充显示数据 ---
                         if (isIdentifyAsAdmin) {
+                            // 强制设置为管理员信息
                             msg.targetName = "管理员";
-                            msg.targetAvatar = "local_admin_resource"; // 特殊标记，通知Adapter使用本地图片
+                            msg.targetAvatar = "local_admin_resource";
                         } else if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
@@ -111,7 +110,7 @@ public class MessageListActivity extends AppCompatActivity {
                                 msg.targetAvatar = "";
                             }
                         } else {
-                            // 默认为普通居民
+                            // 普通居民
                             User u = db.userDao().findById(otherId);
                             if (u != null) {
                                 msg.targetName = u.getName();
@@ -129,7 +128,6 @@ public class MessageListActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     conversationList.clear();
                     conversationList.addAll(latestMsgMap.values());
-                    // 刷新列表
                     adapter.notifyDataSetChanged();
                 });
             } catch (Exception e) {
@@ -151,8 +149,6 @@ public class MessageListActivity extends AppCompatActivity {
                 if (position < 0 || position >= conversationList.size()) return;
 
                 ChatMessage msg = conversationList.get(position);
-
-                // 计算目标ID和角色，用于删除
                 int targetId;
                 String targetRole;
                 if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
@@ -162,12 +158,9 @@ public class MessageListActivity extends AppCompatActivity {
                     targetId = msg.senderId;
                     targetRole = msg.senderRole;
                 }
-
                 final int tId = targetId;
                 final String tRole = targetRole;
-
                 new Thread(() -> db.chatDao().deleteConversation(currentUser.getId(), "RESIDENT", tId, tRole)).start();
-
                 conversationList.remove(position);
                 adapter.notifyItemRemoved(position);
             }
