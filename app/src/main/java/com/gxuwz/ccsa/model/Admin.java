@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.model;
 
 import androidx.room.Entity;
+import androidx.room.Ignore; // 记得导入这个
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "admin")
@@ -11,6 +12,12 @@ public class Admin {
     private String password;
     private String community; // 可管理的小区
 
+    // --- 新增：Room 必须需要的无参构造函数 ---
+    public Admin() {
+    }
+
+
+    @Ignore
     public Admin(String account, String password, String community) {
         this.account = account;
         this.password = password;
