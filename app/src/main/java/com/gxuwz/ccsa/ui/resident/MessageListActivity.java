@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.MessageListAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
+import com.gxuwz.ccsa.model.Admin; // 引入Admin模型
 import com.gxuwz.ccsa.model.ChatMessage;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.User;
@@ -62,7 +63,6 @@ public class MessageListActivity extends AppCompatActivity {
                     int otherId;
                     String otherRole;
 
-                    // 严谨的判断逻辑
                     if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                         otherId = msg.receiverId;
                         otherRole = msg.receiverRole;
@@ -76,26 +76,44 @@ public class MessageListActivity extends AppCompatActivity {
                     String key = safeRole + "_" + otherId;
 
                     if (!latestMsgMap.containsKey(key)) {
-                        // --- 【修复核心】 ---
+                        // --- 【强制修复逻辑开始】 ---
 
-                        // 1. 优先判断管理员：使用 contains 放宽条件，防止角色名差异（如 "ADMINISTRATOR" vs "ADMIN"）
+                        boolean isIdentifyAsAdmin = false;
+
+                        // 判定 A：如果角色字段明确包含 ADMIN
                         if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER") || safeRole.contains("SYSTEM")) {
-                            msg.targetName = "管理员";
-                            msg.targetAvatar = "local_admin_resource"; // 设置特殊标记
+                            isIdentifyAsAdmin = true;
                         }
-                        // 2. 其次判断商家
+                        // 判定 B (核心修复)：如果角色不明确，或者为了保险起见，直接去管理员表查这个ID是否存在
+                        // 只要不是明确的商家(MERCHANT)或明确的居民(RESIDENT)，都去查一下管理员表
+                        else if (!"MERCHANT".equals(safeRole) && !"RESIDENT".equals(safeRole)) {
+                            Admin admin = db.adminDao().findById(otherId);
+                            if (admin != null) {
+                                isIdentifyAsAdmin = true;
+                            }
+                        }
+                        // 判定 C：即使标记为 RESIDENT，如果 ID 是 1, 11 等特定系统账号，可能也会被误判。
+                        // 为了彻底解决，如果上面没查到，但您想强制某些逻辑，可以在这里加。
+                        // 但通常 判定 B 只要查到 ID 在 admin 表里就已经足够了。
+
+                        if (isIdentifyAsAdmin) {
+                            // -> 是管理员，强制修正显示
+                            msg.targetName = "管理员";
+                            msg.targetAvatar = "local_admin_resource"; // 配合 Adapter 显示 R.drawable.admin
+                        }
                         else if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             msg.targetName = (m != null) ? m.getMerchantName() : "商家(已注销)";
                             msg.targetAvatar = (m != null) ? m.getAvatar() : "";
                         }
-                        // 3. 最后是普通用户
                         else {
+                            // 默认为普通居民
                             User u = db.userDao().findById(otherId);
                             msg.targetName = (u != null) ? u.getName() : "用户";
                             msg.targetAvatar = (u != null) ? u.getAvatar() : "";
                         }
-                        // --- 【修复结束】 ---
+
+                        // --- 【修复逻辑结束】 ---
 
                         latestMsgMap.put(key, msg);
                     }

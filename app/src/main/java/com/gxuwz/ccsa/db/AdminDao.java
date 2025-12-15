@@ -12,10 +12,13 @@ public interface AdminDao {
     @Query("SELECT * FROM admin WHERE account = :account")
     Admin findByAccount(String account);
 
+    // 【新增】根据ID查找管理员，用于在消息列表中确认身份
+    @Query("SELECT * FROM admin WHERE id = :id")
+    Admin findById(int id);
+
     @Insert
     void insert(Admin admin);
 
-    // 新增更新方法
     @Update
     void update(Admin admin);
 }
