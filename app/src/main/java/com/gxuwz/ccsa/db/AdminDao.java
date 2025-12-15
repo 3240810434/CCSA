@@ -3,6 +3,7 @@ package com.gxuwz.ccsa.db;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
+import androidx.room.Update;
 
 import com.gxuwz.ccsa.model.Admin;
 
@@ -13,4 +14,8 @@ public interface AdminDao {
 
     @Insert
     void insert(Admin admin);
+
+    // 新增更新方法
+    @Update
+    void update(Admin admin);
 }
