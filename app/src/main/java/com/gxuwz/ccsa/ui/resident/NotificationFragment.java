@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,16 +41,16 @@ public class NotificationFragment extends Fragment {
     private BannerAdapter bannerAdapter;
     private List<String> bannerImages = new ArrayList<>();
     private int currentPage = 0;
-    private Timer timer; // 轮播图定时器
+    private Timer timer;
     private User currentUser;
 
     // 商品展示相关
     private RecyclerView rvProducts;
     private ProductAdapter productAdapter;
-    private List<Product> allProducts = new ArrayList<>();    // 所有的商品列表
-    private List<Product> displayProducts = new ArrayList<>(); // 当前显示的2个商品
-    private Timer productTimer; // 商品刷新定时器
-    private int productDisplayIndex = 0; // 当前展示的商品索引指针
+    private List<Product> allProducts = new ArrayList<>();
+    private List<Product> displayProducts = new ArrayList<>();
+    private Timer productTimer;
+    private int productDisplayIndex = 0;
 
     @Nullable
     @Override
@@ -61,7 +62,6 @@ public class NotificationFragment extends Fragment {
             currentUser = ((ResidentMainActivity) getActivity()).getUser();
         }
 
-        // 初始化各个模块
         initBanner(view);
         initFunctionButtons(view);
         initProductSection(view);
@@ -69,7 +69,6 @@ public class NotificationFragment extends Fragment {
         return view;
     }
 
-    // 初始化轮播图
     private void initBanner(View view) {
         viewPager = view.findViewById(R.id.viewPager);
         indicatorLayout = view.findViewById(R.id.indicatorLayout);
@@ -97,7 +96,6 @@ public class NotificationFragment extends Fragment {
         startAutoSlide();
     }
 
-    // 添加轮播图指示器
     private void addIndicators() {
         indicatorLayout.removeAllViews();
         for (int i = 0; i < bannerImages.size(); i++) {
@@ -126,9 +124,7 @@ public class NotificationFragment extends Fragment {
     }
 
     private void startAutoSlide() {
-        if (timer != null) {
-            timer.cancel();
-        }
+        if (timer != null) timer.cancel();
         timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
@@ -145,65 +141,59 @@ public class NotificationFragment extends Fragment {
         }, 3000, 3000);
     }
 
-    // --- 初始化商品展示区域 ---
     private void initProductSection(View view) {
         rvProducts = view.findViewById(R.id.rv_products);
-        // 设置两列网格布局
         GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
         rvProducts.setLayoutManager(layoutManager);
 
-        // 初始化适配器
         productAdapter = new ProductAdapter(getContext(), displayProducts);
         rvProducts.setAdapter(productAdapter);
 
-        // 加载数据
         loadProducts();
     }
 
-    // --- 从数据库加载所有商品 ---
+    // --- 修改点：加载商品时根据用户小区筛选 ---
     private void loadProducts() {
         new Thread(() -> {
             if (getContext() == null) return;
             AppDatabase db = AppDatabase.getInstance(getContext());
-            // 获取所有商品
-            List<Product> products = db.productDao().getAllProducts();
+
+            List<Product> products;
+            // 如果用户有小区信息，则只查询该小区商家的商品
+            if (currentUser != null && !TextUtils.isEmpty(currentUser.getCommunity())) {
+                products = db.productDao().getProductsByCommunity(currentUser.getCommunity());
+            } else {
+                // 如果没有用户信息（例如未完全登录或未绑定小区），这里选择显示所有或者不显示
+                // 为了演示效果默认显示所有，实际可根据需求改为 new ArrayList<>()
+                products = db.productDao().getAllProducts();
+            }
 
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
                     allProducts.clear();
-                    allProducts.addAll(products);
-
-                    // 初始展示
+                    if (products != null) {
+                        allProducts.addAll(products);
+                    }
                     updateDisplayedProducts();
-
-                    // 启动刷新定时器
                     startProductRefreshTimer();
                 });
             }
         }).start();
     }
 
-    // --- 启动商品刷新定时器 ---
     private void startProductRefreshTimer() {
-        // 先取消旧的
         if (productTimer != null) {
             productTimer.cancel();
             productTimer = null;
         }
-
-        // 如果商品总数小于等于2，不刷新，直接停止
-        if (allProducts.size() <= 2) {
-            return;
-        }
+        if (allProducts.size() <= 2) return;
 
         productTimer = new Timer();
-        // 【修改点】：延迟5秒后开始执行，每隔5秒执行一次 (5000ms)
         productTimer.schedule(new TimerTask() {
             @Override
             public void run() {
                 if (getActivity() != null) {
                     new Handler(Looper.getMainLooper()).post(() -> {
-                        // 移动指针，循环逻辑
                         productDisplayIndex = (productDisplayIndex + 2) % allProducts.size();
                         updateDisplayedProducts();
                     });
@@ -212,110 +202,72 @@ public class NotificationFragment extends Fragment {
         }, 5000, 5000);
     }
 
-    // --- 更新当前展示的商品列表 ---
     private void updateDisplayedProducts() {
         displayProducts.clear();
-
         if (allProducts.isEmpty()) {
-            // 没有商品，留空
             productAdapter.notifyDataSetChanged();
             return;
         }
 
         if (allProducts.size() <= 2) {
-            // 小于等于2个，全部显示
             displayProducts.addAll(allProducts);
         } else {
-            // 大于2个，取2个
-            // 第一个商品
             displayProducts.add(allProducts.get(productDisplayIndex % allProducts.size()));
-
-            // 第二个商品 (防止越界，取模)
             int secondIndex = (productDisplayIndex + 1) % allProducts.size();
             displayProducts.add(allProducts.get(secondIndex));
         }
-
         productAdapter.notifyDataSetChanged();
     }
 
-    // 初始化功能按钮点击事件
     private void initFunctionButtons(View view) {
-        // 1. 通知公告
         view.findViewById(R.id.ll_notice).setOnClickListener(v -> {
-            if (currentUser == null) {
-                Toast.makeText(getContext(), "用户信息获取失败，请重新登录", Toast.LENGTH_SHORT).show();
-                return;
+            if (checkUser()) {
+                Intent intent = new Intent(getContext(), NotificationActivity.class);
+                intent.putExtra("user", currentUser);
+                startActivity(intent);
             }
-            Intent intent = new Intent(getContext(), NotificationActivity.class);
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
         });
-
-        // 2. 小区投票
         view.findViewById(R.id.ll_vote).setOnClickListener(v -> {
-            if (currentUser == null) {
-                Toast.makeText(getContext(), "用户信息获取失败，请重新登录", Toast.LENGTH_SHORT).show();
-                return;
+            if (checkUser()) {
+                Intent intent = new Intent(getContext(), ResidentVoteActivity.class);
+                intent.putExtra("user", currentUser);
+                startActivity(intent);
             }
-            Intent intent = new Intent(getContext(), ResidentVoteActivity.class);
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
         });
-
-        // 3. 物业缴费
         view.findViewById(R.id.ll_property_pay).setOnClickListener(v -> {
-            if (currentUser == null) {
-                Toast.makeText(getContext(), "用户信息获取失败，请重新登录", Toast.LENGTH_SHORT).show();
-                return;
+            if (checkUser()) {
+                Intent intent = new Intent(getContext(), PayPropertyFeeActivity.class);
+                intent.putExtra("user", currentUser);
+                startActivity(intent);
             }
-            Intent intent = new Intent(getContext(), PayPropertyFeeActivity.class);
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
         });
-
-        // 4. 我的缴费
         view.findViewById(R.id.ll_my_payment).setOnClickListener(v -> {
-            if (currentUser == null) {
-                Toast.makeText(getContext(), "用户信息获取失败，请重新登录", Toast.LENGTH_SHORT).show();
-                return;
+            if (checkUser()) {
+                Intent intent = new Intent(getContext(), PaymentDetailActivity.class);
+                intent.putExtra("user", currentUser);
+                startActivity(intent);
             }
-            Intent intent = new Intent(getContext(), PaymentDetailActivity.class);
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
         });
-
-        // 5. 缴费申诉
         view.findViewById(R.id.ll_appeal).setOnClickListener(v -> {
-            if (currentUser == null) {
-                Toast.makeText(getContext(), "用户信息获取失败，请重新登录", Toast.LENGTH_SHORT).show();
-                return;
+            if (checkUser()) {
+                Intent intent = new Intent(getContext(), PaymentAppealActivity.class);
+                intent.putExtra("user", currentUser);
+                startActivity(intent);
             }
-            Intent intent = new Intent(getContext(), PaymentAppealActivity.class);
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
         });
-
-        // 6. 联系物业
         view.findViewById(R.id.ll_contact_property).setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), ContactPropertyActivity.class);
             startActivity(intent);
         });
-
-        // 7. 报修
         view.findViewById(R.id.ll_repair).setOnClickListener(v -> {
-            if (currentUser == null) {
-                Toast.makeText(getContext(), "用户信息获取失败，请重新登录", Toast.LENGTH_SHORT).show();
-                return;
+            if (checkUser()) {
+                Intent intent = new Intent(getContext(), RepairActivity.class);
+                intent.putExtra("user", currentUser);
+                startActivity(intent);
             }
-            Intent intent = new Intent(getContext(), RepairActivity.class);
-            intent.putExtra("user", currentUser);
-            startActivity(intent);
         });
-
-        // 8. 更多按钮
         view.findViewById(R.id.ll_more).setOnClickListener(v -> showMoreServiceDialog());
 
-        // 9. 周边商家 - 更多
         TextView tvMerchantMore = view.findViewById(R.id.tv_merchant_more);
         if (tvMerchantMore != null) {
             tvMerchantMore.setOnClickListener(v -> {
@@ -325,45 +277,38 @@ public class NotificationFragment extends Fragment {
         }
     }
 
-    // 显示更多服务弹窗
+    private boolean checkUser() {
+        if (currentUser == null) {
+            Toast.makeText(getContext(), "用户信息获取失败，请重新登录", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
     private void showMoreServiceDialog() {
         if (getContext() == null) return;
-
         final Dialog dialog = new Dialog(getContext());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         dialog.setContentView(R.layout.dialog_more_service);
-
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
         }
-
         View ivProductService = dialog.findViewById(R.id.iv_product_service);
         View tvProductService = dialog.findViewById(R.id.tv_product_service);
-
         View.OnClickListener jumpListener = v -> {
             dialog.dismiss();
             Intent intent = new Intent(getContext(), ResidentProductBrowsingActivity.class);
             startActivity(intent);
         };
-
         if (ivProductService != null) ivProductService.setOnClickListener(jumpListener);
         if (tvProductService != null) tvProductService.setOnClickListener(jumpListener);
-
         dialog.show();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // 停止轮播图定时器
-        if (timer != null) {
-            timer.cancel();
-            timer = null;
-        }
-        // 停止商品刷新定时器
-        if (productTimer != null) {
-            productTimer.cancel();
-            productTimer = null;
-        }
+        if (timer != null) { timer.cancel(); timer = null; }
+        if (productTimer != null) { productTimer.cancel(); productTimer = null; }
     }
 }

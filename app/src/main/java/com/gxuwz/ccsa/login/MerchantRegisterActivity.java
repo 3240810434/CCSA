@@ -31,12 +31,14 @@ public class MerchantRegisterActivity extends AppCompatActivity {
     private AppDatabase db;
     private String gender = "男";
 
-    // 小区数据
+    // 小区数据源
     private String[] communities = {
             "悦景小区", "梧桐小区", "阳光小区", "锦园小区", "幸福小区",
             "芳邻小区", "逸景小区", "康城小区", "沁园小区", "静安小区"
     };
+    // 用于记录多选框的选中状态
     private boolean[] checkedCommunities;
+    // 存储选中的小区名称
     private List<String> selectedCommunityList = new ArrayList<>();
 
     @Override
@@ -64,6 +66,7 @@ public class MerchantRegisterActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
+        // 点击选择小区，弹出多选对话框
         tvCommunitySelect.setOnClickListener(v -> showCommunityDialog());
 
         rgGender.setOnCheckedChangeListener((group, checkedId) -> {
@@ -76,7 +79,7 @@ public class MerchantRegisterActivity extends AppCompatActivity {
 
     private void showCommunityDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("选择服务小区");
+        builder.setTitle("选择服务小区 (可多选)");
         builder.setMultiChoiceItems(communities, checkedCommunities, (dialog, which, isChecked) -> {
             checkedCommunities[which] = isChecked;
         });
@@ -92,6 +95,7 @@ public class MerchantRegisterActivity extends AppCompatActivity {
                 tvCommunitySelect.setText("");
                 tvCommunitySelect.setHint("点击选择服务小区 (可多选)");
             } else {
+                // 将选中的小区列表用逗号连接成字符串，例如 "A小区,B小区"
                 tvCommunitySelect.setText(TextUtils.join(",", selectedCommunityList));
             }
         });
@@ -121,6 +125,7 @@ public class MerchantRegisterActivity extends AppCompatActivity {
             return;
         }
 
+        // 创建商家对象，传入逗号分隔的小区字符串
         Merchant merchant = new Merchant(
                 communityStr,
                 merchantName,
@@ -131,9 +136,8 @@ public class MerchantRegisterActivity extends AppCompatActivity {
         );
 
         new Thread(() -> {
-            // 【修复 2】：使用 setId() 方法，且 insert 现在返回 long 类型
             long id = db.merchantDao().insert(merchant);
-            merchant.setId((int) id); // 修复了 private access 错误
+            merchant.setId((int) id);
 
             // 保存登录状态
             getSharedPreferences("user_prefs", MODE_PRIVATE)
