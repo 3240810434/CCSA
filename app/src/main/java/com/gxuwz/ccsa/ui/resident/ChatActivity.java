@@ -32,9 +32,9 @@ public class ChatActivity extends AppCompatActivity {
     private TextView tvHeaderName;
 
     private int myId;
-    private String myRole; // "RESIDENT" or "MERCHANT"
+    private String myRole; // "RESIDENT", "MERCHANT", "ADMIN"
     private int targetId;
-    private String targetRole; // "RESIDENT" or "MERCHANT"
+    private String targetRole;
 
     // 缓存的头像 URL
     private String myAvatarUrl = "";
@@ -58,7 +58,7 @@ public class ChatActivity extends AppCompatActivity {
         targetId = getIntent().getIntExtra("targetId", -1);
         targetRole = getIntent().getStringExtra("targetRole");
 
-        // 尝试获取预传的名称和头像，优化体验
+        // 尝试获取预传的名称和头像
         if (getIntent().hasExtra("targetName")) {
             targetNameStr = getIntent().getStringExtra("targetName");
         }
@@ -82,7 +82,7 @@ public class ChatActivity extends AppCompatActivity {
         ivHeaderAvatar = findViewById(R.id.iv_header_avatar);
         tvHeaderName = findViewById(R.id.tv_header_name);
 
-        // 设置初始标题
+        // 设置标题栏显示的对方信息
         tvHeaderName.setText(targetNameStr);
         if (!TextUtils.isEmpty(targetAvatarUrl)) {
             Glide.with(this).load(targetAvatarUrl).placeholder(R.drawable.ic_avatar).circleCrop().into(ivHeaderAvatar);
@@ -96,7 +96,6 @@ public class ChatActivity extends AppCompatActivity {
         btnSend = findViewById(R.id.btn_send);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        // 让消息从底部开始堆叠
         layoutManager.setStackFromEnd(true);
         recyclerView.setLayoutManager(layoutManager);
 
@@ -112,19 +111,25 @@ public class ChatActivity extends AppCompatActivity {
             if ("MERCHANT".equals(myRole)) {
                 Merchant me = db.merchantDao().findById(myId);
                 if (me != null) myAvatarUrl = me.getAvatar();
+            } else if ("ADMIN".equals(myRole)) {
+                // 【修复点1】如果是管理员，不查数据库，直接标记为空或特定值
+                // 管理员头像是本地资源，不需要 URL
+                myAvatarUrl = "";
             } else {
+                // 只有不是商家且不是管理员时，才去查居民表
                 User me = db.userDao().findById(myId);
                 if (me != null) myAvatarUrl = me.getAvatar();
             }
 
-            // 2. 查询对方最新信息（为了头像和名字）
+            // 2. 查询对方最新信息（为了标题栏头像和名字）
+            // 注意：如果对方是管理员，也需要类似处理，但目前这里主要是管理员发给居民
             if ("MERCHANT".equals(targetRole)) {
                 Merchant target = db.merchantDao().findById(targetId);
                 if (target != null) {
                     targetNameStr = target.getMerchantName();
                     targetAvatarUrl = target.getAvatar();
                 }
-            } else {
+            } else if ("RESIDENT".equals(targetRole)) {
                 User target = db.userDao().findById(targetId);
                 if (target != null) {
                     targetNameStr = target.getName();
@@ -133,6 +138,7 @@ public class ChatActivity extends AppCompatActivity {
             }
 
             runOnUiThread(() -> {
+                // 再次更新标题栏（以防数据库信息比Intent传过来的新）
                 tvHeaderName.setText(targetNameStr);
                 Glide.with(this).load(targetAvatarUrl).placeholder(R.drawable.ic_avatar).circleCrop().into(ivHeaderAvatar);
 

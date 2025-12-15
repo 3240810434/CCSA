@@ -71,26 +71,49 @@ public class ChatAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         ChatMessage msg = messageList.get(position);
 
         if (holder instanceof RightViewHolder) {
+            // --- 右边：我发的消息 ---
             RightViewHolder rightHolder = (RightViewHolder) holder;
             rightHolder.tvContent.setText(msg.content);
             rightHolder.tvTime.setText(DateUtils.formatTime(msg.createTime));
-            // 加载我的头像
-            Glide.with(context)
-                    .load(myAvatar)
-                    .placeholder(R.drawable.ic_avatar)
-                    .circleCrop()
-                    .into(rightHolder.ivAvatar);
+
+            // 【修复点2】判断角色是否为 ADMIN
+            if ("ADMIN".equals(myRole)) {
+                // 管理员：加载本地 drawable 资源
+                Glide.with(context)
+                        .load(R.drawable.admin) // 确保你有 admin.jpg 或 admin.png
+                        .placeholder(R.drawable.ic_avatar)
+                        .circleCrop()
+                        .into(rightHolder.ivAvatar);
+            } else {
+                // 普通用户/商家：加载网络头像或路径
+                Glide.with(context)
+                        .load(myAvatar)
+                        .placeholder(R.drawable.ic_avatar)
+                        .circleCrop()
+                        .into(rightHolder.ivAvatar);
+            }
 
         } else if (holder instanceof LeftViewHolder) {
+            // --- 左边：对方发的消息 ---
             LeftViewHolder leftHolder = (LeftViewHolder) holder;
             leftHolder.tvContent.setText(msg.content);
             leftHolder.tvTime.setText(DateUtils.formatTime(msg.createTime));
-            // 加载对方头像
-            Glide.with(context)
-                    .load(targetAvatar)
-                    .placeholder(R.drawable.ic_avatar)
-                    .circleCrop()
-                    .into(leftHolder.ivAvatar);
+
+            // 如果对方是管理员（虽然当前场景不太可能，但为了健壮性可以加判断）
+            if (msg.senderRole != null && "ADMIN".equals(msg.senderRole)) {
+                Glide.with(context)
+                        .load(R.drawable.admin)
+                        .placeholder(R.drawable.ic_avatar)
+                        .circleCrop()
+                        .into(leftHolder.ivAvatar);
+            } else {
+                // 普通用户/商家
+                Glide.with(context)
+                        .load(targetAvatar)
+                        .placeholder(R.drawable.ic_avatar)
+                        .circleCrop()
+                        .into(leftHolder.ivAvatar);
+            }
         }
     }
 
