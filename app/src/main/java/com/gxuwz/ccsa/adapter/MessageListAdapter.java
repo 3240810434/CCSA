@@ -41,57 +41,68 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatMessage msg = conversationList.get(position);
 
-        // --- 【修复步骤 1】先准确计算出对方的角色 (targetRole) ---
-        // 逻辑与 onClick 中保持一致，确保显示和点击跳转的逻辑相同
+        // 1. 先准确计算出“对方”的ID和角色
         int targetId;
         String targetRole;
 
         if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
-            // 我是发送者，对方是接收者
+            // 我发给对方
             targetId = msg.receiverId;
             targetRole = msg.receiverRole;
         } else {
-            // 我是接收者，对方是发送者
+            // 对方发给我
             targetId = msg.senderId;
             targetRole = msg.senderRole;
         }
 
-        // --- 【修复步骤 2】基于 targetRole 判断是否为管理员 ---
-        // 只要角色包含 ADMIN，或者名字已经被 Activity 强制修正为 "管理员"，都算作管理员
-        boolean isAdmin = (targetRole != null && targetRole.toUpperCase().contains("ADMIN")) ||
-                "管理员".equals(msg.targetName) ||
-                "local_admin_resource".equals(msg.targetAvatar);
+        // 2. 判断是否为管理员
+        boolean isAdmin = false;
 
-        // --- 【修复步骤 3】设置 UI ---
+        // 判定条件 A: 对方角色字段包含 ADMIN
+        if (targetRole != null && (targetRole.toUpperCase().contains("ADMIN") || targetRole.toUpperCase().contains("SYSTEM"))) {
+            isAdmin = true;
+        }
+        // 判定条件 B: Activity 层面已经强制修正了名字或头像标记
+        else if ("管理员".equals(msg.targetName) || "local_admin_resource".equals(msg.targetAvatar)) {
+            isAdmin = true;
+        }
+
+        // 3. 设置 UI 显示
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
         holder.tvContent.setText(msg.content);
 
         if (isAdmin) {
-            // 强制显示管理员信息
             holder.tvName.setText("管理员");
-            holder.ivAvatar.setImageResource(R.drawable.admin); // 确保你的 drawable 文件夹里有 admin.jpg (或 .png)
+            holder.ivAvatar.setImageResource(R.drawable.admin);
         } else {
-            // 普通显示逻辑
-            holder.tvName.setText(TextUtils.isEmpty(msg.targetName) ? "未知用户" : msg.targetName);
+            String displayName = TextUtils.isEmpty(msg.targetName) ? "未知用户" : msg.targetName;
+            holder.tvName.setText(displayName);
 
             Glide.with(context)
                     .load(msg.targetAvatar)
-                    .placeholder(R.drawable.ic_avatar) // 默认头像
+                    .placeholder(R.drawable.ic_avatar)
                     .error(R.drawable.ic_avatar)
                     .circleCrop()
                     .into(holder.ivAvatar);
         }
 
-        // --- 点击事件 ---
+        // --- 【Bug修复核心】 ---
+        // 为了满足 Lambda 表达式的 final 要求，创建 final 副本变量
+        final boolean finalIsAdmin = isAdmin;
+        final int finalTargetId = targetId;
+        final String finalTargetRole = targetRole;
+
+        // 4. 点击跳转
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("myId", currentUser.getId());
             intent.putExtra("myRole", "RESIDENT");
 
-            intent.putExtra("targetId", targetId);
-            intent.putExtra("targetRole", targetRole);
+            // 使用 final 变量
+            intent.putExtra("targetId", finalTargetId);
+            intent.putExtra("targetRole", finalTargetRole);
 
-            if (isAdmin) {
+            if (finalIsAdmin) {
                 intent.putExtra("targetName", "管理员");
                 intent.putExtra("targetAvatar", "local_admin_resource");
             } else {

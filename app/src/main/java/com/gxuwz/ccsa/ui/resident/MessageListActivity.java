@@ -70,47 +70,51 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 2. 生成唯一Key
+                    // 2. 生成唯一Key (Role + ID)
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
                     String key = safeRole + "_" + otherId;
 
+                    // 只保留每个会话的最新一条消息
                     if (!latestMsgMap.containsKey(key)) {
-                        // --- 【增强的识别逻辑】 ---
+
                         boolean isIdentifyAsAdmin = false;
 
-                        // A. 显式角色检查
-                        if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER") || safeRole.contains("SYSTEM")) {
+                        // A. 优先检查 Role 字段
+                        if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER")) {
                             isIdentifyAsAdmin = true;
                         }
 
+                        // B. 如果不是明确的商家或居民，尝试去管理员表查一下这个ID (兜底逻辑)
+                        // 这能解决部分历史数据 Role 字段为空的问题
+                        if (!isIdentifyAsAdmin && !"MERCHANT".equals(safeRole) && !"RESIDENT".equals(safeRole)) {
+                            Admin admin = db.adminDao().findById(otherId);
+                            if (admin != null) {
+                                isIdentifyAsAdmin = true;
+                            }
+                        }
+
+                        // C. 填充显示数据 (targetName/targetAvatar 只是暂存，用于Adapter显示)
                         if (isIdentifyAsAdmin) {
                             msg.targetName = "管理员";
-                            msg.targetAvatar = "local_admin_resource";
+                            msg.targetAvatar = "local_admin_resource"; // 特殊标记
                         } else if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
                                 msg.targetName = m.getMerchantName();
                                 msg.targetAvatar = m.getAvatar();
                             } else {
-                                msg.targetName = "商家(已注销)";
+                                msg.targetName = "商家";
                                 msg.targetAvatar = "";
                             }
                         } else {
-                            // B. 默认为居民，但增加兜底检查
+                            // 默认为普通居民
                             User u = db.userDao().findById(otherId);
                             if (u != null) {
                                 msg.targetName = u.getName();
                                 msg.targetAvatar = u.getAvatar();
                             } else {
-                                // C. 如果在 User 表找不到，尝试在 Admin 表找一次 (防止 Role 标记错误的情况)
-                                Admin admin = db.adminDao().findById(otherId);
-                                if (admin != null) {
-                                    msg.targetName = "管理员";
-                                    msg.targetAvatar = "local_admin_resource";
-                                } else {
-                                    msg.targetName = "未知用户";
-                                    msg.targetAvatar = "";
-                                }
+                                msg.targetName = "未知用户";
+                                msg.targetAvatar = "";
                             }
                         }
 
@@ -121,6 +125,7 @@ public class MessageListActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     conversationList.clear();
                     conversationList.addAll(latestMsgMap.values());
+                    // 排序可以放在这里做，这里简化处理直接刷新
                     adapter.notifyDataSetChanged();
                 });
             } catch (Exception e) {
@@ -142,9 +147,10 @@ public class MessageListActivity extends AppCompatActivity {
                 if (position < 0 || position >= conversationList.size()) return;
 
                 ChatMessage msg = conversationList.get(position);
+
+                // 计算目标ID和角色，用于删除
                 int targetId;
                 String targetRole;
-
                 if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                     targetId = msg.receiverId;
                     targetRole = msg.receiverRole;
