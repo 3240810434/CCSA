@@ -1,8 +1,6 @@
 package com.gxuwz.ccsa.ui.resident;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -77,16 +75,28 @@ public class MessageListActivity extends AppCompatActivity {
                 String key = otherRole + "_" + otherId;
 
                 if (!latestMsgMap.containsKey(key)) {
-                    // 查询对方详细信息
+                    // --- 【修复重点开始】 ---
+                    // 查询对方详细信息，必须区分 ADMIN
                     if ("MERCHANT".equals(otherRole)) {
                         Merchant m = db.merchantDao().findById(otherId);
                         msg.targetName = (m != null) ? m.getMerchantName() : "商家(已注销)";
                         msg.targetAvatar = (m != null) ? m.getAvatar() : "";
-                    } else {
+                    }
+                    else if ("ADMIN".equals(otherRole)) {
+                        // 这里处理管理员逻辑
+                        msg.targetName = "管理员";
+                        // 构建指向本地 drawable 资源的 URI 字符串，让 Glide 加载本地图片
+                        // 确保你的 res/drawable 下有 admin.jpg
+                        msg.targetAvatar = "android.resource://" + getPackageName() + "/" + R.drawable.admin;
+                    }
+                    else {
+                        // 既不是商家也不是管理员，才去查用户表
                         User u = db.userDao().findById(otherId);
                         msg.targetName = (u != null) ? u.getName() : "用户";
                         msg.targetAvatar = (u != null) ? u.getAvatar() : "";
                     }
+                    // --- 【修复重点结束】 ---
+
                     latestMsgMap.put(key, msg);
                 }
             }

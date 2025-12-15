@@ -44,18 +44,24 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
         holder.tvContent.setText(msg.content);
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
 
-        Glide.with(context)
-                .load(msg.targetAvatar)
-                .placeholder(R.drawable.ic_avatar)
-                .circleCrop()
-                .into(holder.ivAvatar);
+        // 【修复部分】：判断是否为管理员，显示特定头像
+        if ("管理员".equals(msg.targetName)) {
+            // 直接加载资源文件中的 admin.jpg
+            holder.ivAvatar.setImageResource(R.drawable.admin);
+        } else {
+            // 其他用户使用 Glide 加载 URL
+            Glide.with(context)
+                    .load(msg.targetAvatar)
+                    .placeholder(R.drawable.ic_avatar)
+                    .circleCrop()
+                    .into(holder.ivAvatar);
+        }
 
         holder.itemView.setOnClickListener(v -> {
             // 重新计算目标ID和角色
             int targetId;
             String targetRole;
 
-            // 逻辑：如果我是发送者，目标就是Receiver
             if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
                 targetId = msg.receiverId;
                 targetRole = msg.receiverRole;
@@ -65,11 +71,9 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             }
 
             Intent intent = new Intent(context, ChatActivity.class);
-            // 我是居民
             intent.putExtra("myId", currentUser.getId());
             intent.putExtra("myRole", "RESIDENT");
 
-            // 对方信息
             intent.putExtra("targetId", targetId);
             intent.putExtra("targetRole", targetRole);
             intent.putExtra("targetName", msg.targetName);
