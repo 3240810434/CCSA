@@ -60,7 +60,8 @@ public class ProfileFragment extends Fragment {
         btnLogout = view.findViewById(R.id.btn_logout);
 
         if (adminAccount != null) {
-            tvAdminAccount.setText(adminAccount);
+            // 修改此处：增加“账号：”前缀，使显示更清晰
+            tvAdminAccount.setText("账号：" + adminAccount);
         }
     }
 
