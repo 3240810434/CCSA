@@ -2,6 +2,7 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,44 +41,49 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatMessage msg = conversationList.get(position);
 
-        // 先设置默认显示内容（可能会被后续逻辑覆盖）
-        holder.tvName.setText(msg.targetName != null ? msg.targetName : "未知用户");
-        holder.tvContent.setText(msg.content);
-        holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
+        // --- 【修复步骤 1】先准确计算出对方的角色 (targetRole) ---
+        // 逻辑与 onClick 中保持一致，确保显示和点击跳转的逻辑相同
+        int targetId;
+        String targetRole;
 
-        // --- 【修复核心：强制管理员显示逻辑】 ---
-        // 判断是否为管理员：检查名字、检查头像标记、或者检查发送者角色字段
-        boolean isAdmin = "管理员".equals(msg.targetName) ||
-                "local_admin_resource".equals(msg.targetAvatar) ||
-                (msg.senderRole != null && msg.senderRole.toUpperCase().contains("ADMIN") && msg.senderId != currentUser.getId());
+        if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
+            // 我是发送者，对方是接收者
+            targetId = msg.receiverId;
+            targetRole = msg.receiverRole;
+        } else {
+            // 我是接收者，对方是发送者
+            targetId = msg.senderId;
+            targetRole = msg.senderRole;
+        }
+
+        // --- 【修复步骤 2】基于 targetRole 判断是否为管理员 ---
+        // 只要角色包含 ADMIN，或者名字已经被 Activity 强制修正为 "管理员"，都算作管理员
+        boolean isAdmin = (targetRole != null && targetRole.toUpperCase().contains("ADMIN")) ||
+                "管理员".equals(msg.targetName) ||
+                "local_admin_resource".equals(msg.targetAvatar);
+
+        // --- 【修复步骤 3】设置 UI ---
+        holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
+        holder.tvContent.setText(msg.content);
 
         if (isAdmin) {
-            // 1. 强制显示管理员头像
-            holder.ivAvatar.setImageResource(R.drawable.admin);
-            // 2. 【关键修复】强制显示名字为“管理员”，防止显示成“未知用户”
+            // 强制显示管理员信息
             holder.tvName.setText("管理员");
+            holder.ivAvatar.setImageResource(R.drawable.admin); // 确保你的 drawable 文件夹里有 admin.jpg (或 .png)
         } else {
-            // 普通用户或商家，使用 Glide 加载
+            // 普通显示逻辑
+            holder.tvName.setText(TextUtils.isEmpty(msg.targetName) ? "未知用户" : msg.targetName);
+
             Glide.with(context)
                     .load(msg.targetAvatar)
-                    .placeholder(R.drawable.ic_avatar)
+                    .placeholder(R.drawable.ic_avatar) // 默认头像
                     .error(R.drawable.ic_avatar)
                     .circleCrop()
                     .into(holder.ivAvatar);
         }
 
+        // --- 点击事件 ---
         holder.itemView.setOnClickListener(v -> {
-            int targetId;
-            String targetRole;
-
-            if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
-                targetId = msg.receiverId;
-                targetRole = msg.receiverRole;
-            } else {
-                targetId = msg.senderId;
-                targetRole = msg.senderRole;
-            }
-
             Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("myId", currentUser.getId());
             intent.putExtra("myRole", "RESIDENT");
@@ -85,7 +91,6 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
             intent.putExtra("targetId", targetId);
             intent.putExtra("targetRole", targetRole);
 
-            // 如果识别出是管理员，强制传正确的数据给聊天页面
             if (isAdmin) {
                 intent.putExtra("targetName", "管理员");
                 intent.putExtra("targetAvatar", "local_admin_resource");
