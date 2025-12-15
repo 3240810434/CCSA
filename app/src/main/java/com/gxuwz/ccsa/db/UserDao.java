@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.db;
 
 import androidx.room.Dao;
+import androidx.room.Delete; // 新增导入
 import androidx.room.Insert;
 import androidx.room.Query;
 import androidx.room.Update;
@@ -9,8 +10,20 @@ import java.util.List;
 
 @Dao
 public interface UserDao {
+
+    // --- 插入数据 ---
     @Insert
     void insert(User user);
+
+    // --- 删除用户 (用于注销操作) ---
+    @Delete
+    void delete(User user);
+
+    // --- 更新数据 ---
+    @Update
+    void update(User user);
+
+    // --- 查询方法 ---
 
     @Query("SELECT * FROM user WHERE phone = :phone AND password = :password LIMIT 1")
     User login(String phone, String password);
@@ -21,7 +34,7 @@ public interface UserDao {
     @Query("SELECT * FROM user WHERE id = :id")
     User getUserById(int id);
 
-    // --- 新增此方法，Activity 中使用的是 long 类型 ---
+    // --- Activity 中使用的是 long 类型 ---
     @Query("SELECT * FROM user WHERE id = :id")
     User findById(long id);
 
@@ -45,7 +58,4 @@ public interface UserDao {
 
     @Query("SELECT * FROM user WHERE phone = :phone")
     User getByPhone(String phone);
-
-    @Update
-    void update(User user);
 }
