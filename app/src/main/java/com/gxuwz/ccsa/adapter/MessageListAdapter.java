@@ -66,8 +66,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
         else if ("管理员".equals(msg.targetName) || "local_admin_resource".equals(msg.targetAvatar)) {
             isAdmin = true;
         }
-        // 判定条件 C: ID 为 1 且不是商家 (兜底)
-        else if (targetId == 1 && (targetRole == null || !targetRole.toUpperCase().contains("MERCHANT"))) {
+
+        // --- 关键修改：增强健壮性，强制修正显示逻辑 ---
+        // 如果 ID 是 1，无论之前判定结果如何，也无论角色字段是什么（可能是null或误传），都强制显示为管理员
+        if (targetId == 1) {
             isAdmin = true;
         }
 
