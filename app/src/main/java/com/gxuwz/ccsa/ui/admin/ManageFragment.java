@@ -1,4 +1,3 @@
-// CCSA/app/src/main/java/com/gxuwz/ccsa/ui/admin/ManageFragment.java
 package com.gxuwz.ccsa.ui.admin;
 
 import android.content.Intent;
@@ -17,6 +16,7 @@ public class ManageFragment extends Fragment {
     private String community;
     private Button btnResidentList;
     private Button btnInitiateVote;
+    private Button btnMerchantManage; // 新增
 
     public ManageFragment() {}
 
@@ -33,9 +33,6 @@ public class ManageFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             community = getArguments().getString("community");
-            Log.d(TAG, "当前管理员所属小区: " + community);
-        } else {
-            Log.e(TAG, "未获取到小区信息！");
         }
     }
 
@@ -48,33 +45,31 @@ public class ManageFragment extends Fragment {
     }
 
     private void initViews(View view) {
-        // 确保按钮正确初始化
         btnResidentList = view.findViewById(R.id.btn_resident_list);
-        if (btnResidentList == null) {
-            Log.e(TAG, "布局中未找到btn_resident_list，请检查XML文件");
-        }
         btnInitiateVote = view.findViewById(R.id.btn_initiate_vote);
+        // 新增绑定
+        btnMerchantManage = view.findViewById(R.id.btn_merchant_manage);
     }
 
     private void setupButtonListeners() {
-        // 确保按钮非空再设置点击事件
         if (btnResidentList != null) {
             btnResidentList.setOnClickListener(v -> {
-                Log.d(TAG, "居民列表按钮点击，当前小区: " + community);
-
-                if (getActivity() == null) {
-                    Toast.makeText(getContext(), "页面状态异常", Toast.LENGTH_SHORT).show();
-                    return;
+                if (checkState()) {
+                    Intent intent = new Intent(getActivity(), com.gxuwz.ccsa.ui.admin.ResidentListActivity.class);
+                    intent.putExtra("community", community);
+                    startActivity(intent);
                 }
-                if (community == null || community.isEmpty()) {
-                    Toast.makeText(getActivity(), "未获取到小区信息，请重新登录", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+            });
+        }
 
-                // 跳转到管理员的居民列表页面
-                Intent intent = new Intent(getActivity(), com.gxuwz.ccsa.ui.admin.ResidentListActivity.class);
-                intent.putExtra("community", community);
-                startActivity(intent);
+        // 新增商家管理按钮监听
+        if (btnMerchantManage != null) {
+            btnMerchantManage.setOnClickListener(v -> {
+                if (checkState()) {
+                    Intent intent = new Intent(getActivity(), com.gxuwz.ccsa.ui.admin.MerchantListActivity.class);
+                    intent.putExtra("community", community);
+                    startActivity(intent);
+                }
             });
         }
 
@@ -83,5 +78,16 @@ public class ManageFragment extends Fragment {
                 Toast.makeText(getContext(), "发起投票功能", Toast.LENGTH_SHORT).show();
             });
         }
+    }
+
+    private boolean checkState() {
+        if (getActivity() == null) {
+            return false;
+        }
+        if (community == null || community.isEmpty()) {
+            Toast.makeText(getActivity(), "未获取到小区信息，请重新登录", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
     }
 }
