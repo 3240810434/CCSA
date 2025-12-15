@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.ui.resident;
 
 import android.os.Bundle;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -53,18 +54,30 @@ public class MessageListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
-                // 1. 获取所有与我相关的消息（按时间倒序）
-                List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
+                // 1. 为了保险起见，重新查询一次当前用户的最新信息（确保小区字段准确）
+                User freshUser = db.userDao().findById(currentUser.getId());
+                if (freshUser == null) freshUser = currentUser;
 
-                // 用于去重，只显示每个会话的最新一条消息
-                // Key 格式建议为: Role_Id (例如 MERCHANT_5, RESIDENT_3)
+                // 2. 【核心修复】获取当前小区对应的物业管理员 ID
+                // 不依赖消息里的 Role 字符串，直接查人
+                int propertyAdminId = -1; // -1 代表未找到或无效
+                if (freshUser.getCommunity() != null) {
+                    Admin admin = db.adminDao().findByCommunity(freshUser.getCommunity());
+                    if (admin != null) {
+                        propertyAdminId = admin.getId();
+                        Log.d("MessageList", "Found Property Admin ID to hide: " + propertyAdminId);
+                    }
+                }
+
+                // 3. 获取所有消息
+                List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
                 Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
                 for (ChatMessage msg : allMsgs) {
                     int otherId;
                     String otherRole;
 
-                    // 判断对方是谁（如果是发件人是我，那对方就是收件人；反之亦然）
+                    // 判断对方是谁
                     if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                         otherId = msg.receiverId;
                         otherRole = msg.receiverRole;
@@ -73,38 +86,36 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 统一角色字符串格式，防止空指针
+                    // 防止空指针
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
 
-                    // ====================================================================================
-                    // 【核心逻辑】隐藏管理员会话
-                    // 如果对方的角色是 ADMIN（物业/系统管理员），则跳过，不显示在列表中。
-                    // ====================================================================================
+                    // ============================================================
+                    // 【强力过滤逻辑】
+                    // ============================================================
+
+                    // A. ID 精准匹配：如果对方ID等于该小区的物业管理员ID，直接隐藏
+                    if (propertyAdminId != -1 && otherId == propertyAdminId) {
+                        continue;
+                    }
+
+                    // B. 角色字符串匹配：如果角色包含 ADMIN，隐藏
                     if (safeRole.contains("ADMIN")) {
                         continue;
                     }
 
-                    // 额外的硬编码ID过滤（如果您的系统有固定管理员ID，保留此项以防角色字段缺失）
-                    if (otherId == 1 || otherId == 11 || otherId == 111 ||
-                            otherId == 1111 || otherId == 11111) {
+                    // C. 常见管理员ID硬编码过滤（兜底）
+                    if (otherId == 1 || otherId == 11 || otherId == 11111) {
                         continue;
                     }
 
-                    // (可选) 如果角色是 UNKNOWN，可以查库兜底确认是否为管理员（防止数据异常导致漏删）
-                    if ("UNKNOWN".equals(safeRole)) {
-                        Admin adminCheck = db.adminDao().findById(otherId);
-                        if (adminCheck != null) {
-                            continue; // 确认为管理员，跳过
-                        }
-                    }
-                    // ====================================================================================
+                    // ============================================================
+                    // 通过过滤后，才添加到显示列表
+                    // ============================================================
 
-                    // 生成唯一Key，用于识别同一个聊天对象
                     String key = safeRole + "_" + otherId;
 
-                    // 如果这个人的消息还没添加过（因为是倒序，第一条就是最新的），则添加
                     if (!latestMsgMap.containsKey(key)) {
-                        // 补充对方的头像和名称信息，用于列表显示
+                        // 补充显示信息
                         if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
@@ -123,7 +134,6 @@ public class MessageListActivity extends AppCompatActivity {
                                 msg.targetName = "未知用户";
                             }
                         }
-
                         latestMsgMap.put(key, msg);
                     }
                 }
@@ -152,10 +162,10 @@ public class MessageListActivity extends AppCompatActivity {
                 if (position < 0 || position >= conversationList.size()) return;
 
                 ChatMessage msg = conversationList.get(position);
+
+                // 解析删除对象
                 int targetId;
                 String targetRole;
-
-                // 解析删除对象的ID和角色
                 if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                     targetId = msg.receiverId;
                     targetRole = msg.receiverRole;
@@ -166,11 +176,8 @@ public class MessageListActivity extends AppCompatActivity {
 
                 final int tId = targetId;
                 final String tRole = targetRole;
-
-                // 从数据库逻辑删除
                 new Thread(() -> db.chatDao().deleteConversation(currentUser.getId(), "RESIDENT", tId, tRole)).start();
 
-                // 从UI移除
                 conversationList.remove(position);
                 adapter.notifyItemRemoved(position);
             }
