@@ -2,8 +2,10 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,6 +44,16 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
     private int screenHeight;
     private static final int OCCUPIED_HEIGHT_DP = 220;
 
+    // 新增删除监听器
+    public interface OnDeleteListener {
+        void onDelete(HelpPost post);
+    }
+    private OnDeleteListener deleteListener;
+
+    public void setDeleteListener(OnDeleteListener listener) {
+        this.deleteListener = listener;
+    }
+
     public HelpPostAdapter(Context context, List<HelpPost> list, User currentUser) {
         this.context = context;
         this.list = list;
@@ -52,10 +64,9 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
         screenHeight = dm.heightPixels;
     }
 
-    // 提供方法更新 currentUser，防止 Adapter 持有旧的用户对象
     public void setCurrentUser(User user) {
         this.currentUser = user;
-        notifyDataSetChanged(); // 用户身份变化可能影响“联系”按钮的显示
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -71,7 +82,6 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
 
         holder.tvTitle.setText(post.title);
         holder.tvContent.setText(post.content);
-        // 优先显示动态查询到的用户名，解决改名不同步问题
         holder.tvAuthor.setText(post.userName != null ? post.userName : "未知邻居");
         holder.tvTime.setText(DateUtils.formatTime(post.createTime));
 
@@ -82,7 +92,7 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
                 .circleCrop()
                 .into(holder.ivAvatar);
 
-        // 媒体内容处理 (保持原有逻辑)
+        // 媒体内容处理
         holder.mediaContainer.removeAllViews();
         if (post.mediaList != null && !post.mediaList.isEmpty()) {
             holder.mediaContainer.setVisibility(View.VISIBLE);
@@ -181,30 +191,80 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
             holder.mediaContainer.setVisibility(View.GONE);
         }
 
-        // 联系按钮逻辑
-        if (currentUser != null && post.userId == currentUser.getId()) {
-            holder.llContact.setVisibility(View.GONE); // 自己不能联系自己
-        } else {
+        // --- 联系/删除 按钮逻辑 ---
+        if (deleteListener != null) {
+            // "我的互助" 模式：显示删除按钮
             holder.llContact.setVisibility(View.VISIBLE);
-            holder.llContact.setOnClickListener(v -> {
-                if (currentUser == null) {
-                    Toast.makeText(context, "用户信息获取失败，请刷新或重新登录", Toast.LENGTH_SHORT).show();
-                    return;
+
+            // 清除可能存在的旧视图
+            holder.llContact.removeAllViews();
+
+            TextView tvDelete = new TextView(context);
+            tvDelete.setText("删除求助");
+            tvDelete.setTextColor(Color.RED);
+            tvDelete.setTextSize(14);
+            tvDelete.setGravity(Gravity.CENTER);
+            holder.llContact.addView(tvDelete);
+
+            // 设置删除背景和点击事件
+            holder.llContact.setBackgroundResource(R.drawable.button_border_gray);
+            holder.llContact.setOnClickListener(v -> deleteListener.onDelete(post));
+
+        } else {
+            // 正常浏览模式
+            // 恢复原状需要小心，这里假设 RecyclerView 重绘会清空重加，或者简单处理：
+            // 如果 llContact 被修改过（child count > 0 且是我们加的 View），需要恢复
+            // 这里为了简单，如果检测到被修改，重新inflate内容比较麻烦，建议在 Adapter 里尽可能重置。
+
+            // 简单重置逻辑：如果第一个子 View 是 Textview 且内容是 "删除求助"，则清空并加回图标
+            boolean isModified = false;
+            if(holder.llContact.getChildCount() > 0 && holder.llContact.getChildAt(0) instanceof TextView) {
+                TextView tv = (TextView) holder.llContact.getChildAt(0);
+                if("删除求助".equals(tv.getText().toString())) {
+                    isModified = true;
                 }
+            }
 
-                // 【修复部分】：按照 ChatActivity 的要求传递 myId, myRole, targetId, targetRole
-                Intent intent = new Intent(context, ChatActivity.class);
-                intent.putExtra("myId", currentUser.getId());
-                intent.putExtra("myRole", "RESIDENT"); // 当前用户角色是居民
-                intent.putExtra("targetId", post.userId);
-                intent.putExtra("targetRole", "RESIDENT"); // 帖子发布者也是居民
+            if (isModified) {
+                holder.llContact.removeAllViews();
+                // 重新添加 图标和文字 (硬编码恢复布局)
+                ImageView iv = new ImageView(context);
+                iv.setImageResource(R.drawable.ic_contact); // 假设有这个资源，或者用 R.drawable.contact
+                LinearLayout.LayoutParams p1 = new LinearLayout.LayoutParams(dp2px(context, 16), dp2px(context, 16));
+                iv.setLayoutParams(p1);
 
-                // 传递头像和名字，优化聊天页面的加载体验
-                intent.putExtra("targetName", post.userName);
-                intent.putExtra("targetAvatar", post.userAvatar);
+                TextView tv = new TextView(context);
+                tv.setText("联系Ta");
+                tv.setTextSize(12);
+                tv.setTextColor(Color.parseColor("#666666"));
+                LinearLayout.LayoutParams p2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                p2.leftMargin = dp2px(context, 4);
+                tv.setLayoutParams(p2);
 
-                context.startActivity(intent);
-            });
+                holder.llContact.addView(iv);
+                holder.llContact.addView(tv);
+                holder.llContact.setBackgroundResource(R.drawable.btn_rounded_light_blue); // 恢复原有背景，假设
+            }
+
+            if (currentUser != null && post.userId == currentUser.getId()) {
+                holder.llContact.setVisibility(View.GONE);
+            } else {
+                holder.llContact.setVisibility(View.VISIBLE);
+                holder.llContact.setOnClickListener(v -> {
+                    if (currentUser == null) {
+                        Toast.makeText(context, "用户信息获取失败，请刷新或重新登录", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    Intent intent = new Intent(context, ChatActivity.class);
+                    intent.putExtra("myId", currentUser.getId());
+                    intent.putExtra("myRole", "RESIDENT");
+                    intent.putExtra("targetId", post.userId);
+                    intent.putExtra("targetRole", "RESIDENT");
+                    intent.putExtra("targetName", post.userName);
+                    intent.putExtra("targetAvatar", post.userAvatar);
+                    context.startActivity(intent);
+                });
+            }
         }
     }
 

@@ -2,6 +2,7 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -39,6 +40,16 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
     private static final int OCCUPIED_HEIGHT_DP = 180;
 
+    // 删除事件监听器
+    public interface OnDeleteListener {
+        void onDelete(Post post);
+    }
+    private OnDeleteListener deleteListener;
+
+    public void setDeleteListener(OnDeleteListener listener) {
+        this.deleteListener = listener;
+    }
+
     public PostAdapter(Context context, List<Post> list, User currentUser) {
         this.context = context;
         this.list = list;
@@ -48,10 +59,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         screenHeight = dm.heightPixels;
     }
 
-    // 【新增】允许外部更新 CurrentUser，确保身份信息最新
     public void setCurrentUser(User user) {
         this.currentUser = user;
-        // 刷新列表以防有依赖 currentUser 状态的 UI 需要更新
         notifyDataSetChanged();
     }
 
@@ -66,7 +75,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
         Post post = list.get(position);
 
-        // 使用 Fragment 中已更新的 userName 和 userAvatar 进行显示
         holder.tvName.setText(post.userName);
         holder.tvTime.setText(DateUtils.getRelativeTime(post.createTime));
         holder.tvCommentCount.setText(post.commentCount > 0 ? String.valueOf(post.commentCount) : "评论");
@@ -89,9 +97,34 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
         holder.layoutBottomBar.setVisibility(View.VISIBLE);
 
+        // --- 处理删除按钮逻辑 (非视频模式) ---
+        // 查找是否已经添加过删除按钮，避免重复添加
+        View existingDeleteBtn = holder.layoutBottomBar.findViewWithTag("DELETE_BTN");
+        if (deleteListener != null && post.type != 2) {
+            if (existingDeleteBtn == null) {
+                TextView deleteBtn = new TextView(context);
+                deleteBtn.setText("删除");
+                deleteBtn.setTextColor(Color.RED);
+                deleteBtn.setTag("DELETE_BTN");
+                deleteBtn.setPadding(20, 0, 20, 0);
+                deleteBtn.setGravity(Gravity.CENTER);
+                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT);
+                deleteBtn.setLayoutParams(params);
+                holder.layoutBottomBar.addView(deleteBtn);
+                existingDeleteBtn = deleteBtn;
+            }
+            existingDeleteBtn.setVisibility(View.VISIBLE);
+            existingDeleteBtn.setOnClickListener(v -> deleteListener.onDelete(post));
+        } else {
+            if (existingDeleteBtn != null) {
+                existingDeleteBtn.setVisibility(View.GONE);
+            }
+        }
+
         if (hasMedia) {
             if (post.type == 2) {
-                // ============ 视频帖子优化 ============
+                // ============ 视频帖子 ============
                 holder.layoutBottomBar.setVisibility(View.GONE);
                 holder.mediaContainer.setPadding(0, 0, 0, 0);
 
@@ -147,6 +180,15 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 sideBar.addView(btnFavorite);
                 sideBar.addView(btnComment);
 
+                // --- 视频模式下的删除按钮 ---
+                if (deleteListener != null) {
+                    ImageView btnDelete = createSideIcon(context, android.R.drawable.ic_menu_delete);
+                    // 这里使用了系统自带的删除图标，如果项目有 ic_delete.png 请替换为 R.drawable.ic_delete
+                    btnDelete.setColorFilter(Color.WHITE);
+                    btnDelete.setOnClickListener(v -> deleteListener.onDelete(post));
+                    sideBar.addView(btnDelete);
+                }
+
                 relativeLayout.addView(videoView);
                 relativeLayout.addView(coverImage);
                 relativeLayout.addView(playIcon);
@@ -193,6 +235,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 btnComment.setOnClickListener(v -> openDetail(post));
 
             } else {
+                // 图片处理逻辑
                 int imgCount = post.mediaList.size();
                 ArrayList<String> imgUrls = new ArrayList<>();
                 for(int k=0; k<imgCount; k++) imgUrls.add(post.mediaList.get(k).url);
@@ -279,7 +322,6 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     private void openDetail(Post post) {
         Intent intent = new Intent(context, PostDetailActivity.class);
         intent.putExtra("post", post);
-        // 传递最新的 currentUser
         if (currentUser != null) {
             intent.putExtra("user", currentUser);
         }

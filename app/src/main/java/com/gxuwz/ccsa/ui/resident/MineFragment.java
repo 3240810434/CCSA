@@ -83,12 +83,23 @@ public class MineFragment extends Fragment {
         view.findViewById(R.id.cv_avatar).setOnClickListener(editProfileListener);
         view.findViewById(R.id.btn_edit_profile).setOnClickListener(editProfileListener);
 
-        // --- 修改部分：跳转到我的订单页面 ---
+        // 跳转到我的订单页面
         view.findViewById(R.id.btn_my_orders).setOnClickListener(v -> {
             Intent intent = new Intent(getContext(), ResidentOrdersActivity.class);
             startActivity(intent);
         });
-        // ------------------------------------
+
+        // 跳转到我的动态页面
+        view.findViewById(R.id.btn_my_dynamics).setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), MyDynamicsActivity.class);
+            startActivity(intent);
+        });
+
+        // 跳转到我的互助页面
+        view.findViewById(R.id.btn_my_help).setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), MyHelpActivity.class);
+            startActivity(intent);
+        });
 
         View.OnClickListener notImplListener = v ->
                 Toast.makeText(getContext(), "功能暂未开放", Toast.LENGTH_SHORT).show();

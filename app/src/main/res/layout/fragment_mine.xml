@@ -125,39 +125,46 @@
                         android:text="更改密码"/>
                 </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@android:color/white"
-            android:padding="16dp"
-            android:minHeight="200dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="我的作品"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="#333333"
-                android:layout_marginBottom="16dp"/>
-
-            <FrameLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="120dp"
-                android:background="#FAFAFA">
+                android:orientation="horizontal"
+                android:layout_marginTop="16dp"
+                android:baselineAligned="false">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="暂无作品，快去发布吧~"
-                    android:textColor="#999999"
-                    android:layout_gravity="center"/>
-            </FrameLayout>
+                <LinearLayout
+                    android:id="@+id/btn_my_dynamics"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/ic_dynamic"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="我的动态"/>
+                </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/btn_my_help"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/handshake"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="我的互助"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"/>
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"/>
+
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>
