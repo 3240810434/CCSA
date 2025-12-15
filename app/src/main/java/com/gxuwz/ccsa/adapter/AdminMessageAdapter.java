@@ -44,6 +44,7 @@ public class AdminMessageAdapter extends RecyclerView.Adapter<AdminMessageAdapte
         ChatMessage msg = conversationList.get(position);
 
         holder.tvName.setText(msg.targetName != null ? msg.targetName : "未知用户");
+        // 这里之前报错，因为 holder.tvContent 是 null
         holder.tvContent.setText(msg.content);
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
 
@@ -95,7 +96,11 @@ public class AdminMessageAdapter extends RecyclerView.Adapter<AdminMessageAdapte
             super(itemView);
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
             tvName = itemView.findViewById(R.id.tv_name);
-            tvContent = itemView.findViewById(R.id.tv_content);
+
+            // --- 关键修改：ID 从 tv_content 改为 tv_last_msg ---
+            tvContent = itemView.findViewById(R.id.tv_last_msg);
+            // ------------------------------------------------
+
             tvTime = itemView.findViewById(R.id.tv_time);
         }
     }

@@ -1,4 +1,3 @@
-// CCSA/app/src/main/java/com/gxuwz/ccsa/ui/resident/ResidentListActivity.java
 package com.gxuwz.ccsa.ui.resident;
 
 import android.os.Bundle;
@@ -50,7 +49,9 @@ public class ResidentListActivity extends AppCompatActivity {
                 if (residents.isEmpty()) {
                     Toast.makeText(this, "该小区暂无注册居民", Toast.LENGTH_SHORT).show();
                 } else {
-                    adapter = new ResidentListAdapter(residents);
+                    // 修改点：传入 null 作为第二个参数 (Listener)
+                    // 因为居民查看列表时不需要 "删除" 或 "聊天" 操作
+                    adapter = new ResidentListAdapter(residents, null);
                     rvResidents.setAdapter(adapter);
                 }
             });

@@ -1,7 +1,7 @@
 package com.gxuwz.ccsa.model;
 
 import androidx.room.Entity;
-import androidx.room.Ignore; // 1. 导入 Ignore
+import androidx.room.Ignore; // 必须导入 Ignore
 import androidx.room.PrimaryKey;
 import androidx.room.ColumnInfo;
 import java.io.Serializable;
@@ -35,7 +35,7 @@ public class AfterSalesRecord implements Serializable {
     // Room 默认使用这个无参构造函数
     public AfterSalesRecord() {}
 
-    // 2. 添加 @Ignore，消除警告
+    // 使用 @Ignore 消除警告，告诉 Room 不要尝试使用这个构造函数来映射数据
     @Ignore
     public AfterSalesRecord(Long orderId, String type, String reason, String description, String imagePaths, String createTime) {
         this.orderId = orderId;
