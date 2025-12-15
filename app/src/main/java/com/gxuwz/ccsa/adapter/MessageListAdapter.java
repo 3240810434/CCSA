@@ -40,29 +40,37 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ChatMessage msg = conversationList.get(position);
 
+        // 显示名字
         holder.tvName.setText(msg.targetName != null ? msg.targetName : "未知用户");
         holder.tvContent.setText(msg.content);
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
 
-        // 【修复部分】：判断是否为管理员，显示特定头像
-        if ("管理员".equals(msg.targetName)) {
-            // 直接加载资源文件中的 admin.jpg
+        // --- 【强制显示管理员头像】 ---
+        // 只要名字是“管理员” 或者 头像标记是我们Activity里设定的那个特殊字符串
+        // 或者是消息角色包含 ADMIN (作为双重保险)
+        boolean isAdmin = "管理员".equals(msg.targetName) ||
+                "local_admin_resource".equals(msg.targetAvatar) ||
+                (msg.senderRole != null && msg.senderRole.toUpperCase().contains("ADMIN") && msg.senderId != currentUser.getId());
+
+        if (isAdmin) {
+            // 强制加载本地 drawable 资源
             holder.ivAvatar.setImageResource(R.drawable.admin);
         } else {
-            // 其他用户使用 Glide 加载 URL
+            // 普通用户或商家，使用 Glide 加载网络/本地路径图片
             Glide.with(context)
                     .load(msg.targetAvatar)
-                    .placeholder(R.drawable.ic_avatar)
+                    .placeholder(R.drawable.ic_avatar) // 默认头像
+                    .error(R.drawable.ic_avatar)       // 加载失败显示默认头像
                     .circleCrop()
                     .into(holder.ivAvatar);
         }
 
         holder.itemView.setOnClickListener(v -> {
-            // 重新计算目标ID和角色
+            // 点击跳转逻辑
             int targetId;
             String targetRole;
 
-            if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+            if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                 targetId = msg.receiverId;
                 targetRole = msg.receiverRole;
             } else {
@@ -76,6 +84,8 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
 
             intent.putExtra("targetId", targetId);
             intent.putExtra("targetRole", targetRole);
+
+            // 将强制修正后的名字和头像传给聊天页面，确保聊天页面标题也显示“管理员”
             intent.putExtra("targetName", msg.targetName);
             intent.putExtra("targetAvatar", msg.targetAvatar);
 

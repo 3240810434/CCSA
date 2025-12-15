@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.ui.resident;
 
 import android.os.Bundle;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -35,7 +36,6 @@ public class MessageListActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // 传递 User 对象作为 "我的身份标识"，在 Adapter 内部会将其识别为 ID=user.id, Role="RESIDENT"
         adapter = new MessageListAdapter(this, conversationList, currentUser);
         recyclerView.setAdapter(adapter);
 
@@ -52,60 +52,67 @@ public class MessageListActivity extends AppCompatActivity {
         if (currentUser == null || currentUser.getId() == 0) return;
 
         new Thread(() -> {
-            // 查询所有和我(RESIDENT)有关的消息
-            List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
-            Map<String, ChatMessage> latestMsgMap = new HashMap<>();
+            try {
+                // 查询所有和我(RESIDENT)有关的消息
+                List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
+                Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
-            for (ChatMessage msg : allMsgs) {
-                // 确定对方是谁
-                int otherId;
-                String otherRole;
+                for (ChatMessage msg : allMsgs) {
+                    // 1. 确定对方是谁
+                    int otherId;
+                    String otherRole;
 
-                if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
-                    // 我发的，对方是 Receiver
-                    otherId = msg.receiverId;
-                    otherRole = msg.receiverRole;
-                } else {
-                    // 别人发的，对方是 Sender
-                    otherId = msg.senderId;
-                    otherRole = msg.senderRole;
+                    // 严谨的判断逻辑：如果是我发的(ID相同且角色是RESIDENT)，那对方就是接收者；否则对方是发送者
+                    if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
+                        otherId = msg.receiverId;
+                        otherRole = msg.receiverRole;
+                    } else {
+                        otherId = msg.senderId;
+                        otherRole = msg.senderRole;
+                    }
+
+                    // 2. 生成唯一Key，区分不同角色的同ID用户
+                    // 比如 ADMIN_1 和 RESIDENT_1 是两个人
+                    String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.toUpperCase();
+                    String key = safeRole + "_" + otherId;
+
+                    if (!latestMsgMap.containsKey(key)) {
+                        // --- 【强制修复核心】 ---
+
+                        // 优先判断：如果是管理员，直接写死，不需要查库！
+                        if ("ADMIN".equals(safeRole) || "ADMINISTRATOR".equals(safeRole)) {
+                            msg.targetName = "管理员";
+                            // 设置一个特殊标记，Adapter 里识别这个标记
+                            msg.targetAvatar = "local_admin_resource";
+                        }
+                        // 其次判断：如果是商家
+                        else if ("MERCHANT".equals(safeRole)) {
+                            Merchant m = db.merchantDao().findById(otherId);
+                            msg.targetName = (m != null) ? m.getMerchantName() : "商家(已注销)";
+                            msg.targetAvatar = (m != null) ? m.getAvatar() : "";
+                        }
+                        // 最后：既不是管理员也不是商家，那肯定是普通用户（RESIDENT）
+                        else {
+                            User u = db.userDao().findById(otherId);
+                            // 如果查到了，用查到的名字；查不到（可能是数据错误）就显示“用户”
+                            msg.targetName = (u != null) ? u.getName() : "用户";
+                            msg.targetAvatar = (u != null) ? u.getAvatar() : "";
+                        }
+
+                        // --- 【修复结束】 ---
+
+                        latestMsgMap.put(key, msg);
+                    }
                 }
 
-                // 组合 Key 避免不同 Role 的 ID 冲突
-                String key = otherRole + "_" + otherId;
-
-                if (!latestMsgMap.containsKey(key)) {
-                    // --- 【修复重点开始】 ---
-                    // 查询对方详细信息，必须区分 ADMIN
-                    if ("MERCHANT".equals(otherRole)) {
-                        Merchant m = db.merchantDao().findById(otherId);
-                        msg.targetName = (m != null) ? m.getMerchantName() : "商家(已注销)";
-                        msg.targetAvatar = (m != null) ? m.getAvatar() : "";
-                    }
-                    else if ("ADMIN".equals(otherRole)) {
-                        // 这里处理管理员逻辑
-                        msg.targetName = "管理员";
-                        // 构建指向本地 drawable 资源的 URI 字符串，让 Glide 加载本地图片
-                        // 确保你的 res/drawable 下有 admin.jpg
-                        msg.targetAvatar = "android.resource://" + getPackageName() + "/" + R.drawable.admin;
-                    }
-                    else {
-                        // 既不是商家也不是管理员，才去查用户表
-                        User u = db.userDao().findById(otherId);
-                        msg.targetName = (u != null) ? u.getName() : "用户";
-                        msg.targetAvatar = (u != null) ? u.getAvatar() : "";
-                    }
-                    // --- 【修复重点结束】 ---
-
-                    latestMsgMap.put(key, msg);
-                }
+                runOnUiThread(() -> {
+                    conversationList.clear();
+                    conversationList.addAll(latestMsgMap.values());
+                    adapter.notifyDataSetChanged();
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
-            runOnUiThread(() -> {
-                conversationList.clear();
-                conversationList.addAll(latestMsgMap.values());
-                adapter.notifyDataSetChanged();
-            });
         }).start();
     }
 
@@ -122,11 +129,10 @@ public class MessageListActivity extends AppCompatActivity {
                 if (position < 0 || position >= conversationList.size()) return;
 
                 ChatMessage msg = conversationList.get(position);
-
-                // 计算目标ID和角色，用于删除
                 int targetId;
                 String targetRole;
-                if (msg.senderId == currentUser.getId() && "RESIDENT".equals(msg.senderRole)) {
+
+                if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                     targetId = msg.receiverId;
                     targetRole = msg.receiverRole;
                 } else {
