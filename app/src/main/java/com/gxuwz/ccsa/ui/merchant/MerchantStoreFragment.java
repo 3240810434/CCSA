@@ -14,6 +14,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat; // 必须导入这个类
 import androidx.fragment.app.Fragment;
 
 import com.gxuwz.ccsa.R;
@@ -194,14 +195,18 @@ public class MerchantStoreFragment extends Fragment {
         tvStoreName.setText(currentMerchant.getMerchantName());
 
         // 更新营业状态 UI
-        if (currentMerchant.isOpen()) {
-            ivStoreStatus.setImageResource(R.drawable.open); // 建议是一张彩色的开启图标
-            tvStatusText.setText("营业中");
-            tvStatusText.setTextColor(getResources().getColor(android.R.color.holo_green_dark, null));
-        } else {
-            ivStoreStatus.setImageResource(R.drawable.close); // 建议是一张灰色的关闭图标
-            tvStatusText.setText("休息中");
-            tvStatusText.setTextColor(getResources().getColor(android.R.color.darker_gray, null));
+        if (getContext() != null) { // 确保 Context 不为空
+            if (currentMerchant.isOpen()) {
+                ivStoreStatus.setImageResource(R.drawable.open);
+                tvStatusText.setText("营业中");
+                // 修复：使用 ContextCompat.getColor 替代 getResources().getColor
+                tvStatusText.setTextColor(ContextCompat.getColor(getContext(), android.R.color.holo_green_dark));
+            } else {
+                ivStoreStatus.setImageResource(R.drawable.close);
+                tvStatusText.setText("休息中");
+                // 修复：使用 ContextCompat.getColor 替代 getResources().getColor
+                tvStatusText.setTextColor(ContextCompat.getColor(getContext(), android.R.color.darker_gray));
+            }
         }
     }
 
