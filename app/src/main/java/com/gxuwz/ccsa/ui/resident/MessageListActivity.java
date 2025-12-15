@@ -53,6 +53,7 @@ public class MessageListActivity extends AppCompatActivity {
 
         new Thread(() -> {
             try {
+                // 获取所有与我相关的消息
                 List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentUser.getId(), "RESIDENT");
                 Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
@@ -60,6 +61,7 @@ public class MessageListActivity extends AppCompatActivity {
                     int otherId;
                     String otherRole;
 
+                    // 判断对方是谁
                     if (msg.senderId == currentUser.getId() && "RESIDENT".equalsIgnoreCase(msg.senderRole)) {
                         otherId = msg.receiverId;
                         otherRole = msg.receiverRole;
@@ -68,39 +70,46 @@ public class MessageListActivity extends AppCompatActivity {
                         otherRole = msg.senderRole;
                     }
 
-                    // 生成唯一Key (Role + ID)
+                    // 生成用于判断角色的字符串
                     String safeRole = (otherRole == null) ? "UNKNOWN" : otherRole.trim().toUpperCase();
+
+                    // ============================================================
+                    // 【核心修改】过滤逻辑：如果对方是管理员，直接跳过 (continue)
+                    // ============================================================
+
+                    // 1. 检查角色字段是否包含 ADMIN
+                    if (safeRole.contains("ADMIN")) {
+                        continue; // 直接跳过，不显示
+                    }
+
+                    // 2. 检查 ID 是否在已知的管理员 ID 列表中 (保留您原有的硬编码逻辑以防万一)
+                    if (otherId == 1 || otherId == 11 || otherId == 111 ||
+                            otherId == 1111 || otherId == 11111 || otherId == 111111 ||
+                            otherId == 1111111 || otherId == 11111111) {
+                        continue; // 直接跳过，不显示
+                    }
+
+                    // 3. (可选) 检查角色是否包含 MANAGER
+                    if (safeRole.contains("MANAGER")) {
+                        continue; // 直接跳过
+                    }
+
+                    // 4. (兜底) 查询 Admin 数据库表，确认是否为管理员
+                    // 这一步比较耗时，前面的检查如果能拦截最好，拦截不到再查库
+                    Admin adminCheck = db.adminDao().findById(otherId);
+                    if (adminCheck != null) {
+                        continue; // 是管理员，跳过
+                    }
+
+                    // ============================================================
+                    // 只有通过了上面的过滤（不是管理员），才添加到显示列表
+                    // ============================================================
+
                     String key = safeRole + "_" + otherId;
 
                     if (!latestMsgMap.containsKey(key)) {
-                        boolean isIdentifyAsAdmin = false;
-
-                        // --- 核心修复：优先通过 ID 强制识别管理员 ---
-                        // 这里包含了 ID 为 1 (悦景) 以及您列出的其他可能的管理员账号 ID
-                        // 注意：如果您的数据库 ID 是自增的，账号 "11" 的 ID 可能不是 11，但这里我们根据账号逻辑做全量匹配以防万一
-                        if (otherId == 1 || otherId == 11 || otherId == 111 ||
-                                otherId == 1111 || otherId == 11111 || otherId == 111111 ||
-                                otherId == 1111111 || otherId == 11111111) {
-                            isIdentifyAsAdmin = true;
-                        }
-                        // 补充判断：通过 Role 字段
-                        else if (safeRole.contains("ADMIN") || safeRole.contains("MANAGER")) {
-                            isIdentifyAsAdmin = true;
-                        }
-                        // 补充判断：查库兜底
-                        else {
-                            Admin admin = db.adminDao().findById(otherId);
-                            if (admin != null) {
-                                isIdentifyAsAdmin = true;
-                            }
-                        }
-
-                        // --- 填充显示数据 ---
-                        if (isIdentifyAsAdmin) {
-                            // 强制设置为管理员信息
-                            msg.targetName = "管理员";
-                            msg.targetAvatar = "local_admin_resource";
-                        } else if (safeRole.contains("MERCHANT")) {
+                        // 处理普通用户或商家的显示信息
+                        if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
                                 msg.targetName = m.getMerchantName();
@@ -110,7 +119,7 @@ public class MessageListActivity extends AppCompatActivity {
                                 msg.targetAvatar = "";
                             }
                         } else {
-                            // 普通居民
+                            // 默认为普通居民 (RESIDENT)
                             User u = db.userDao().findById(otherId);
                             if (u != null) {
                                 msg.targetName = u.getName();
@@ -121,6 +130,7 @@ public class MessageListActivity extends AppCompatActivity {
                             }
                         }
 
+                        // 加入到 Map 中以去重（只保留最新的一条）
                         latestMsgMap.put(key, msg);
                     }
                 }
