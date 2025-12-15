@@ -101,13 +101,13 @@ public class ChatActivity extends AppCompatActivity {
         btnSend.setOnClickListener(v -> sendMessage());
     }
 
-    // 【Bug修复】统一处理头部 UI 更新，处理管理员特殊头像
+    // 统一处理头部 UI 更新，处理管理员特殊头像
     private void updateHeaderUI() {
         if (tvHeaderName == null || ivHeaderAvatar == null) return;
 
         tvHeaderName.setText(targetNameStr);
 
-        if ("local_admin_resource".equals(targetAvatarUrl)) {
+        if ("local_admin_resource".equals(targetAvatarUrl) || (targetRole != null && targetRole.contains("ADMIN"))) {
             // 是管理员，强制显示本地资源
             ivHeaderAvatar.setImageResource(R.drawable.admin);
         } else if (!TextUtils.isEmpty(targetAvatarUrl)) {
@@ -130,7 +130,7 @@ public class ChatActivity extends AppCompatActivity {
                 Merchant me = db.merchantDao().findById(myId);
                 if (me != null) myAvatarUrl = me.getAvatar();
             } else if ("ADMIN".equals(myRole)) {
-                myAvatarUrl = ""; // 管理员无网络头像
+                myAvatarUrl = "local_admin_resource"; // 管理员标记
             } else {
                 User me = db.userDao().findById(myId);
                 if (me != null) myAvatarUrl = me.getAvatar();
@@ -151,10 +151,10 @@ public class ChatActivity extends AppCompatActivity {
                     targetNameStr = target.getName();
                     targetAvatarUrl = target.getAvatar();
                 }
-            } else if ("ADMIN".equals(tRole) || "ADMINISTRATOR".equals(tRole)) {
-                // 【Bug修复】增加管理员角色的判断逻辑
+            } else if (tRole.contains("ADMIN")) {
+                // 增加管理员角色的判断逻辑
                 targetNameStr = "管理员";
-                targetAvatarUrl = "local_admin_resource"; // 特殊标记
+                targetAvatarUrl = "local_admin_resource";
             }
 
             runOnUiThread(() -> {
@@ -172,6 +172,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void loadMessages() {
         new Thread(() -> {
+            // 查询时注意：如果对方是ADMIN，角色字段需匹配
             List<ChatMessage> msgs = db.chatDao().getChatHistory(myId, myRole, targetId, targetRole);
             runOnUiThread(() -> {
                 messageList.clear();

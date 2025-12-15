@@ -84,19 +84,23 @@ public class MessageListActivity extends AppCompatActivity {
                             isIdentifyAsAdmin = true;
                         }
 
-                        // B. 如果不是明确的商家或居民，尝试去管理员表查一下这个ID (兜底逻辑)
-                        // 这能解决部分历史数据 Role 字段为空的问题
+                        // B. 兜底逻辑：如果角色不明确，且ID为1，认为是管理员（修复历史数据）
                         if (!isIdentifyAsAdmin && !"MERCHANT".equals(safeRole) && !"RESIDENT".equals(safeRole)) {
-                            Admin admin = db.adminDao().findById(otherId);
-                            if (admin != null) {
+                            if (otherId == 1) {
                                 isIdentifyAsAdmin = true;
+                            } else {
+                                // 尝试去管理员表查一下这个ID
+                                Admin admin = db.adminDao().findById(otherId);
+                                if (admin != null) {
+                                    isIdentifyAsAdmin = true;
+                                }
                             }
                         }
 
-                        // C. 填充显示数据 (targetName/targetAvatar 只是暂存，用于Adapter显示)
+                        // C. 填充显示数据
                         if (isIdentifyAsAdmin) {
                             msg.targetName = "管理员";
-                            msg.targetAvatar = "local_admin_resource"; // 特殊标记
+                            msg.targetAvatar = "local_admin_resource"; // 特殊标记，通知Adapter使用本地图片
                         } else if (safeRole.contains("MERCHANT")) {
                             Merchant m = db.merchantDao().findById(otherId);
                             if (m != null) {
@@ -125,7 +129,7 @@ public class MessageListActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     conversationList.clear();
                     conversationList.addAll(latestMsgMap.values());
-                    // 排序可以放在这里做，这里简化处理直接刷新
+                    // 刷新列表
                     adapter.notifyDataSetChanged();
                 });
             } catch (Exception e) {

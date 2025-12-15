@@ -66,6 +66,10 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
         else if ("管理员".equals(msg.targetName) || "local_admin_resource".equals(msg.targetAvatar)) {
             isAdmin = true;
         }
+        // 判定条件 C: ID 为 1 且不是商家 (兜底)
+        else if (targetId == 1 && (targetRole == null || !targetRole.toUpperCase().contains("MERCHANT"))) {
+            isAdmin = true;
+        }
 
         // 3. 设置 UI 显示
         holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
@@ -73,6 +77,7 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
 
         if (isAdmin) {
             holder.tvName.setText("管理员");
+            // 必须确保 res/drawable 下有 admin.jpg
             holder.ivAvatar.setImageResource(R.drawable.admin);
         } else {
             String displayName = TextUtils.isEmpty(msg.targetName) ? "未知用户" : msg.targetName;
@@ -86,21 +91,20 @@ public class MessageListAdapter extends RecyclerView.Adapter<MessageListAdapter.
                     .into(holder.ivAvatar);
         }
 
-        // --- 【Bug修复核心】 ---
-        // 为了满足 Lambda 表达式的 final 要求，创建 final 副本变量
+        // 4. 准备跳转参数
         final boolean finalIsAdmin = isAdmin;
         final int finalTargetId = targetId;
         final String finalTargetRole = targetRole;
 
-        // 4. 点击跳转
+        // 5. 点击跳转
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, ChatActivity.class);
             intent.putExtra("myId", currentUser.getId());
             intent.putExtra("myRole", "RESIDENT");
 
-            // 使用 final 变量
             intent.putExtra("targetId", finalTargetId);
-            intent.putExtra("targetRole", finalTargetRole);
+            // 如果判定是管理员，强制传 ADMIN，修复后续聊天问题
+            intent.putExtra("targetRole", finalIsAdmin ? "ADMIN" : finalTargetRole);
 
             if (finalIsAdmin) {
                 intent.putExtra("targetName", "管理员");

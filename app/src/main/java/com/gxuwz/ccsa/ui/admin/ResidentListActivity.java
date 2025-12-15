@@ -1,4 +1,3 @@
-// app/src/main/java/com/gxuwz/ccsa/ui/admin/ResidentListActivity.java
 package com.gxuwz.ccsa.ui.admin;
 
 import android.app.AlertDialog;
@@ -115,7 +114,7 @@ public class ResidentListActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ChatActivity.class);
 
         // --- 关键参数配置 ---
-        // 1. 设置管理员身份 (ID设为1或其他固定ID，角色设为ADMIN)
+        // 1. 设置管理员身份 (ID设为1，角色设为ADMIN)
         intent.putExtra("myId", 1);
         intent.putExtra("myRole", "ADMIN");
 
@@ -124,12 +123,8 @@ public class ResidentListActivity extends AppCompatActivity {
         intent.putExtra("targetRole", "RESIDENT"); // 用户表中角色通常是居民
 
         // 3. 传递用于显示的头像和名称（ChatActivity会优先使用这些）
-        // 目标（居民）的显示信息
         intent.putExtra("targetName", user.getName());
         intent.putExtra("targetAvatar", user.getAvatar());
-
-        // 注意：ChatActivity 中还需要确保能识别 ADMIN 角色并显示 "物业管理员" 和 "admin" 头像
-        // 如果系统没有专门的 Admin 表，通常需要在 ChatActivity 中特殊处理 myRole == "ADMIN" 的情况
 
         startActivity(intent);
     }
