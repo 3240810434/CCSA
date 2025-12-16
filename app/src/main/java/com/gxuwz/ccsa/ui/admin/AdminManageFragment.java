@@ -34,7 +34,6 @@ public class AdminManageFragment extends Fragment {
     private View btnLifeDynamics;
     private View btnNeighborHelp;
 
-    // 底部的“商家账号管理”按钮 (如果有用到的话，布局中未看到ID引用，但在逻辑里保留)
     private View btnMerchantManage;
 
     public static AdminManageFragment newInstance(String community, String adminAccount) {
@@ -84,8 +83,6 @@ public class AdminManageFragment extends Fragment {
         btnResidentRepair = view.findViewById(R.id.btn_resident_repair);
         btnLifeDynamics = view.findViewById(R.id.btn_life_dynamics);
         btnNeighborHelp = view.findViewById(R.id.btn_neighbor_help);
-
-        // 如果布局中有 btnMerchantManage 可以在这里绑定，没有则忽略
     }
 
     private void setupButtonListeners() {
@@ -145,26 +142,24 @@ public class AdminManageFragment extends Fragment {
             startActivity(intent);
         });
 
-        if (btnMerchantManage != null) {
-            setListener(btnMerchantManage, v -> {
-                Intent intent = new Intent(requireActivity(), MerchantListActivity.class);
-                intent.putExtra("community", mCommunity);
-                startActivity(intent);
-            });
-        }
-
-        // ================== 修改部分 ==================
-        // 链接到通知管理页面
         setListener(btnPublishNotice, v -> {
             Intent intent = new Intent(requireActivity(), AdminNotificationManagementActivity.class);
-            // 如果 AdminNotificationManagementActivity 需要小区信息，可以通过 putExtra 传递
-            // intent.putExtra("community", mCommunity);
             startActivity(intent);
         });
-        // ============================================
 
-        setListener(btnLifeDynamics, v -> showToast("生活动态功能开发中"));
-        setListener(btnNeighborHelp, v -> showToast("邻里互助功能开发中"));
+        // ================== 修改部分：跳转到具体的管理页面 ==================
+        setListener(btnLifeDynamics, v -> {
+            Intent intent = new Intent(requireActivity(), AdminLifeDynamicsActivity.class);
+            intent.putExtra("community", mCommunity);
+            startActivity(intent);
+        });
+
+        setListener(btnNeighborHelp, v -> {
+            Intent intent = new Intent(requireActivity(), AdminNeighborHelpActivity.class);
+            intent.putExtra("community", mCommunity);
+            startActivity(intent);
+        });
+        // ================================================================
     }
 
     private void setListener(View view, View.OnClickListener listener) {

@@ -24,6 +24,10 @@ public interface PostDao {
     @Query("SELECT * FROM post ORDER BY createTime DESC")
     List<Post> getAllPosts();
 
+    // 【新增】关联用户表，查询指定小区的所有生活动态
+    @Query("SELECT post.* FROM post INNER JOIN user ON post.userId = user.id WHERE user.community = :community ORDER BY post.createTime DESC")
+    List<Post> getPostsByCommunity(String community);
+
     @Query("SELECT * FROM post WHERE userId = :userId ORDER BY createTime DESC")
     List<Post> getMyPosts(int userId);
 

@@ -75,6 +75,8 @@
         <activity android:name=".ui.admin.HandlePaymentAppealActivity" android:exported="false" />
         <activity android:name=".ui.admin.AdminRepairDetailActivity" android:exported="false"/>
         <activity android:name=".ui.admin.AdminRepairHistoryActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.AdminLifeDynamicsActivity" android:exported="false"/>
+        <activity android:name=".ui.admin.AdminNeighborHelpActivity" android:exported="false"/>
 
         <activity android:name=".ui.resident.PayPropertyFeeActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PaymentDetailActivity" android:exported="false"/>

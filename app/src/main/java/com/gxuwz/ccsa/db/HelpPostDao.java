@@ -19,6 +19,10 @@ public interface HelpPostDao {
     @Query("SELECT * FROM help_post ORDER BY createTime DESC")
     List<HelpPost> getAllHelpPosts();
 
+    // 【新增】关联用户表，查询指定小区的所有互助帖
+    @Query("SELECT help_post.* FROM help_post INNER JOIN user ON help_post.userId = user.id WHERE user.community = :community ORDER BY help_post.createTime DESC")
+    List<HelpPost> getHelpPostsByCommunity(String community);
+
     // 新增：查询当前用户的互助帖
     @Query("SELECT * FROM help_post WHERE userId = :userId ORDER BY createTime DESC")
     List<HelpPost> getMyHelpPosts(int userId);
