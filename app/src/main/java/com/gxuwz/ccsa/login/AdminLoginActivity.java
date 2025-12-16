@@ -1,7 +1,7 @@
 package com.gxuwz.ccsa.login;
 
 import androidx.appcompat.app.AppCompatActivity;
-import android.content.SharedPreferences; // 导入 SharedPreferences
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -23,7 +23,7 @@ public class AdminLoginActivity extends AppCompatActivity {
     private EditText accountEditText;
     private EditText passwordEditText;
     private Button loginButton;
-    private TextView forgotPasswordTextView;
+    // 已删除 forgotPasswordTextView
     private String selectedCommunity;
     private AppDatabase db;
     private String[] communities = {
@@ -48,8 +48,7 @@ public class AdminLoginActivity extends AppCompatActivity {
         // 设置登录按钮点击事件
         setupLoginButton();
 
-        // 设置忘记密码点击事件
-        setupForgotPassword();
+        // 已删除 setupForgotPassword() 调用
     }
 
     private void initViews() {
@@ -57,7 +56,7 @@ public class AdminLoginActivity extends AppCompatActivity {
         accountEditText = findViewById(R.id.et_account);
         passwordEditText = findViewById(R.id.et_password);
         loginButton = findViewById(R.id.btn_login);
-        forgotPasswordTextView = findViewById(R.id.tv_forgot_password);
+        // 已删除 forgotPasswordTextView = findViewById...
     }
 
     private void setupCommunitySpinner() {
@@ -106,18 +105,15 @@ public class AdminLoginActivity extends AppCompatActivity {
                     // 验证小区管理权限
                     if (admin.getCommunity().equals(selectedCommunity)) {
 
-                        // 【新增修复代码 START】: 保存登录状态到 SharedPreferences
-                        // 这里必须使用 "admin_prefs" 且 key 为 "community"，与 AdminNoticeEditActivity 中读取的一致
+                        // 保存登录状态到 SharedPreferences
                         SharedPreferences sp = getSharedPreferences("admin_prefs", MODE_PRIVATE);
                         SharedPreferences.Editor editor = sp.edit();
                         editor.putString("community", selectedCommunity);
-                        editor.putString("adminAccount", account); // 建议顺便保存账号，以备后用
+                        editor.putString("adminAccount", account);
                         editor.apply();
-                        // 【新增修复代码 END】
 
                         // 登录成功，跳转到管理员首界面
                         Intent intent = new Intent(AdminLoginActivity.this, AdminMainActivity.class);
-                        // Intent 传值可以保留，不影响 SharedPreferences
                         intent.putExtra("community", selectedCommunity);
                         intent.putExtra("adminAccount", account);
                         startActivity(intent);
@@ -136,9 +132,5 @@ public class AdminLoginActivity extends AppCompatActivity {
         });
     }
 
-    private void setupForgotPassword() {
-        forgotPasswordTextView.setOnClickListener(v -> {
-            Toast.makeText(AdminLoginActivity.this, "请联系系统管理员重置密码", Toast.LENGTH_SHORT).show();
-        });
-    }
+    // 已删除 setupForgotPassword() 方法
 }
