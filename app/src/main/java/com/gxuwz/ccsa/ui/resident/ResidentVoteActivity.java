@@ -1,81 +1,51 @@
 package com.gxuwz.ccsa.ui.resident;
 
-import android.content.Intent; // 补充关键导入
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.fragment.app.FragmentTransaction;
 import com.gxuwz.ccsa.R;
-import com.gxuwz.ccsa.adapter.VoteAdapter;
-import com.gxuwz.ccsa.db.AppDatabase;
-import com.gxuwz.ccsa.model.User;
-import com.gxuwz.ccsa.model.Vote;
-import com.gxuwz.ccsa.ui.common.VoteDetailActivity;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.gxuwz.ccsa.ui.admin.VoteListFragment; // 引用之前定义的 Fragment
+import com.gxuwz.ccsa.util.SharedPreferencesUtil;
 
-public class ResidentVoteActivity extends AppCompatActivity implements VoteAdapter.OnVoteItemClickListener {
-    private RecyclerView rvVotes;
-    private VoteAdapter adapter;
+public class ResidentVoteActivity extends AppCompatActivity {
+
     private String community;
     private String userId;
-    private AppDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_vote_management);
+        setContentView(R.layout.activity_resident_vote);
 
-        // 修复：强制转换前增加类型检查
-        Intent intent = getIntent();
-        User user = null;
-        if (intent.hasExtra("user") && intent.getSerializableExtra("user") instanceof User) {
-            user = (User) intent.getSerializableExtra("user");
+        // 1. 获取用户信息 (优先从 SharedPreferences 获取，保证数据准确)
+        community = SharedPreferencesUtil.getData(this, "community", "");
+        userId = SharedPreferencesUtil.getData(this, "userId", "");
+
+        // 兼容性处理：如果 Intent 传了值，也可以覆盖
+        if (getIntent().hasExtra("community")) {
+            community = getIntent().getStringExtra("community");
         }
 
-        if (user != null) {
-            community = user.getCommunity();
-            userId = user.getPhone();
-        }
-
-        db = AppDatabase.getInstance(this);
-        rvVotes = findViewById(R.id.rv_votes);
-        rvVotes.setLayoutManager(new LinearLayoutManager(this));
-        findViewById(R.id.btn_add_vote).setVisibility(View.GONE);
-        loadVotes();
+        initView();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadVotes();
-    }
+    private void initView() {
+        // 2. 设置顶部标题栏
+        TextView tvTitle = findViewById(R.id.tv_title);
+        tvTitle.setText("小区投票");
 
-    private void loadVotes() {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        executor.execute(() -> {
-            List<Vote> votes = db.voteDao().getVotesByCommunity(community);
-            runOnUiThread(() -> {
-                adapter = new VoteAdapter(this, votes, false, this);
-                rvVotes.setAdapter(adapter);
-            });
-        });
-    }
+        ImageView ivBack = findViewById(R.id.iv_back);
+        ivBack.setOnClickListener(v -> finish());
 
-    @Override
-    public void onItemClick(Vote vote) {
-        // 修复：使用正确的Intent构造及传参方式
-        Intent detailIntent = new Intent(ResidentVoteActivity.this, VoteDetailActivity.class);
-        detailIntent.putExtra("vote", vote);
-        detailIntent.putExtra("userId", userId);
-        detailIntent.putExtra("isAdmin", false);
-        startActivity(detailIntent);
-    }
+        // 3. 加载投票列表 Fragment
+        // 参数说明: community=小区名, status=1(已发布), isAdmin=false(居民身份)
+        VoteListFragment fragment = VoteListFragment.newInstance(community, 1, false);
 
-    @Override
-    public void onDeleteClick(Vote vote) {
-        // 空实现（居民无删除权限）
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_container, fragment);
+        transaction.commit();
     }
 }
