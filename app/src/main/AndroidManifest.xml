@@ -116,5 +116,8 @@
         <activity android:name=".ui.admin.AdminNotificationManagementActivity" android:title="通知管理" />
         <activity android:name=".ui.admin.AdminNoticeEditActivity" android:title="编辑通知" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.admin.AdminNoticeDetailActivity" android:title="通知详情" />
+        <activity android:name=".ui.resident.ResidentHistoryActivity" android:exported="false"/>
+        <activity android:name=".ui.resident.ResidentChangePasswordActivity" android:exported="false"/>
+        <activity android:name=".ui.resident.HelpPostDetailActivity" android:exported="false"/>
     </application>
 </manifest>

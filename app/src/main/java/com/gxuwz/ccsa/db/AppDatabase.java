@@ -29,7 +29,8 @@ import com.gxuwz.ccsa.model.HelpPostMedia;
 import com.gxuwz.ccsa.model.Product;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.model.AfterSalesRecord;
-import com.gxuwz.ccsa.model.AdminNotice; // 【新增】引入 AdminNotice 类
+import com.gxuwz.ccsa.model.AdminNotice;
+import com.gxuwz.ccsa.model.HistoryRecord; // 【新增】
 
 @Database(
         entities = {
@@ -55,9 +56,10 @@ import com.gxuwz.ccsa.model.AdminNotice; // 【新增】引入 AdminNotice 类
                 Product.class,
                 Order.class,
                 AfterSalesRecord.class,
-                AdminNotice.class // 【新增】必须在这里注册新表 AdminNotice
+                AdminNotice.class,
+                HistoryRecord.class // 【新增】注册 HistoryRecord
         },
-        version = 15, // 【修改】数据库版本号，基于原有的14升级为15
+        version = 16, // 【修改】数据库版本号 +1
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)
@@ -84,9 +86,10 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ProductDao productDao();
     public abstract OrderDao orderDao();
     public abstract AfterSalesRecordDao afterSalesRecordDao();
-
-    // 【新增】注册 AdminNoticeDao
     public abstract AdminNoticeDao adminNoticeDao();
+
+    // 【新增】注册 HistoryDao
+    public abstract HistoryDao historyDao();
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
@@ -97,8 +100,8 @@ public abstract class AppDatabase extends RoomDatabase {
                                     AppDatabase.class,
                                     "ccsa_database"
                             )
-                            .allowMainThreadQueries() // 允许主线程查询（保持原有设置）
-                            .fallbackToDestructiveMigration() // 版本升级时清空数据重建
+                            .allowMainThreadQueries()
+                            .fallbackToDestructiveMigration()
                             .build();
                 }
             }

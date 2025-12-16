@@ -29,6 +29,9 @@ import com.gxuwz.ccsa.model.Comment;
 import com.gxuwz.ccsa.model.Post;
 import com.gxuwz.ccsa.model.PostMedia;
 import com.gxuwz.ccsa.model.User;
+// 【新增】引入历史记录模型
+import com.gxuwz.ccsa.model.HistoryRecord;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -187,6 +190,40 @@ public class PostDetailActivity extends AppCompatActivity {
             videoContainer.setVisibility(View.GONE);
             indicatorContainer.setVisibility(View.GONE);
         }
+
+        // 【新增】保存浏览历史
+        if (currentUser != null) {
+            saveHistory();
+        }
+    }
+
+    // 【新增】保存历史记录逻辑
+    private void saveHistory() {
+        new Thread(() -> {
+            AppDatabase db = AppDatabase.getInstance(this);
+            // 先删除旧的记录，保证最新浏览排在最前 (1 代表 Post 类型)
+            db.historyDao().deleteRecord(currentUser.getId(), post.id, 1);
+
+            String cover = post.userAvatar; // 默认用头像
+            if (post.mediaList != null && !post.mediaList.isEmpty()) {
+                // 如果有图片或视频封面，则使用第一张媒体图
+                cover = post.mediaList.get(0).url;
+            }
+
+            // 确保标题不为空
+            String title = !TextUtils.isEmpty(post.content) ? post.content : post.userName + "的动态";
+
+            HistoryRecord record = new HistoryRecord(
+                    currentUser.getId(),
+                    post.id,
+                    1, // 1 for Post
+                    title,
+                    cover,
+                    post.userName,
+                    System.currentTimeMillis()
+            );
+            db.historyDao().insert(record);
+        }).start();
     }
 
     private void setupIndicators(int count) {

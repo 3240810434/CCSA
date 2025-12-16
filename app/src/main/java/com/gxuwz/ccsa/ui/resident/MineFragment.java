@@ -24,6 +24,9 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.util.SharedPreferencesUtil;
+// 【新增】引入目标Activity
+import com.gxuwz.ccsa.ui.resident.ResidentHistoryActivity;
+import com.gxuwz.ccsa.ui.resident.ResidentChangePasswordActivity;
 
 import java.util.concurrent.Executors;
 
@@ -112,10 +115,21 @@ public class MineFragment extends Fragment {
             }
         });
 
-        View.OnClickListener notImplListener = v ->
-                Toast.makeText(getContext(), "功能暂未开放", Toast.LENGTH_SHORT).show();
-        view.findViewById(R.id.btn_watch_history).setOnClickListener(notImplListener);
-        view.findViewById(R.id.btn_change_password).setOnClickListener(notImplListener);
+        // 【修改】跳转到观看历史
+        view.findViewById(R.id.btn_watch_history).setOnClickListener(v -> {
+            if (checkLoginStatus()) {
+                Intent intent = new Intent(getContext(), ResidentHistoryActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        // 【修改】跳转到修改密码
+        view.findViewById(R.id.btn_change_password).setOnClickListener(v -> {
+            if (checkLoginStatus()) {
+                Intent intent = new Intent(getContext(), ResidentChangePasswordActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     // 辅助方法：检查登录状态，防止空指针或无效跳转

@@ -29,6 +29,8 @@ import com.gxuwz.ccsa.model.HelpPost;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.ui.resident.ChatActivity;
 import com.gxuwz.ccsa.ui.resident.ImagePreviewActivity;
+// 【新增】引入详情页 Activity
+import com.gxuwz.ccsa.ui.resident.HelpPostDetailActivity;
 import com.gxuwz.ccsa.util.DateUtils;
 
 import java.util.ArrayList;
@@ -91,6 +93,14 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
                 .error(R.drawable.lan)
                 .circleCrop()
                 .into(holder.ivAvatar);
+
+        // 【新增】设置整个 Item 点击跳转详情
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(context, HelpPostDetailActivity.class);
+            intent.putExtra("helpPost", post);
+            intent.putExtra("user", currentUser);
+            context.startActivity(intent);
+        });
 
         // 媒体内容处理
         holder.mediaContainer.removeAllViews();
@@ -212,10 +222,6 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
 
         } else {
             // 正常浏览模式
-            // 恢复原状需要小心，这里假设 RecyclerView 重绘会清空重加，或者简单处理：
-            // 如果 llContact 被修改过（child count > 0 且是我们加的 View），需要恢复
-            // 这里为了简单，如果检测到被修改，重新inflate内容比较麻烦，建议在 Adapter 里尽可能重置。
-
             // 简单重置逻辑：如果第一个子 View 是 Textview 且内容是 "删除求助"，则清空并加回图标
             boolean isModified = false;
             if(holder.llContact.getChildCount() > 0 && holder.llContact.getChildAt(0) instanceof TextView) {
@@ -243,7 +249,7 @@ public class HelpPostAdapter extends RecyclerView.Adapter<HelpPostAdapter.ViewHo
 
                 holder.llContact.addView(iv);
                 holder.llContact.addView(tv);
-                holder.llContact.setBackgroundResource(R.drawable.btn_rounded_light_blue); // 恢复原有背景，假设
+                holder.llContact.setBackgroundResource(R.drawable.btn_rounded_light_blue);
             }
 
             if (currentUser != null && post.userId == currentUser.getId()) {
