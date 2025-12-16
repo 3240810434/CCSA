@@ -1,7 +1,6 @@
 package com.gxuwz.ccsa.ui.resident;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -36,14 +35,21 @@ public class ResidentHistoryActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_resident_history.xml);
+        // 【修改点】这里去掉了 .xml 后缀
+        setContentView(R.layout.activity_resident_history);
 
         currentUser = SharedPreferencesUtil.getUser(this);
         if (currentUser == null) {
+            Toast.makeText(this, "请先登录", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
+        initViews();
+        loadHistory();
+    }
+
+    private void initViews() {
         findViewById(R.id.iv_back).setOnClickListener(v -> finish());
         findViewById(R.id.iv_delete_all).setOnClickListener(v -> showClearConfirmDialog());
 
@@ -51,19 +57,22 @@ public class ResidentHistoryActivity extends AppCompatActivity {
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
         adapter = new HistoryAdapter();
         rvHistory.setAdapter(adapter);
-
-        loadHistory();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadHistory(); // 每次回到页面刷新
+        // 每次回到页面刷新数据，确保删除或新增后数据同步
+        loadHistory();
     }
 
     private void loadHistory() {
         new Thread(() -> {
-            List<HistoryRecord> list = AppDatabase.getInstance(this).historyDao().getUserHistory(currentUser.getId());
+            // 获取当前用户的历史记录，按时间倒序
+            List<HistoryRecord> list = AppDatabase.getInstance(this)
+                    .historyDao()
+                    .getUserHistory(currentUser.getId());
+
             runOnUiThread(() -> {
                 historyList.clear();
                 historyList.addAll(list);
@@ -97,7 +106,8 @@ public class ResidentHistoryActivity extends AppCompatActivity {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_history_record, parent, false);
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.item_history_record, parent, false);
             return new ViewHolder(view);
         }
 
@@ -107,7 +117,15 @@ public class ResidentHistoryActivity extends AppCompatActivity {
             holder.tvTitle.setText(record.title);
             holder.tvAuthor.setText("发布者: " + record.authorName);
             holder.tvTime.setText(DateUtils.formatTime(record.viewTime));
-            holder.tvType.setText(record.type == 1 ? "生活动态" : "邻里互助");
+
+            // 根据类型显示标签
+            if (record.type == 1) {
+                holder.tvType.setText("生活动态");
+                holder.tvType.setBackgroundResource(R.drawable.button_border_gray); // 假设的样式
+            } else {
+                holder.tvType.setText("邻里互助");
+                holder.tvType.setBackgroundResource(R.drawable.button_border_gray);
+            }
 
             Glide.with(holder.itemView.getContext())
                     .load(record.coverImage)
@@ -115,37 +133,50 @@ public class ResidentHistoryActivity extends AppCompatActivity {
                     .error(R.drawable.lan)
                     .into(holder.ivCover);
 
+            // 点击跳转到详情页
             holder.itemView.setOnClickListener(v -> {
                 new Thread(() -> {
-                    // 异步查询原始数据
                     AppDatabase db = AppDatabase.getInstance(ResidentHistoryActivity.this);
+
                     if (record.type == 1) {
-                        // Post
-                        List<Post> posts = db.postDao().getAllPosts(); // 临时方案：如果PostDao没有findById，就遍历。如果有findById请替换。
+                        // === 跳转到生活动态详情 ===
+                        // 注意：这里暂时使用遍历查找，如果PostDao有findById(int id)建议替换为直接查询
+                        List<Post> posts = db.postDao().getAllPosts();
                         Post target = null;
-                        for(Post p : posts) if(p.id == record.relatedId) target = p;
+                        for(Post p : posts) {
+                            if(p.id == record.relatedId) {
+                                target = p;
+                                break;
+                            }
+                        }
 
                         if (target != null) {
                             Intent intent = new Intent(ResidentHistoryActivity.this, PostDetailActivity.class);
                             intent.putExtra("post", target);
                             intent.putExtra("user", currentUser);
-                            startActivity(intent);
+                            runOnUiThread(() -> startActivity(intent));
                         } else {
-                            runOnUiThread(() -> Toast.makeText(ResidentHistoryActivity.this, "该内容已被删除", Toast.LENGTH_SHORT).show());
+                            runOnUiThread(() -> Toast.makeText(ResidentHistoryActivity.this, "该动态已被删除", Toast.LENGTH_SHORT).show());
                         }
+
                     } else if (record.type == 2) {
-                        // HelpPost
-                        List<HelpPost> posts = db.helpPostDao().getAllHelpPosts(); // 同上
+                        // === 跳转到邻里互助详情 ===
+                        List<HelpPost> posts = db.helpPostDao().getAllHelpPosts();
                         HelpPost target = null;
-                        for(HelpPost p : posts) if(p.id == record.relatedId) target = p;
+                        for(HelpPost p : posts) {
+                            if(p.id == record.relatedId) {
+                                target = p;
+                                break;
+                            }
+                        }
 
                         if (target != null) {
                             Intent intent = new Intent(ResidentHistoryActivity.this, HelpPostDetailActivity.class);
                             intent.putExtra("helpPost", target);
                             intent.putExtra("user", currentUser);
-                            startActivity(intent);
+                            runOnUiThread(() -> startActivity(intent));
                         } else {
-                            runOnUiThread(() -> Toast.makeText(ResidentHistoryActivity.this, "该内容已被删除", Toast.LENGTH_SHORT).show());
+                            runOnUiThread(() -> Toast.makeText(ResidentHistoryActivity.this, "该互助帖已被删除", Toast.LENGTH_SHORT).show());
                         }
                     }
                 }).start();
@@ -158,6 +189,7 @@ public class ResidentHistoryActivity extends AppCompatActivity {
         class ViewHolder extends RecyclerView.ViewHolder {
             ImageView ivCover;
             TextView tvTitle, tvAuthor, tvTime, tvType;
+
             public ViewHolder(@NonNull View itemView) {
                 super(itemView);
                 ivCover = itemView.findViewById(R.id.iv_cover);
