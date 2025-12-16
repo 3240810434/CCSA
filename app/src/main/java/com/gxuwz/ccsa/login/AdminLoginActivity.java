@@ -1,6 +1,7 @@
 package com.gxuwz.ccsa.login;
 
 import androidx.appcompat.app.AppCompatActivity;
+import android.content.SharedPreferences; // 导入 SharedPreferences
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -104,8 +105,19 @@ public class AdminLoginActivity extends AppCompatActivity {
                 if (admin.getPassword().equals(password)) {
                     // 验证小区管理权限
                     if (admin.getCommunity().equals(selectedCommunity)) {
+
+                        // 【新增修复代码 START】: 保存登录状态到 SharedPreferences
+                        // 这里必须使用 "admin_prefs" 且 key 为 "community"，与 AdminNoticeEditActivity 中读取的一致
+                        SharedPreferences sp = getSharedPreferences("admin_prefs", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sp.edit();
+                        editor.putString("community", selectedCommunity);
+                        editor.putString("adminAccount", account); // 建议顺便保存账号，以备后用
+                        editor.apply();
+                        // 【新增修复代码 END】
+
                         // 登录成功，跳转到管理员首界面
                         Intent intent = new Intent(AdminLoginActivity.this, AdminMainActivity.class);
+                        // Intent 传值可以保留，不影响 SharedPreferences
                         intent.putExtra("community", selectedCommunity);
                         intent.putExtra("adminAccount", account);
                         startActivity(intent);
