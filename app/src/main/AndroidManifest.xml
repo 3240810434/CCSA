@@ -111,6 +111,8 @@
         <activity android:name=".ui.merchant.MerchantAfterSalesListActivity" android:exported="false"/>
         <activity android:name=".ui.merchant.MerchantAfterSalesDetailActivity" android:exported="false" android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.admin.MerchantListActivity" android:exported="false"/>
-
+        <activity android:name=".ui.admin.AdminNotificationManagementActivity" android:title="通知管理" />
+        <activity android:name=".ui.admin.AdminNoticeEditActivity" android:title="编辑通知" android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.admin.AdminNoticeDetailActivity" android:title="通知详情" />
     </application>
 </manifest>
