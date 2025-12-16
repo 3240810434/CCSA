@@ -14,7 +14,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import com.bumptech.glide.Glide; // 假设使用了Glide加载图片，如果没有请使用ImageUtils
+import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Vote;
@@ -34,11 +34,10 @@ public class VoteDetailActivity extends AppCompatActivity {
 
     private TextView tvTitle, tvContent, tvTime, tvTotalStats;
     private ImageView ivAttachment;
-    private LinearLayout layoutVotingArea; // 投票区域（居民）
-    private LinearLayout layoutStatsArea;  // 统计区域（管理员/已投）
+    private LinearLayout layoutVotingArea;
+    private LinearLayout layoutStatsArea;
     private Button btnSubmit;
 
-    // 动态控件引用
     private List<CheckBox> checkBoxes = new ArrayList<>();
     private RadioGroup radioGroup;
 
@@ -68,11 +67,9 @@ public class VoteDetailActivity extends AppCompatActivity {
 
         tvTitle.setText(vote.getTitle());
         tvContent.setText(vote.getContent());
-        // Simple date format omitted for brevity
 
         if (!TextUtils.isEmpty(vote.getAttachmentPath())) {
             ivAttachment.setVisibility(View.VISIBLE);
-            // 简单图片加载
             Glide.with(this).load(vote.getAttachmentPath()).into(ivAttachment);
         }
 
@@ -89,11 +86,9 @@ public class VoteDetailActivity extends AppCompatActivity {
                 hasVoted = (record != null);
             }
 
-            // 获取统计数据
             List<VoteRecord> allRecords = db.voteDao().getAllRecordsForVote(vote.getId());
             int totalResidents = db.userDao().countResidents(vote.getCommunity());
 
-            // 统计每个选项的票数
             Map<Integer, Integer> counts = new HashMap<>();
             List<String> options = vote.getOptionList();
             for(int i=0; i<options.size(); i++) counts.put(i, 0);
@@ -103,13 +98,14 @@ public class VoteDetailActivity extends AppCompatActivity {
                 for (String idxStr : indices) {
                     try {
                         int idx = Integer.parseInt(idxStr);
-                        counts.put(idx, counts.getOrDefault(idx, 0) + 1);
+                        // API 21 兼容性修复
+                        int current = counts.containsKey(idx) ? counts.get(idx) : 0;
+                        counts.put(idx, current + 1);
                     } catch (Exception e) {}
                 }
             }
 
             boolean finalHasVoted = hasVoted;
-            VoteRecord finalRecord = record;
             runOnUiThread(() -> {
                 if (isAdmin || finalHasVoted) {
                     showStats(options, counts, allRecords.size(), totalResidents);
@@ -120,7 +116,6 @@ public class VoteDetailActivity extends AppCompatActivity {
         });
     }
 
-    // 渲染投票选项（未投票居民）
     private void showVotingOptions(List<String> options) {
         layoutStatsArea.setVisibility(View.GONE);
         layoutVotingArea.setVisibility(View.VISIBLE);
@@ -147,7 +142,6 @@ public class VoteDetailActivity extends AppCompatActivity {
         }
     }
 
-    // 渲染统计条（管理员或已投票居民）
     private void showStats(List<String> options, Map<Integer, Integer> counts, int votedCount, int totalCount) {
         layoutVotingArea.setVisibility(View.GONE);
         btnSubmit.setVisibility(View.GONE);
@@ -161,9 +155,10 @@ public class VoteDetailActivity extends AppCompatActivity {
             ProgressBar pb = view.findViewById(R.id.pb_opt_count);
             TextView tvCount = view.findViewById(R.id.tv_opt_count);
 
-            int count = counts.getOrDefault(i, 0);
+            // API 21 兼容性修复
+            int count = counts.containsKey(i) ? counts.get(i) : 0;
             tvName.setText(options.get(i));
-            pb.setMax(totalCount == 0 ? 1 : totalCount); // 避免除以0，实际可以用最大投票数
+            pb.setMax(totalCount == 0 ? 1 : totalCount);
             pb.setProgress(count);
             tvCount.setText(count + "票");
 
@@ -200,7 +195,7 @@ public class VoteDetailActivity extends AppCompatActivity {
             db.voteDao().insertRecord(record);
             runOnUiThread(() -> {
                 Toast.makeText(this, "投票成功", Toast.LENGTH_SHORT).show();
-                loadData(); // 刷新页面看统计
+                loadData();
             });
         });
     }

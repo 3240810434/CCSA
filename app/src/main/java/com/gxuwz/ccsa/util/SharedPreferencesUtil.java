@@ -14,7 +14,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 public class SharedPreferencesUtil {
+    // 统一使用同一个 SharedPreferences 文件名，避免数据分散
     private static final String PREF_NAME = "ccsa_prefs";
+
     private static final String KEY_USER = "user_data";
     private static final String KEY_MERCHANT_ID = "merchant_id";
 
@@ -32,7 +34,8 @@ public class SharedPreferencesUtil {
         return instance;
     }
 
-    // --- 商家相关 ---
+    // ================== 1. 商家相关 (原有实例方法) ==================
+
     public String getMerchantId() {
         return sharedPreferences.getString(KEY_MERCHANT_ID, "1");
     }
@@ -41,10 +44,10 @@ public class SharedPreferencesUtil {
         sharedPreferences.edit().putString(KEY_MERCHANT_ID, id).apply();
     }
 
-    // --- 用户相关 (静态方法，适配 MyDynamicsActivity 等调用) ---
+    // ================== 2. 用户对象相关 (原有静态方法) ==================
 
     /**
-     * 保存用户信息
+     * 保存用户信息 (对象序列化)
      */
     public static void saveUser(Context context, User user) {
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -66,7 +69,7 @@ public class SharedPreferencesUtil {
     }
 
     /**
-     * 获取用户信息
+     * 获取用户信息 (对象反序列化)
      */
     public static User getUser(Context context) {
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -93,5 +96,62 @@ public class SharedPreferencesUtil {
     public static void clearUser(Context context) {
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         sp.edit().remove(KEY_USER).apply();
+    }
+
+    // ================== 3. 通用数据存取 (新增通用方法) ==================
+
+    /**
+     * 通用数据保存方法
+     * 支持 Integer, Boolean, String, Float, Long
+     */
+    public static void saveData(Context context, String key, Object data) {
+        // 统一使用 PREF_NAME
+        SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sp.edit();
+
+        if (data instanceof Integer) {
+            editor.putInt(key, (Integer) data);
+        } else if (data instanceof Boolean) {
+            editor.putBoolean(key, (Boolean) data);
+        } else if (data instanceof String) {
+            editor.putString(key, (String) data);
+        } else if (data instanceof Float) {
+            editor.putFloat(key, (Float) data);
+        } else if (data instanceof Long) {
+            editor.putLong(key, (Long) data);
+        }
+        editor.apply();
+    }
+
+    /**
+     * 通用数据获取方法 (默认返回 String)
+     */
+    public static String getData(Context context, String key, String defValue) {
+        SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        return sp.getString(key, defValue);
+    }
+
+    /**
+     * 通用数据获取方法 (根据默认值类型返回对应数据)
+     * 支持 String, Integer, Boolean
+     */
+    public static Object getData(Context context, String key, Object defValue) {
+        SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+
+        if (defValue instanceof String) {
+            return sp.getString(key, (String) defValue);
+        } else if (defValue instanceof Integer) {
+            return sp.getInt(key, (Integer) defValue);
+        } else if (defValue instanceof Boolean) {
+            return sp.getBoolean(key, (Boolean) defValue);
+        } else if (defValue instanceof Float) {
+            // 补充：既然 saveData 支持 Float，这里最好也支持
+            return sp.getFloat(key, (Float) defValue);
+        } else if (defValue instanceof Long) {
+            // 补充：既然 saveData 支持 Long，这里最好也支持
+            return sp.getLong(key, (Long) defValue);
+        }
+
+        return null;
     }
 }

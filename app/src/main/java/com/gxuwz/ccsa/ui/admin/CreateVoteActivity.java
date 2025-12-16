@@ -1,13 +1,12 @@
 package com.gxuwz.ccsa.ui.admin;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -25,7 +24,6 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Vote;
 import com.gxuwz.ccsa.util.NotificationUtil;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,7 +34,7 @@ public class CreateVoteActivity extends AppCompatActivity {
     private RadioGroup rgSelectionType;
     private LinearLayout layoutOptionsContainer;
     private TextView tvAttachmentName;
-    private View btnDeleteAttachment;
+    private ImageView btnDeleteAttachment;
 
     private String community;
     private String adminAccount;
@@ -57,7 +55,7 @@ public class CreateVoteActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_vote);
+        setContentView(R.layout.activity_create_vote); // 对应下面的XML文件
 
         community = getIntent().getStringExtra("community");
         adminAccount = getIntent().getStringExtra("adminAccount");
@@ -74,6 +72,8 @@ public class CreateVoteActivity extends AppCompatActivity {
             addOptionView("");
             addOptionView("");
         }
+
+        findViewById(R.id.iv_back).setOnClickListener(v -> finish());
     }
 
     private void initViews() {
@@ -86,6 +86,7 @@ public class CreateVoteActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_add_option).setOnClickListener(v -> addOptionView(""));
         findViewById(R.id.layout_attachment).setOnClickListener(v -> pickFile());
+
         btnDeleteAttachment.setOnClickListener(v -> {
             attachmentUriString = null;
             tvAttachmentName.setText("添加附件/图片");
@@ -97,6 +98,7 @@ public class CreateVoteActivity extends AppCompatActivity {
     }
 
     private void addOptionView(String text) {
+        // 对应下面的 item_create_vote_option.xml
         View view = LayoutInflater.from(this).inflate(R.layout.item_create_vote_option, layoutOptionsContainer, false);
         EditText etOption = view.findViewById(R.id.et_option_text);
         ImageView ivDelete = view.findViewById(R.id.iv_delete_option);
@@ -108,22 +110,30 @@ public class CreateVoteActivity extends AppCompatActivity {
     }
 
     private void pickFile() {
+        // 简单权限检查，如果是在Android 10+通常不需要READ_EXTERNAL_STORAGE也能通过SAF获取图片，但为了稳妥保留检查
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
         } else {
-            filePickerLauncher.launch("*/*"); // 可以限制为 image/*
+            filePickerLauncher.launch("image/*");
         }
     }
 
     private void loadDraftData() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            Vote vote = db.voteDao().getVoteById(existingId); // 需要在DAO加 getVoteById
-            if (vote != null) { // 简单判空
+            // 修正方法名
+            Vote vote = db.voteDao().getVoteById(existingId);
+            if (vote != null) {
                 runOnUiThread(() -> {
                     etTitle.setText(vote.getTitle());
                     etContent.setText(vote.getContent());
-                    ((RadioButton)rgSelectionType.getChildAt(vote.getSelectionType())).setChecked(true);
+                    // 修正 RadioButton 选中
+                    if (vote.getSelectionType() == 1) {
+                        ((RadioButton)findViewById(R.id.rb_multi)).setChecked(true);
+                    } else {
+                        ((RadioButton)findViewById(R.id.rb_single)).setChecked(true);
+                    }
+
                     attachmentUriString = vote.getAttachmentPath();
                     if (attachmentUriString != null) {
                         tvAttachmentName.setText("已添加附件");
@@ -138,7 +148,6 @@ public class CreateVoteActivity extends AppCompatActivity {
     }
 
     private void prePublishCheck() {
-        // 先查询小区人数
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             int count = db.userDao().countResidents(community);
