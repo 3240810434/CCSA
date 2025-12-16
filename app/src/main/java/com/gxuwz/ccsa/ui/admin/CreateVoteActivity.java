@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -24,6 +23,8 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Vote;
 import com.gxuwz.ccsa.util.NotificationUtil;
+import com.gxuwz.ccsa.util.SharedPreferencesUtil; // 引入 SharedPreferencesUtil
+
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,7 +41,7 @@ public class CreateVoteActivity extends AppCompatActivity {
     private String adminAccount;
     private AppDatabase db;
     private String attachmentUriString = null;
-    private long existingId = -1; // 用于编辑草稿
+    private long existingId = -1;
 
     private final ActivityResultLauncher<String> filePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.GetContent(),
@@ -55,20 +56,30 @@ public class CreateVoteActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create_vote); // 对应下面的XML文件
+        setContentView(R.layout.activity_create_vote);
 
+        // 1. 优先从 Intent 获取，如果没有则尝试从 SharedPreferences 获取作为兜底
         community = getIntent().getStringExtra("community");
+        if (TextUtils.isEmpty(community)) {
+            community = SharedPreferencesUtil.getData(this, "community", "");
+        }
+
         adminAccount = getIntent().getStringExtra("adminAccount");
         db = AppDatabase.getInstance(this);
 
+        // 2. 检查小区信息是否有效
+        if (TextUtils.isEmpty(community)) {
+            Toast.makeText(this, "错误：未获取到小区信息，无法发布投票", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
         initViews();
 
-        // 如果是编辑草稿，加载数据
         if (getIntent().hasExtra("vote_id")) {
             existingId = getIntent().getLongExtra("vote_id", -1);
             loadDraftData();
         } else {
-            // 默认添加两个选项框
             addOptionView("");
             addOptionView("");
         }
@@ -98,7 +109,6 @@ public class CreateVoteActivity extends AppCompatActivity {
     }
 
     private void addOptionView(String text) {
-        // 对应下面的 item_create_vote_option.xml
         View view = LayoutInflater.from(this).inflate(R.layout.item_create_vote_option, layoutOptionsContainer, false);
         EditText etOption = view.findViewById(R.id.et_option_text);
         ImageView ivDelete = view.findViewById(R.id.iv_delete_option);
@@ -110,7 +120,6 @@ public class CreateVoteActivity extends AppCompatActivity {
     }
 
     private void pickFile() {
-        // 简单权限检查，如果是在Android 10+通常不需要READ_EXTERNAL_STORAGE也能通过SAF获取图片，但为了稳妥保留检查
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
         } else {
@@ -121,13 +130,11 @@ public class CreateVoteActivity extends AppCompatActivity {
     private void loadDraftData() {
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
-            // 修正方法名
             Vote vote = db.voteDao().getVoteById(existingId);
             if (vote != null) {
                 runOnUiThread(() -> {
                     etTitle.setText(vote.getTitle());
                     etContent.setText(vote.getContent());
-                    // 修正 RadioButton 选中
                     if (vote.getSelectionType() == 1) {
                         ((RadioButton)findViewById(R.id.rb_multi)).setChecked(true);
                     } else {
@@ -154,7 +161,7 @@ public class CreateVoteActivity extends AppCompatActivity {
             runOnUiThread(() -> {
                 new AlertDialog.Builder(this)
                         .setTitle("确认发布")
-                        .setMessage("即将向本小区的 " + count + " 位居民发布投票，发布后无法修改。")
+                        .setMessage("即将向 " + community + " 的 " + count + " 位居民发布投票，发布后无法修改。")
                         .setPositiveButton("确认发布", (d, w) -> saveVote(1))
                         .setNegativeButton("取消", null)
                         .show();
@@ -190,6 +197,7 @@ public class CreateVoteActivity extends AppCompatActivity {
             return;
         }
 
+        // 创建 Vote 对象 (注意：发布时间 status=1 时更新为当前时间，草稿保持原样或更新均可，这里统一更新)
         Vote vote = new Vote(title, content, community, adminAccount, System.currentTimeMillis(),
                 optionsBuilder.toString(), selectionType, status, attachmentUriString);
         if (existingId != -1) vote.setId(existingId);
@@ -199,18 +207,16 @@ public class CreateVoteActivity extends AppCompatActivity {
             if (existingId != -1) db.voteDao().update(vote);
             else db.voteDao().insert(vote);
 
-            if (status == 1) {
-                runOnUiThread(() -> {
+            runOnUiThread(() -> {
+                if (status == 1) {
                     NotificationUtil.sendVoteNotification(this, "小区投票: " + title, content);
                     Toast.makeText(this, "发布成功", Toast.LENGTH_SHORT).show();
-                    finish();
-                });
-            } else {
-                runOnUiThread(() -> {
+                } else {
                     Toast.makeText(this, "已保存到草稿箱", Toast.LENGTH_SHORT).show();
-                    finish();
-                });
-            }
+                }
+                setResult(RESULT_OK); // 通知上个页面刷新
+                finish();
+            });
         });
     }
 }

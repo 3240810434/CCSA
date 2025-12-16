@@ -48,7 +48,8 @@ public class VoteListFragment extends Fragment implements VoteAdapter.OnVoteItem
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_common_list, container, false); // 复用只有RecyclerView的布局
+        // 确保 R.layout.fragment_common_list 存在且包含 id 为 recycler_view 的 RecyclerView
+        View view = inflater.inflate(R.layout.fragment_common_list, container, false);
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         return view;
@@ -61,12 +62,28 @@ public class VoteListFragment extends Fragment implements VoteAdapter.OnVoteItem
     }
 
     private void loadData() {
+        // 如果 Context 为空，不执行加载
+        if (getContext() == null) return;
+
         Executors.newSingleThreadExecutor().execute(() -> {
+            // 安全获取 Context，防止 Fragment 已销毁导致 Crash
+            if (getContext() == null) return;
+
             List<Vote> votes = AppDatabase.getInstance(getContext()).voteDao().getVotesByStatus(community, status);
-            getActivity().runOnUiThread(() -> {
-                adapter = new VoteAdapter(getContext(), votes, isAdmin, this);
-                recyclerView.setAdapter(adapter);
-            });
+
+            // 切换回主线程更新 UI
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    if (adapter == null) {
+                        adapter = new VoteAdapter(getContext(), votes, isAdmin, this);
+                        recyclerView.setAdapter(adapter);
+                    } else {
+                        // 如果 adapter 已存在，最好更新数据而不是重建，这里为了简单重建也可以，但要注意
+                        adapter = new VoteAdapter(getContext(), votes, isAdmin, this);
+                        recyclerView.setAdapter(adapter);
+                    }
+                });
+            }
         });
     }
 
@@ -76,7 +93,7 @@ public class VoteListFragment extends Fragment implements VoteAdapter.OnVoteItem
             // 管理员点击草稿 -> 去编辑
             Intent intent = new Intent(getContext(), CreateVoteActivity.class);
             intent.putExtra("community", community);
-            intent.putExtra("adminAccount", "admin"); // 简化处理
+            intent.putExtra("adminAccount", "admin");
             intent.putExtra("vote_id", vote.getId());
             startActivity(intent);
         } else {
@@ -90,10 +107,14 @@ public class VoteListFragment extends Fragment implements VoteAdapter.OnVoteItem
 
     @Override
     public void onDeleteClick(Vote vote) {
+        if (getContext() == null) return;
         Executors.newSingleThreadExecutor().execute(() -> {
             AppDatabase.getInstance(getContext()).voteDao().delete(vote);
-            AppDatabase.getInstance(getContext()).voteDao().deleteAllRecords(vote.getId()); // 级联删除记录
-            getActivity().runOnUiThread(this::loadData);
+            AppDatabase.getInstance(getContext()).voteDao().deleteAllRecords(vote.getId());
+
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(this::loadData);
+            }
         });
     }
 }
