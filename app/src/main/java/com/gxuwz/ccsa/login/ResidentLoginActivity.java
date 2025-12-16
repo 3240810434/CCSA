@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -59,10 +58,11 @@ public class ResidentLoginActivity extends AppCompatActivity {
         // 登录按钮点击事件
         btnLogin.setOnClickListener(v -> login());
 
-        // 忘记密码点击事件
-        tvForgotPassword.setOnClickListener(v ->
-                Toast.makeText(ResidentLoginActivity.this, "请联系管理员重置密码", Toast.LENGTH_SHORT).show()
-        );
+        // 忘记密码点击事件 - 修改为跳转到找回密码页面
+        tvForgotPassword.setOnClickListener(v -> {
+            Intent intent = new Intent(ResidentLoginActivity.this, ResidentForgotPasswordActivity.class);
+            startActivity(intent);
+        });
 
         // 跳转到注册页面
         tvRegister.setOnClickListener(v -> {

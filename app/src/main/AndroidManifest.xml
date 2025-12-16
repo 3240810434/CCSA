@@ -119,5 +119,6 @@
         <activity android:name=".ui.resident.ResidentHistoryActivity" android:exported="false"/>
         <activity android:name=".ui.resident.ResidentChangePasswordActivity" android:exported="false"/>
         <activity android:name=".ui.resident.HelpPostDetailActivity" android:exported="false"/>
+        <activity android:name=".login.ResidentForgotPasswordActivity" />
     </application>
 </manifest>
