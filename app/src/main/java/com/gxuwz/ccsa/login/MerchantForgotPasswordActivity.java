@@ -12,9 +12,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
-import com.gxuwz.ccsa.model.User;
+import com.gxuwz.ccsa.model.Merchant;
 
-public class ResidentForgotPasswordActivity extends AppCompatActivity {
+public class MerchantForgotPasswordActivity extends AppCompatActivity {
 
     private EditText etPhone, etCode, etNewPassword;
     private Button btnGetCode, btnConfirm;
@@ -25,7 +25,7 @@ public class ResidentForgotPasswordActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_resident_forgot_password);
+        setContentView(R.layout.activity_merchant_forgot_password);
 
         db = AppDatabase.getInstance(this);
         initViews();
@@ -42,36 +42,32 @@ public class ResidentForgotPasswordActivity extends AppCompatActivity {
     }
 
     private void setupListeners() {
-        // 获取验证码点击事件
+        // 获取验证码
         btnGetCode.setOnClickListener(v -> {
             String phone = etPhone.getText().toString().trim();
             if (TextUtils.isEmpty(phone)) {
                 Toast.makeText(this, "请先输入手机号", Toast.LENGTH_SHORT).show();
                 return;
             }
-         /*   // 简单校验手机号格式（可选）
-            if (phone.length() != 11) {
+           /* if (phone.length() != 11) {
                 Toast.makeText(this, "请输入正确的11位手机号", Toast.LENGTH_SHORT).show();
                 return;
             }*/
 
-            // 模拟发送验证码
+            // 模拟发送
             Toast.makeText(this, "验证码已发送", Toast.LENGTH_SHORT).show();
             startCountDown();
         });
 
-        // 确认修改点击事件
+        // 确认修改
         btnConfirm.setOnClickListener(v -> resetPassword());
 
         // 返回登录
         tvBackLogin.setOnClickListener(v -> finish());
     }
 
-    /**
-     * 开始60秒倒计时
-     */
     private void startCountDown() {
-        btnGetCode.setEnabled(false); // 禁用按钮
+        btnGetCode.setEnabled(false);
         countDownTimer = new CountDownTimer(60000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
@@ -87,9 +83,6 @@ public class ResidentForgotPasswordActivity extends AppCompatActivity {
         countDownTimer.start();
     }
 
-    /**
-     * 重置密码逻辑
-     */
     private void resetPassword() {
         String phone = etPhone.getText().toString().trim();
         String code = etCode.getText().toString().trim();
@@ -108,25 +101,24 @@ public class ResidentForgotPasswordActivity extends AppCompatActivity {
             return;
         }
 
-        // 验证码校验
+        // 模拟验证码校验
         if (!"1234".equals(code)) {
             Toast.makeText(this, "验证码错误", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // 数据库操作
         new Thread(() -> {
-            // 查询该手机号是否存在
-            User user = db.userDao().findByPhone(phone);
-            if (user == null) {
-                runOnUiThread(() -> Toast.makeText(this, "该手机号未注册", Toast.LENGTH_SHORT).show());
+            // 查询商家
+            Merchant merchant = db.merchantDao().findByPhone(phone);
+            if (merchant == null) {
+                runOnUiThread(() -> Toast.makeText(this, "该手机号未注册商家账号", Toast.LENGTH_SHORT).show());
             } else {
                 // 更新密码
-                user.setPassword(newPassword);
-                db.userDao().update(user);
+                merchant.setPassword(newPassword);
+                db.merchantDao().update(merchant);
                 runOnUiThread(() -> {
-                    Toast.makeText(this, "修改成功，请重新登录", Toast.LENGTH_SHORT).show();
-                    finish(); // 关闭当前页面，返回登录页
+                    Toast.makeText(this, "密码修改成功", Toast.LENGTH_SHORT).show();
+                    finish(); // 返回登录页
                 });
             }
         }).start();

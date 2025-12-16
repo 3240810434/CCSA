@@ -44,9 +44,11 @@ public class MerchantLoginActivity extends AppCompatActivity {
     private void setupListeners() {
         btnLogin.setOnClickListener(v -> login());
 
-        tvForgotPassword.setOnClickListener(v ->
-                Toast.makeText(this, "请联系管理员重置密码", Toast.LENGTH_SHORT).show()
-        );
+        // 修改：跳转到忘记密码页面
+        tvForgotPassword.setOnClickListener(v -> {
+            Intent intent = new Intent(MerchantLoginActivity.this, MerchantForgotPasswordActivity.class);
+            startActivity(intent);
+        });
 
         tvRegister.setOnClickListener(v -> {
             Intent intent = new Intent(MerchantLoginActivity.this, MerchantRegisterActivity.class);
@@ -71,10 +73,7 @@ public class MerchantLoginActivity extends AppCompatActivity {
                     // 保存登录状态到 SharedPreferences
                     SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = sp.edit();
-
-                    // 【核心修改】：改为 putInt，因为 id 是 int 类型
                     editor.putInt("merchant_id", merchant.getId());
-
                     editor.apply();
 
                     Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();

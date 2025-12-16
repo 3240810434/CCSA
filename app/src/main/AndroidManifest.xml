@@ -120,5 +120,6 @@
         <activity android:name=".ui.resident.ResidentChangePasswordActivity" android:exported="false"/>
         <activity android:name=".ui.resident.HelpPostDetailActivity" android:exported="false"/>
         <activity android:name=".login.ResidentForgotPasswordActivity" />
+        <activity android:name=".login.MerchantForgotPasswordActivity" />
     </application>
 </manifest>
