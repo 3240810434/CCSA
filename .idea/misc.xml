@@ -30,6 +30,9 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/aaa.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_login.xml" value="0.2526041666666667" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_main.xml" value="0.2526041666666667" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_notice_detail.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_notice_edit.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_notification_management.xml" value="0.240625" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_repair_detail.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_repair_history.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/activity_admin_repair_list.xml" value="0.24114583333333334" />
@@ -131,6 +134,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/fragment_notification_new.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/fragment_service.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/image_grid_item.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_admin_notice.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_admin_repair.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_banner.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_chat_left.xml" value="0.264" />

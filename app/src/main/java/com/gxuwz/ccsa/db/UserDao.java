@@ -58,4 +58,7 @@ public interface UserDao {
 
     @Query("SELECT * FROM user WHERE phone = :phone")
     User getByPhone(String phone);
+
+    @Query("SELECT * FROM user WHERE building IN (:buildings)")
+    List<User> getUsersByBuildings(List<Integer> buildings);
 }

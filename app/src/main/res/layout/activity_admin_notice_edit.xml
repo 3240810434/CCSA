@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/et_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="请输入通知标题"
+            android:textSize="16sp"
+            android:background="@null"
+            android:padding="10dp"/>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#E0E0E0"/>
+
+        <EditText
+            android:id="@+id/et_content"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:hint="请输入通知内容..."
+            android:gravity="top"
+            android:background="@null"
+            android:padding="10dp"
+            android:layout_marginTop="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="发送对象"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp"/>
+
+        <CheckBox
+            android:id="@+id/cb_merchant"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="全体商家"/>
+
+        <CheckBox
+            android:id="@+id/cb_resident"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="居民 (点击选择楼栋)"
+            android:layout_marginTop="5dp"/>
+
+        <TextView
+            android:id="@+id/tv_selected_buildings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="已选: 全部楼栋"
+            android:textColor="#666"
+            android:textSize="12sp"
+            android:paddingStart="32dp"
+            android:visibility="gone"/>
+
+        <LinearLayout
+            android:id="@+id/layout_attachment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="15dp"
+            android:background="#F5F5F5"
+            android:padding="10dp">
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_add_photo"/> <TextView
+            android:id="@+id/tv_attachment_name"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="添加附件/图片"
+            android:layout_marginStart="10dp"/>
+            <ImageView
+                android:id="@+id/iv_delete_attachment"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_delete"
+                android:visibility="gone"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="30dp">
+
+            <Button
+                android:id="@+id/btn_save_draft"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="保存草稿"
+                android:backgroundTint="#AAAAAA"
+                android:textColor="#FFF"
+                android:layout_marginEnd="10dp"/>
+
+            <Button
+                android:id="@+id/btn_publish_now"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="立即发布"
+                android:backgroundTint="#1E88E5"
+                android:textColor="#FFF"/>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
