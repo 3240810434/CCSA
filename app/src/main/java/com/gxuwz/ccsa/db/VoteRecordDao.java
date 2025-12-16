@@ -20,4 +20,5 @@ public interface VoteRecordDao {
     // 移除了无效的 getAgreeCount/getOpposeCount，改用获取所有记录后在内存中统计
     @Query("SELECT * FROM vote_records WHERE voteId = :voteId")
     List<VoteRecord> getAllRecordsForVote(long voteId);
+
 }
