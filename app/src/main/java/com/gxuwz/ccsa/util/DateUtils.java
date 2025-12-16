@@ -25,12 +25,10 @@ public class DateUtils {
     }
 
     /**
-     * 将Date对象转换为字符串
-     * 修复报错：Cannot resolve method 'dateToString'
+     * 将Date对象转换为字符串 (修复报错的核心方法)
      */
     public static String dateToString(Date date) {
         if (date == null) return "";
-        // 这里复用 formatTime 的逻辑，或者自定义格式
         return formatTime(date.getTime());
     }
 
@@ -43,7 +41,6 @@ public class DateUtils {
         if (diff < 60 * 1000) return "刚刚";
         if (diff < 60 * 60 * 1000) return (diff / (60 * 1000)) + "分钟前";
         if (diff < 24 * 60 * 60 * 1000) return (diff / (60 * 60 * 1000)) + "小时前";
-        // 超过24小时，返回具体日期
         return formatDate(time);
     }
 

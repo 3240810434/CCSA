@@ -29,7 +29,6 @@ import com.gxuwz.ccsa.util.DateUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,6 @@ public class MerchantMessageFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // 每次页面显示时刷新数据
         loadConversations();
     }
 
@@ -74,7 +72,7 @@ public class MerchantMessageFragment extends Fragment {
         if (merchantId == -1) return;
 
         new Thread(() -> {
-            // 1. 查询所有与我(MERCHANT)相关的聊天消息
+            // 1. 查询聊天消息
             List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(merchantId, "MERCHANT");
             Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
@@ -82,7 +80,6 @@ public class MerchantMessageFragment extends Fragment {
                 int otherId;
                 String otherRole;
 
-                // 判断对方是谁
                 if (msg.senderId == merchantId && "MERCHANT".equals(msg.senderRole)) {
                     otherId = msg.receiverId;
                     otherRole = msg.receiverRole;
@@ -91,11 +88,9 @@ public class MerchantMessageFragment extends Fragment {
                     otherRole = msg.senderRole;
                 }
 
-                // 组合Key，防止ID重复
                 String key = otherRole + "_" + otherId;
 
                 if (!latestMsgMap.containsKey(key)) {
-                    // 如果对方是居民，查询居民信息
                     if ("RESIDENT".equals(otherRole)) {
                         User u = db.userDao().findById(otherId);
                         msg.targetName = (u != null) ? u.getName() : "居民";
@@ -107,36 +102,35 @@ public class MerchantMessageFragment extends Fragment {
                 }
             }
 
-            // 暂存聊天列表
             List<ChatMessage> finalList = new ArrayList<>(latestMsgMap.values());
 
-            // 2. 【新增】查询系统通知
-            // 首先获取商家的手机号，因为 Notification 表是用手机号关联的
+            // 2. 查询系统通知
             Merchant me = db.merchantDao().findById(merchantId);
             if (me != null) {
-                // 使用在 NotificationDao 中新增的方法 findByRecipientPhone
+                // 确保 NotificationDao 中有 findByRecipientPhone 方法
                 List<Notification> notices = db.notificationDao().findByRecipientPhone(me.getPhone());
                 if (notices != null && !notices.isEmpty()) {
-                    // 取最新的一条通知作为展示
                     Notification latestNotice = notices.get(0);
                     ChatMessage sysMsg = new ChatMessage();
-                    sysMsg.targetName = "系统通知"; // 特殊标记名称
-                    sysMsg.content = latestNotice.getTitle(); // 显示标题
-                    sysMsg.createTime = latestNotice.getCreateTime();
-                    // 可以设置一个系统头像资源ID，在 Adapter 里处理，或者这里给空字符串
-                    sysMsg.targetAvatar = "";
-                    sysMsg.senderRole = "SYSTEM"; // 标记为系统角色
+                    sysMsg.targetName = "系统通知";
+                    sysMsg.content = latestNotice.getTitle();
 
-                    // 将系统通知加入列表
+                    // 【修复点 1】类型转换：Date -> long
+                    if (latestNotice.getCreateTime() != null) {
+                        sysMsg.createTime = latestNotice.getCreateTime().getTime();
+                    } else {
+                        sysMsg.createTime = System.currentTimeMillis();
+                    }
+
+                    sysMsg.targetAvatar = "";
+                    sysMsg.senderRole = "SYSTEM";
                     finalList.add(sysMsg);
                 }
             }
 
-            // 3. 按时间倒序排序
-            Collections.sort(finalList, (o1, o2) -> {
-                if(o1.createTime == null || o2.createTime == null) return 0;
-                return o2.createTime.compareTo(o1.createTime);
-            });
+            // 【修复点 2】修复 long 类型比较报错
+            // ChatMessage.createTime 是 long 类型，不能与 null 比较，也不能直接调用 compareTo
+            Collections.sort(finalList, (o1, o2) -> Long.compare(o2.createTime, o1.createTime));
 
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
@@ -148,7 +142,6 @@ public class MerchantMessageFragment extends Fragment {
         }).start();
     }
 
-    // 内部类 Adapter
     public static class MerchantChatAdapter extends RecyclerView.Adapter<MerchantChatAdapter.ViewHolder> {
         private Context context;
         private List<ChatMessage> list;
@@ -171,37 +164,20 @@ public class MerchantMessageFragment extends Fragment {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             ChatMessage msg = list.get(position);
 
-            // 设置昵称
-            if (holder.tvName != null) {
-                holder.tvName.setText(msg.targetName);
-            }
+            if (holder.tvName != null) holder.tvName.setText(msg.targetName);
+            if (holder.tvContent != null) holder.tvContent.setText(msg.content);
+            if (holder.tvTime != null) holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
 
-            // 设置内容
-            if (holder.tvContent != null) {
-                holder.tvContent.setText(msg.content);
-            }
-
-            // 设置时间
-            if (holder.tvTime != null) {
-                holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
-            }
-
-            // 【新增】处理系统通知的头像和点击事件
             if ("系统通知".equals(msg.targetName) || "SYSTEM".equals(msg.senderRole)) {
-                // 设置系统通知默认头像 (请确保 res/drawable 下有 ic_notification 图片，或者使用其他现有图片)
                 holder.ivAvatar.setImageResource(R.drawable.ic_notification);
-
-                // 点击系统通知弹出详情或跳转列表 (这里简单实现为弹窗显示最新一条，或者跳转到通知列表页)
                 holder.itemView.setOnClickListener(v -> {
-                    // 如果有 NotificationListActivity 应该跳转过去，这里为了演示直接弹窗显示内容
                     new AlertDialog.Builder(context)
                             .setTitle("最新系统通知")
-                            .setMessage(msg.content) // 这里只显示了标题，实际开发建议跳转专门的通知列表Activity
+                            .setMessage(msg.content)
                             .setPositiveButton("知道了", null)
                             .show();
                 });
             } else {
-                // 普通聊天逻辑
                 Glide.with(context)
                         .load(msg.targetAvatar)
                         .placeholder(R.drawable.ic_avatar)
@@ -211,7 +187,6 @@ public class MerchantMessageFragment extends Fragment {
                 holder.itemView.setOnClickListener(v -> {
                     int targetId;
                     String targetRole;
-
                     if (msg.senderId == myMerchantId && "MERCHANT".equals(msg.senderRole)) {
                         targetId = msg.receiverId;
                         targetRole = msg.receiverRole;
@@ -219,7 +194,6 @@ public class MerchantMessageFragment extends Fragment {
                         targetId = msg.senderId;
                         targetRole = msg.senderRole;
                     }
-
                     Intent intent = new Intent(context, ChatActivity.class);
                     intent.putExtra("myId", myMerchantId);
                     intent.putExtra("myRole", "MERCHANT");
@@ -243,7 +217,6 @@ public class MerchantMessageFragment extends Fragment {
                 super(itemView);
                 ivAvatar = itemView.findViewById(R.id.iv_avatar);
                 tvName = itemView.findViewById(R.id.tv_name);
-                // 确保这里ID和xml一致
                 tvContent = itemView.findViewById(R.id.tv_last_msg);
                 tvTime = itemView.findViewById(R.id.tv_time);
             }

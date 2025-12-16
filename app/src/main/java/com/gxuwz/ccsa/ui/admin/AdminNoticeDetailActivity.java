@@ -12,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.AdminNotice;
-import com.gxuwz.ccsa.util.DateUtils;
+import com.gxuwz.ccsa.util.DateUtils; // 确保导入了这个包
 import java.util.concurrent.Executors;
 
 public class AdminNoticeDetailActivity extends AppCompatActivity {
@@ -30,7 +30,6 @@ public class AdminNoticeDetailActivity extends AppCompatActivity {
         loadData();
 
         findViewById(R.id.btn_resend).setOnClickListener(v -> {
-            // 跳转到编辑页，携带ID，视为“编辑并重发”
             Intent intent = new Intent(this, AdminNoticeEditActivity.class);
             intent.putExtra("notice_id", noticeId);
             startActivity(intent);
@@ -51,6 +50,8 @@ public class AdminNoticeDetailActivity extends AppCompatActivity {
         if (notice == null) return;
         ((TextView)findViewById(R.id.tv_detail_title)).setText(notice.getTitle());
         ((TextView)findViewById(R.id.tv_detail_content)).setText(notice.getContent());
+
+        // 确保 DateUtils 中有 dateToString 方法，且 notice.getPublishTime() 返回 java.util.Date
         ((TextView)findViewById(R.id.tv_detail_info)).setText("发布人: 管理员  发布时间: " + DateUtils.dateToString(notice.getPublishTime()));
 
         String targetStr = "对象: ";
@@ -82,9 +83,7 @@ public class AdminNoticeDetailActivity extends AppCompatActivity {
     private void deleteNotice() {
         Executors.newSingleThreadExecutor().execute(() -> {
             AppDatabase db = AppDatabase.getInstance(this);
-            // 1. 删除管理员记录
             db.adminNoticeDao().delete(notice);
-            // 2. 级联删除用户收到的通知 (核心功能：同步删除)
             db.notificationDao().deleteByAdminNoticeId(noticeId);
 
             runOnUiThread(() -> {
