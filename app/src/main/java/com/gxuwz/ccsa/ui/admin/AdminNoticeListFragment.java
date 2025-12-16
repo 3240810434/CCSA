@@ -39,7 +39,8 @@ public class AdminNoticeListFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.activity_common_list, container, false); // 复用列表布局，只要有个RecyclerView id=recyclerView即可
+        // 【修改点】使用新的无标题布局
+        View view = inflater.inflate(R.layout.fragment_admin_notice_list, container, false);
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new AdminNoticeAdapter(getContext(), !isPublishedList);

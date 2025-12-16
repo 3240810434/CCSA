@@ -5,27 +5,34 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.AdminNotice;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Notification;
 import com.gxuwz.ccsa.model.User;
+
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 
 public class AdminNoticeEditActivity extends AppCompatActivity {
@@ -33,6 +40,7 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
     private CheckBox cbMerchant, cbResident;
     private TextView tvSelectedBuildings, tvAttachmentName;
     private View btnDeleteAttachment;
+    private LinearLayout layoutAttachment;
 
     private String attachmentUriString = null;
     private List<Integer> selectedBuildings = new ArrayList<>(); // 存储选择的楼栋号 1-10
@@ -58,9 +66,11 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
         tvSelectedBuildings = findViewById(R.id.tv_selected_buildings);
         tvAttachmentName = findViewById(R.id.tv_attachment_name);
         btnDeleteAttachment = findViewById(R.id.iv_delete_attachment);
+        layoutAttachment = findViewById(R.id.layout_attachment);
 
-        // 附件点击
-        findViewById(R.id.layout_attachment).setOnClickListener(v -> pickFile());
+        // 【修复点2】强制设置点击事件，确保能触发
+        layoutAttachment.setOnClickListener(v -> pickFile());
+
         btnDeleteAttachment.setOnClickListener(v -> {
             attachmentUriString = null;
             tvAttachmentName.setText("添加附件/图片");
@@ -89,27 +99,27 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
     private void checkIntentData() {
         existingId = getIntent().getLongExtra("notice_id", -1);
         if (existingId != -1) {
-            // 加载草稿数据
             Executors.newSingleThreadExecutor().execute(() -> {
                 AdminNotice notice = AppDatabase.getInstance(this).adminNoticeDao().getById(existingId);
-                runOnUiThread(() -> {
-                    etTitle.setText(notice.getTitle());
-                    etContent.setText(notice.getContent());
-                    attachmentUriString = notice.getAttachmentPath();
-                    if (attachmentUriString != null) {
-                        tvAttachmentName.setText("已添加附件");
-                        btnDeleteAttachment.setVisibility(View.VISIBLE);
-                    }
+                if (notice != null) {
+                    runOnUiThread(() -> {
+                        etTitle.setText(notice.getTitle());
+                        etContent.setText(notice.getContent());
+                        attachmentUriString = notice.getAttachmentPath();
+                        if (attachmentUriString != null) {
+                            tvAttachmentName.setText("已添加附件");
+                            btnDeleteAttachment.setVisibility(View.VISIBLE);
+                        }
 
-                    String type = notice.getTargetType();
-                    if ("MERCHANT".equals(type) || "BOTH".equals(type)) cbMerchant.setChecked(true);
-                    if ("RESIDENT".equals(type) || "BOTH".equals(type)) {
-                        cbResident.setChecked(true);
-                        tvSelectedBuildings.setVisibility(View.VISIBLE);
-                        // 解析楼栋 "1,2,3" 或 "ALL"
-                        restoreBuildings(notice.getTargetBuildings());
-                    }
-                });
+                        String type = notice.getTargetType();
+                        if ("MERCHANT".equals(type) || "BOTH".equals(type)) cbMerchant.setChecked(true);
+                        if ("RESIDENT".equals(type) || "BOTH".equals(type)) {
+                            cbResident.setChecked(true);
+                            tvSelectedBuildings.setVisibility(View.VISIBLE);
+                            restoreBuildings(notice.getTargetBuildings());
+                        }
+                    });
+                }
             });
         }
     }
@@ -175,16 +185,36 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
             uri -> {
                 if (uri != null) {
                     attachmentUriString = uri.toString();
-                    tvAttachmentName.setText(uri.getPath());
+                    tvAttachmentName.setText("已选择图片");
                     btnDeleteAttachment.setVisibility(View.VISIBLE);
                 }
             });
 
+    // 【修复点2】修复权限请求逻辑，适配 Android 13
     private void pickFile() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
+        String permission;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permission = Manifest.permission.READ_MEDIA_IMAGES;
+        } else {
+            permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{permission}, 100);
         } else {
             filePickerLauncher.launch("image/*");
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                filePickerLauncher.launch("image/*");
+            } else {
+                Toast.makeText(this, "需要存储权限才能选择图片", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -205,7 +235,7 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
         else if (cbResident.isChecked()) targetType = "RESIDENT";
         else if (cbMerchant.isChecked()) targetType = "MERCHANT";
 
-        // --- 修复: 变量在 Lambda 表达式中必须是 final 或 effective final ---
+        // 处理楼栋字符串 (用于存入AdminNotice表)
         String tempBuildingsStr = "";
         if (cbResident.isChecked()) {
             if (selectedBuildings.size() == 10) tempBuildingsStr = "ALL";
@@ -216,49 +246,65 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
                 tempBuildingsStr = sb.toString();
             }
         }
-        final String buildingsStrFinal = tempBuildingsStr; // 定义 final 变量供线程使用
-        // -------------------------------------------------------------
+        final String buildingsStrFinal = tempBuildingsStr;
 
         AdminNotice notice = new AdminNotice(title, content, targetType, buildingsStrFinal, attachmentUriString, status, new Date(), status == 1 ? new Date() : null);
         if (existingId != -1) notice.setId(existingId);
 
+        // 禁止重复点击
+        findViewById(R.id.btn_publish_now).setEnabled(false);
+
         Executors.newSingleThreadExecutor().execute(() -> {
             AppDatabase db = AppDatabase.getInstance(this);
             long noticeId;
+
+            // 1. 存入/更新管理员通知表
             if (existingId != -1) {
                 db.adminNoticeDao().update(notice);
                 noticeId = existingId;
+                // 如果是从草稿变发布，先清除可能残留的旧分发记录
                 if (status == 1) db.notificationDao().deleteByAdminNoticeId(noticeId);
             } else {
                 noticeId = db.adminNoticeDao().insert(notice);
             }
 
+            // 2. 如果是发布，执行分发
             if (status == 1) {
                 List<Notification> distributionList = new ArrayList<>();
+                // 【修复点3】使用 Set 去重，防止同一手机号收到多条通知
+                Set<String> processedPhones = new HashSet<>();
                 Date now = new Date();
 
-                // 1. 发给商家
+                // --- 商家分发逻辑 ---
                 if (cbMerchant.isChecked()) {
-                    List<Merchant> merchants = db.merchantDao().getAllMerchants(); // 现在 MerchantDao 已有此方法
+                    List<Merchant> merchants = db.merchantDao().getAllMerchants();
                     for (Merchant m : merchants) {
-                        distributionList.add(new Notification(noticeId, "所有店铺", m.getPhone(), title, content, 2, attachmentUriString, "管理员", now, false));
+                        if (!TextUtils.isEmpty(m.getPhone()) && !processedPhones.contains(m.getPhone())) {
+                            distributionList.add(new Notification(noticeId, "所有店铺", m.getPhone(), title, content, 2, attachmentUriString, "管理员", now, false));
+                            processedPhones.add(m.getPhone());
+                        }
                     }
                 }
 
-                // 2. 发给居民
+                // --- 居民分发逻辑 ---
                 if (cbResident.isChecked()) {
                     List<User> residents;
-                    // 使用 final 变量 buildingsStrFinal
                     if ("ALL".equals(buildingsStrFinal)) {
-                        residents = db.userDao().getAllUsers(); // 现在 UserDao 已有此方法
+                        residents = db.userDao().getAllUsers();
                     } else {
                         residents = db.userDao().getUsersByBuildings(selectedBuildings);
                     }
+
                     for (User u : residents) {
-                        distributionList.add(new Notification(noticeId, u.getCommunityName(), u.getPhone(), title, content, 2, attachmentUriString, "管理员", now, false));
+                        // 【修复点3】关键去重逻辑：检查该手机号是否已添加
+                        if (!TextUtils.isEmpty(u.getPhone()) && !processedPhones.contains(u.getPhone())) {
+                            distributionList.add(new Notification(noticeId, u.getCommunityName(), u.getPhone(), title, content, 2, attachmentUriString, "管理员", now, false));
+                            processedPhones.add(u.getPhone());
+                        }
                     }
                 }
 
+                // 批量插入
                 if (!distributionList.isEmpty()) {
                     db.notificationDao().insertAll(distributionList);
                 }
@@ -266,6 +312,7 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 Toast.makeText(this, status == 1 ? "发布成功" : "草稿已保存", Toast.LENGTH_SHORT).show();
+                findViewById(R.id.btn_publish_now).setEnabled(true);
                 finish();
             });
         });
