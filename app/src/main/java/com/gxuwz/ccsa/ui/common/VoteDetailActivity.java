@@ -67,6 +67,8 @@ public class VoteDetailActivity extends AppCompatActivity {
 
         tvTitle.setText(vote.getTitle());
         tvContent.setText(vote.getContent());
+        // 如果有时间字段，建议在这里设置，防止空指针或显示默认文案
+        // tvTime.setText(vote.getCreateTime());
 
         if (!TextUtils.isEmpty(vote.getAttachmentPath())) {
             ivAttachment.setVisibility(View.VISIBLE);
@@ -87,6 +89,7 @@ public class VoteDetailActivity extends AppCompatActivity {
             }
 
             List<VoteRecord> allRecords = db.voteDao().getAllRecordsForVote(vote.getId());
+            // 注意：countResidents 方法如果数据量大可能会慢，放在子线程是正确的
             int totalResidents = db.userDao().countResidents(vote.getCommunity());
 
             Map<Integer, Integer> counts = new HashMap<>();
@@ -94,14 +97,17 @@ public class VoteDetailActivity extends AppCompatActivity {
             for(int i=0; i<options.size(); i++) counts.put(i, 0);
 
             for (VoteRecord r : allRecords) {
+                if (r.getSelectedIndices() == null) continue; // 防止空指针
                 String[] indices = r.getSelectedIndices().split(",");
                 for (String idxStr : indices) {
                     try {
-                        int idx = Integer.parseInt(idxStr);
-                        // API 21 兼容性修复
+                        if (TextUtils.isEmpty(idxStr)) continue;
+                        int idx = Integer.parseInt(idxStr.trim());
                         int current = counts.containsKey(idx) ? counts.get(idx) : 0;
                         counts.put(idx, current + 1);
-                    } catch (Exception e) {}
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -121,21 +127,28 @@ public class VoteDetailActivity extends AppCompatActivity {
         layoutVotingArea.setVisibility(View.VISIBLE);
         btnSubmit.setVisibility(View.VISIBLE);
 
+        // 【关键修复】清除之前的视图，防止重复添加导致选项翻倍
+        layoutVotingArea.removeAllViews();
+        checkBoxes.clear(); // 同时清空 checkbox 引用列表
+
         if (vote.getSelectionType() == 0) { // 单选
             radioGroup = new RadioGroup(this);
             for (int i = 0; i < options.size(); i++) {
                 RadioButton rb = new RadioButton(this);
                 rb.setText(options.get(i));
                 rb.setId(i);
+                // 优化体验：增加内边距
+                rb.setPadding(0, 20, 0, 20);
                 radioGroup.addView(rb);
             }
             layoutVotingArea.addView(radioGroup);
         } else { // 多选
-            checkBoxes.clear();
             for (int i = 0; i < options.size(); i++) {
                 CheckBox cb = new CheckBox(this);
                 cb.setText(options.get(i));
                 cb.setTag(i);
+                // 优化体验：增加内边距
+                cb.setPadding(0, 20, 0, 20);
                 checkBoxes.add(cb);
                 layoutVotingArea.addView(cb);
             }
@@ -149,15 +162,23 @@ public class VoteDetailActivity extends AppCompatActivity {
 
         tvTotalStats.setText("本小区共 " + totalCount + " 户，已参与 " + votedCount + " 户");
 
+        // 【关键修复】清除旧的统计条目。
+        // 因为 layoutStatsArea 中第一个子 View 是 xml 中写的 tvTotalStats，所以从索引 1 开始移除
+        int childCount = layoutStatsArea.getChildCount();
+        if (childCount > 1) {
+            layoutStatsArea.removeViews(1, childCount - 1);
+        }
+
         for (int i = 0; i < options.size(); i++) {
             View view = LayoutInflater.from(this).inflate(R.layout.item_vote_stat, layoutStatsArea, false);
             TextView tvName = view.findViewById(R.id.tv_opt_name);
             ProgressBar pb = view.findViewById(R.id.pb_opt_count);
             TextView tvCount = view.findViewById(R.id.tv_opt_count);
 
-            // API 21 兼容性修复
             int count = counts.containsKey(i) ? counts.get(i) : 0;
             tvName.setText(options.get(i));
+
+            // 进度条最大值设为总户数（或者已投票数，看需求），防止除以0
             pb.setMax(totalCount == 0 ? 1 : totalCount);
             pb.setProgress(count);
             tvCount.setText(count + "票");
@@ -169,6 +190,7 @@ public class VoteDetailActivity extends AppCompatActivity {
     private void submitVote() {
         StringBuilder sb = new StringBuilder();
         if (vote.getSelectionType() == 0) {
+            if (radioGroup == null) return; // 防止空指针
             int selectedId = radioGroup.getCheckedRadioButtonId();
             if (selectedId == -1) {
                 Toast.makeText(this, "请选择一个选项", Toast.LENGTH_SHORT).show();
@@ -190,12 +212,17 @@ public class VoteDetailActivity extends AppCompatActivity {
             }
         }
 
+        // 可以在这里禁用按钮防止重复点击
+        btnSubmit.setEnabled(false);
+
         VoteRecord record = new VoteRecord(vote.getId(), userId, sb.toString());
         Executors.newSingleThreadExecutor().execute(() -> {
             db.voteDao().insertRecord(record);
             runOnUiThread(() -> {
                 Toast.makeText(this, "投票成功", Toast.LENGTH_SHORT).show();
                 loadData();
+                // 如果需要，可以在这里恢复按钮（虽然loadData会隐藏按钮）
+                btnSubmit.setEnabled(true);
             });
         });
     }
