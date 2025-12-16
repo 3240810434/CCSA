@@ -20,7 +20,6 @@ public interface UserDao {
     @Update
     void update(User user);
 
-    // 修复报错：Cannot resolve method 'getAllUsers'
     @Query("SELECT * FROM user")
     List<User> getAllUsers();
 
@@ -57,7 +56,11 @@ public interface UserDao {
     @Query("SELECT * FROM user WHERE phone = :phone")
     User getByPhone(String phone);
 
-    // 确保有这个方法用于按楼栋筛选
+    // 原有的按楼栋筛选（可能存在跨小区问题，建议使用下面的新方法）
     @Query("SELECT * FROM user WHERE building IN (:buildings)")
     List<User> getUsersByBuildings(List<Integer> buildings);
+
+    // 【新增】根据小区和楼栋列表筛选用户，解决发给全部居民的问题
+    @Query("SELECT * FROM user WHERE community = :community AND building IN (:buildings)")
+    List<User> getUsersByCommunityAndBuildings(String community, List<Integer> buildings);
 }
