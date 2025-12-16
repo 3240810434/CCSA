@@ -23,7 +23,6 @@ import com.gxuwz.ccsa.model.AdminNotice;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Notification;
 import com.gxuwz.ccsa.model.User;
-import com.gxuwz.ccsa.util.SharedPreferencesUtil; // 假设有工具类获取当前信息
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -162,7 +161,6 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
             }
         });
         builder.setNeutralButton("全选", (dialog, which) -> {
-            // 需要重新打开对话框刷新状态，这里简化处理，只逻辑全选
             for(int i=0; i<10; i++) buildingCheckedItems[i] = true;
             selectedBuildings.clear();
             for(int i=1; i<=10; i++) selectedBuildings.add(i);
@@ -186,7 +184,7 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
         } else {
-            filePickerLauncher.launch("image/*"); // 简化为只选图片，如需所有文件用 "*/*"
+            filePickerLauncher.launch("image/*");
         }
     }
 
@@ -207,19 +205,22 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
         else if (cbResident.isChecked()) targetType = "RESIDENT";
         else if (cbMerchant.isChecked()) targetType = "MERCHANT";
 
-        String buildingsStr = "";
+        // --- 修复: 变量在 Lambda 表达式中必须是 final 或 effective final ---
+        String tempBuildingsStr = "";
         if (cbResident.isChecked()) {
-            if (selectedBuildings.size() == 10) buildingsStr = "ALL";
+            if (selectedBuildings.size() == 10) tempBuildingsStr = "ALL";
             else {
                 StringBuilder sb = new StringBuilder();
                 for (int b : selectedBuildings) sb.append(b).append(",");
                 if (sb.length() > 0) sb.deleteCharAt(sb.length() - 1);
-                buildingsStr = sb.toString();
+                tempBuildingsStr = sb.toString();
             }
         }
+        final String buildingsStrFinal = tempBuildingsStr; // 定义 final 变量供线程使用
+        // -------------------------------------------------------------
 
-        AdminNotice notice = new AdminNotice(title, content, targetType, buildingsStr, attachmentUriString, status, new Date(), status == 1 ? new Date() : null);
-        if (existingId != -1) notice.setId(existingId); // Update logic
+        AdminNotice notice = new AdminNotice(title, content, targetType, buildingsStrFinal, attachmentUriString, status, new Date(), status == 1 ? new Date() : null);
+        if (existingId != -1) notice.setId(existingId);
 
         Executors.newSingleThreadExecutor().execute(() -> {
             AppDatabase db = AppDatabase.getInstance(this);
@@ -227,20 +228,18 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
             if (existingId != -1) {
                 db.adminNoticeDao().update(notice);
                 noticeId = existingId;
-                // 如果是从草稿变发布，或者编辑了已发布的，先清除旧的下发记录
                 if (status == 1) db.notificationDao().deleteByAdminNoticeId(noticeId);
             } else {
                 noticeId = db.adminNoticeDao().insert(notice);
             }
 
-            // 如果是立即发布，执行分发逻辑
             if (status == 1) {
                 List<Notification> distributionList = new ArrayList<>();
                 Date now = new Date();
 
                 // 1. 发给商家
                 if (cbMerchant.isChecked()) {
-                    List<Merchant> merchants = db.merchantDao().getAllMerchants(); // 假设有此方法
+                    List<Merchant> merchants = db.merchantDao().getAllMerchants(); // 现在 MerchantDao 已有此方法
                     for (Merchant m : merchants) {
                         distributionList.add(new Notification(noticeId, "所有店铺", m.getPhone(), title, content, 2, attachmentUriString, "管理员", now, false));
                     }
@@ -249,10 +248,10 @@ public class AdminNoticeEditActivity extends AppCompatActivity {
                 // 2. 发给居民
                 if (cbResident.isChecked()) {
                     List<User> residents;
-                    if ("ALL".equals(buildingsStr)) {
-                        residents = db.userDao().getAllUsers(); // 假设UserDao有此方法
+                    // 使用 final 变量 buildingsStrFinal
+                    if ("ALL".equals(buildingsStrFinal)) {
+                        residents = db.userDao().getAllUsers(); // 现在 UserDao 已有此方法
                     } else {
-                        // 假设User有 getBuilding() 方法
                         residents = db.userDao().getUsersByBuildings(selectedBuildings);
                     }
                     for (User u : residents) {

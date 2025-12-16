@@ -25,6 +25,16 @@ public class DateUtils {
     }
 
     /**
+     * 将Date对象转换为字符串
+     * 修复报错：Cannot resolve method 'dateToString'
+     */
+    public static String dateToString(Date date) {
+        if (date == null) return "";
+        // 这里复用 formatTime 的逻辑，或者自定义格式
+        return formatTime(date.getTime());
+    }
+
+    /**
      * 获取相对时间（如：刚刚、xx分钟前）
      */
     public static String getRelativeTime(long time) {
@@ -38,7 +48,7 @@ public class DateUtils {
     }
 
     /**
-     * 【新增】获取当前时间完整字符串
+     * 获取当前时间完整字符串
      * 格式：yyyy-MM-dd HH:mm:ss
      */
     public static String getCurrentDateTime() {
