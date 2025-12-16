@@ -63,4 +63,7 @@ public interface UserDao {
     // 【新增】根据小区和楼栋列表筛选用户，解决发给全部居民的问题
     @Query("SELECT * FROM user WHERE community = :community AND building IN (:buildings)")
     List<User> getUsersByCommunityAndBuildings(String community, List<Integer> buildings);
+
+    @Query("SELECT COUNT(*) FROM users WHERE community = :community")
+    int countResidents(String community);
 }

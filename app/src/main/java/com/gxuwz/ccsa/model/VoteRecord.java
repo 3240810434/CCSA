@@ -1,4 +1,3 @@
-// CCSA/app/src/main/java/com/gxuwz/ccsa/model/VoteRecord.java
 package com.gxuwz.ccsa.model;
 
 import androidx.room.Entity;
@@ -8,26 +7,23 @@ import androidx.room.PrimaryKey;
 public class VoteRecord {
     @PrimaryKey(autoGenerate = true)
     private long id;
-    private long voteId; // 投票ID
-    private String userId; // 用户ID(手机号)
-    private boolean isAgree; // true:赞成, false:反对
+    private long voteId;
+    private String userId;
+    private String selectedIndices; // 用户选择的选项索引，如 "0,2" 代表选了第1和第3个
 
-    public VoteRecord(long voteId, String userId, boolean isAgree) {
+    public VoteRecord(long voteId, String userId, String selectedIndices) {
         this.voteId = voteId;
         this.userId = userId;
-        this.isAgree = isAgree;
+        this.selectedIndices = selectedIndices;
     }
 
-    // getter和setter方法
+    // Getters and Setters
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
-
     public long getVoteId() { return voteId; }
     public void setVoteId(long voteId) { this.voteId = voteId; }
-
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
-
-    public boolean isAgree() { return isAgree; }
-    public void setAgree(boolean agree) { isAgree = agree; }
+    public String getSelectedIndices() { return selectedIndices; }
+    public void setSelectedIndices(String selectedIndices) { this.selectedIndices = selectedIndices; }
 }

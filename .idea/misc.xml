@@ -146,6 +146,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_chat_left.xml" value="0.264" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_chat_right.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_comment.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_create_vote_option.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_fee_announcement.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_fee_bill.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_fee_bill.xml " value="0.24114583333333334" />
@@ -178,6 +179,7 @@
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_room_area.xml " value="0.24048913043478262" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_spec_row.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_vote.xml" value="0.24114583333333334" />
+        <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/item_vote_stat.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/merchant_navigation_bottom.xml" value="0.24114583333333334" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/layout/navigation_bottom.xml" value="0.536" />
         <entry key="..\:/Android/AndroidStudioProjects/CCSA/app/src/main/res/menu/admin_bottom_nav.xml" value="0.24114583333333334" />
