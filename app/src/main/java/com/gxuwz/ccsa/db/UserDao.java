@@ -64,6 +64,6 @@ public interface UserDao {
     @Query("SELECT * FROM user WHERE community = :community AND building IN (:buildings)")
     List<User> getUsersByCommunityAndBuildings(String community, List<Integer> buildings);
 
-    @Query("SELECT COUNT(*) FROM users WHERE community = :community")
+    @Query("SELECT COUNT(*) FROM user WHERE community = :community")
     int countResidents(String community);
 }
