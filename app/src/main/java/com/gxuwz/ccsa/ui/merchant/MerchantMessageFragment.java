@@ -1,5 +1,6 @@
 package com.gxuwz.ccsa.ui.merchant;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,11 +21,15 @@ import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.ChatMessage;
+import com.gxuwz.ccsa.model.Merchant;
+import com.gxuwz.ccsa.model.Notification;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.ui.resident.ChatActivity;
 import com.gxuwz.ccsa.util.DateUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +74,7 @@ public class MerchantMessageFragment extends Fragment {
         if (merchantId == -1) return;
 
         new Thread(() -> {
-            // 查询所有与我(MERCHANT)相关的消息
+            // 1. 查询所有与我(MERCHANT)相关的聊天消息
             List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(merchantId, "MERCHANT");
             Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
@@ -102,10 +107,41 @@ public class MerchantMessageFragment extends Fragment {
                 }
             }
 
+            // 暂存聊天列表
+            List<ChatMessage> finalList = new ArrayList<>(latestMsgMap.values());
+
+            // 2. 【新增】查询系统通知
+            // 首先获取商家的手机号，因为 Notification 表是用手机号关联的
+            Merchant me = db.merchantDao().findById(merchantId);
+            if (me != null) {
+                // 使用在 NotificationDao 中新增的方法 findByRecipientPhone
+                List<Notification> notices = db.notificationDao().findByRecipientPhone(me.getPhone());
+                if (notices != null && !notices.isEmpty()) {
+                    // 取最新的一条通知作为展示
+                    Notification latestNotice = notices.get(0);
+                    ChatMessage sysMsg = new ChatMessage();
+                    sysMsg.targetName = "系统通知"; // 特殊标记名称
+                    sysMsg.content = latestNotice.getTitle(); // 显示标题
+                    sysMsg.createTime = latestNotice.getCreateTime();
+                    // 可以设置一个系统头像资源ID，在 Adapter 里处理，或者这里给空字符串
+                    sysMsg.targetAvatar = "";
+                    sysMsg.senderRole = "SYSTEM"; // 标记为系统角色
+
+                    // 将系统通知加入列表
+                    finalList.add(sysMsg);
+                }
+            }
+
+            // 3. 按时间倒序排序
+            Collections.sort(finalList, (o1, o2) -> {
+                if(o1.createTime == null || o2.createTime == null) return 0;
+                return o2.createTime.compareTo(o1.createTime);
+            });
+
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
                     conversationList.clear();
-                    conversationList.addAll(latestMsgMap.values());
+                    conversationList.addAll(finalList);
                     if (adapter != null) adapter.notifyDataSetChanged();
                 });
             }
@@ -127,7 +163,6 @@ public class MerchantMessageFragment extends Fragment {
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            // 加载 item_message_list 布局
             View view = LayoutInflater.from(context).inflate(R.layout.item_message_list, parent, false);
             return new ViewHolder(view);
         }
@@ -141,7 +176,7 @@ public class MerchantMessageFragment extends Fragment {
                 holder.tvName.setText(msg.targetName);
             }
 
-            // 设置内容 (之前报错的地方)
+            // 设置内容
             if (holder.tvContent != null) {
                 holder.tvContent.setText(msg.content);
             }
@@ -151,34 +186,50 @@ public class MerchantMessageFragment extends Fragment {
                 holder.tvTime.setText(DateUtils.formatTime(msg.createTime));
             }
 
-            // 设置头像
-            Glide.with(context)
-                    .load(msg.targetAvatar)
-                    .placeholder(R.drawable.ic_avatar)
-                    .circleCrop()
-                    .into(holder.ivAvatar);
+            // 【新增】处理系统通知的头像和点击事件
+            if ("系统通知".equals(msg.targetName) || "SYSTEM".equals(msg.senderRole)) {
+                // 设置系统通知默认头像 (请确保 res/drawable 下有 ic_notification 图片，或者使用其他现有图片)
+                holder.ivAvatar.setImageResource(R.drawable.ic_notification);
 
-            holder.itemView.setOnClickListener(v -> {
-                int targetId;
-                String targetRole;
+                // 点击系统通知弹出详情或跳转列表 (这里简单实现为弹窗显示最新一条，或者跳转到通知列表页)
+                holder.itemView.setOnClickListener(v -> {
+                    // 如果有 NotificationListActivity 应该跳转过去，这里为了演示直接弹窗显示内容
+                    new AlertDialog.Builder(context)
+                            .setTitle("最新系统通知")
+                            .setMessage(msg.content) // 这里只显示了标题，实际开发建议跳转专门的通知列表Activity
+                            .setPositiveButton("知道了", null)
+                            .show();
+                });
+            } else {
+                // 普通聊天逻辑
+                Glide.with(context)
+                        .load(msg.targetAvatar)
+                        .placeholder(R.drawable.ic_avatar)
+                        .circleCrop()
+                        .into(holder.ivAvatar);
 
-                if (msg.senderId == myMerchantId && "MERCHANT".equals(msg.senderRole)) {
-                    targetId = msg.receiverId;
-                    targetRole = msg.receiverRole;
-                } else {
-                    targetId = msg.senderId;
-                    targetRole = msg.senderRole;
-                }
+                holder.itemView.setOnClickListener(v -> {
+                    int targetId;
+                    String targetRole;
 
-                Intent intent = new Intent(context, ChatActivity.class);
-                intent.putExtra("myId", myMerchantId);
-                intent.putExtra("myRole", "MERCHANT");
-                intent.putExtra("targetId", targetId);
-                intent.putExtra("targetRole", targetRole);
-                intent.putExtra("targetName", msg.targetName);
-                intent.putExtra("targetAvatar", msg.targetAvatar);
-                context.startActivity(intent);
-            });
+                    if (msg.senderId == myMerchantId && "MERCHANT".equals(msg.senderRole)) {
+                        targetId = msg.receiverId;
+                        targetRole = msg.receiverRole;
+                    } else {
+                        targetId = msg.senderId;
+                        targetRole = msg.senderRole;
+                    }
+
+                    Intent intent = new Intent(context, ChatActivity.class);
+                    intent.putExtra("myId", myMerchantId);
+                    intent.putExtra("myRole", "MERCHANT");
+                    intent.putExtra("targetId", targetId);
+                    intent.putExtra("targetRole", targetRole);
+                    intent.putExtra("targetName", msg.targetName);
+                    intent.putExtra("targetAvatar", msg.targetAvatar);
+                    context.startActivity(intent);
+                });
+            }
         }
 
         @Override
@@ -192,8 +243,7 @@ public class MerchantMessageFragment extends Fragment {
                 super(itemView);
                 ivAvatar = itemView.findViewById(R.id.iv_avatar);
                 tvName = itemView.findViewById(R.id.tv_name);
-                // 【核心修复】这里必须用 R.id.tv_last_msg，因为 item_message_list.xml 里是这么写的
-                // 之前错误的写成了 R.id.tv_content
+                // 确保这里ID和xml一致
                 tvContent = itemView.findViewById(R.id.tv_last_msg);
                 tvTime = itemView.findViewById(R.id.tv_time);
             }
