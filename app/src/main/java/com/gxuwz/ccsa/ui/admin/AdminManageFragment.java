@@ -112,11 +112,15 @@ public class AdminManageFragment extends Fragment {
             startActivity(intent);
         });
 
+        // ================== 修改部分：跳转到投票列表管理页面 ==================
         setListener(btnInitiateVote, v -> {
-            Intent intent = new Intent(requireActivity(), CreateVoteActivity.class);
+            // 原来是跳转到 CreateVoteActivity，现在改为 VoteManagementActivity
+            Intent intent = new Intent(requireActivity(), VoteManagementActivity.class);
             intent.putExtra("community", mCommunity);
+            intent.putExtra("adminAccount", mAdminAccount); // 传递账号，以便在管理页新建时使用
             startActivity(intent);
         });
+        // ================================================================
 
         setListener(btnResidentList, v -> {
             Intent intent = new Intent(requireActivity(), ResidentListActivity.class);
@@ -147,7 +151,6 @@ public class AdminManageFragment extends Fragment {
             startActivity(intent);
         });
 
-        // ================== 修改部分：跳转到具体的管理页面 ==================
         setListener(btnLifeDynamics, v -> {
             Intent intent = new Intent(requireActivity(), AdminLifeDynamicsActivity.class);
             intent.putExtra("community", mCommunity);
@@ -159,7 +162,6 @@ public class AdminManageFragment extends Fragment {
             intent.putExtra("community", mCommunity);
             startActivity(intent);
         });
-        // ================================================================
     }
 
     private void setListener(View view, View.OnClickListener listener) {
