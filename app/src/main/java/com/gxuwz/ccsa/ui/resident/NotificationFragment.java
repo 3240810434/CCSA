@@ -241,13 +241,16 @@ public class NotificationFragment extends Fragment {
                 startActivity(intent);
             }
         });
+
+        // 修改了这里：跳转到 PaymentDashboardActivity (有图的缴费页面)
         view.findViewById(R.id.ll_my_payment).setOnClickListener(v -> {
             if (checkUser()) {
-                Intent intent = new Intent(getContext(), PaymentDetailActivity.class);
+                Intent intent = new Intent(getContext(), PaymentDashboardActivity.class);
                 intent.putExtra("user", currentUser);
                 startActivity(intent);
             }
         });
+
         view.findViewById(R.id.ll_appeal).setOnClickListener(v -> {
             if (checkUser()) {
                 Intent intent = new Intent(getContext(), PaymentAppealActivity.class);
