@@ -4,67 +4,83 @@
     android:layout_height="match_parent"
     android:background="#CC000000"> <View
     android:id="@+id/view_ripple_1"
-    android:layout_width="200dp"
-    android:layout_height="200dp"
+    android:layout_width="300dp"
+    android:layout_height="300dp"
     android:layout_gravity="center"
-    android:background="@drawable/bg_red_circle"
-    android:alpha="0.3"
-    android:visibility="invisible"/>
+    android:background="@drawable/red_circle"
+    android:alpha="0.3" />
 
     <View
         android:id="@+id/view_ripple_2"
         android:layout_width="300dp"
         android:layout_height="300dp"
         android:layout_gravity="center"
-        android:background="@drawable/bg_red_circle"
-        android:alpha="0.1"
-        android:visibility="invisible"/>
+        android:background="@drawable/red_circle"
+        android:alpha="0.3" />
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="vertical"
         android:gravity="center">
 
         <TextView
-            android:id="@+id/tv_alarm_status"
+            android:id="@+id/tv_status_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="紧急报警系统"
+            android:text="紧急求助"
             android:textColor="#FFFFFF"
             android:textSize="24sp"
             android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="40dp"/>
+            android:layout_marginBottom="30dp"/>
 
         <FrameLayout
-            android:id="@+id/btn_emergency_action"
+            android:id="@+id/btn_sos_main"
             android:layout_width="160dp"
             android:layout_height="160dp"
-            android:background="@drawable/bg_red_circle"
+            android:background="@drawable/red_circle"
             android:clickable="true"
             android:focusable="true">
 
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:src="@drawable/ic_notification"
+                android:layout_gravity="center"
+                app:tint="#FFFFFF"
+                xmlns:app="http://schemas.android.com/apk/res-auto"/>
+
             <TextView
-                android:id="@+id/tv_btn_text"
+                android:id="@+id/tv_sos_hint"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:text="@string/alarm_confirm_hint"
+                android:layout_gravity="center|bottom"
+                android:text="双击报警"
                 android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
+                android:textSize="14sp"
+                android:layout_marginBottom="25dp"/>
         </FrameLayout>
 
-        <Button
-            android:id="@+id/btn_cancel_alarm"
+        <TextView
+            android:id="@+id/tv_countdown"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="取消"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#888888"
-            android:layout_marginTop="60dp"/>
+            android:text="请双击红色按钮"
+            android:textColor="#DDDDDD"
+            android:textSize="16sp"
+            android:layout_marginTop="30dp"/>
+
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_cancel_alarm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="取消"
+        android:background="@null"
+        android:textColor="#FFFFFF"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="50dp"/>
+
 </FrameLayout>
