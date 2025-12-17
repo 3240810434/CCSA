@@ -21,9 +21,9 @@ import java.util.List;
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
     private Context context;
     private List<Comment> list;
-    private int currentUserId = 1; // 假定当前用户ID，实际项目中建议从 SharedPreferences 或 User 对象获取
+    private int currentUserId = 1;
 
-    // 【新增】定义回复点击监听接口
+    // 定义回复点击监听接口
     private OnReplyClickListener onReplyClickListener;
 
     public interface OnReplyClickListener {
@@ -39,7 +39,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         this.list = list;
     }
 
-    // 如果你有传入当前用户ID的需求，可以加这个方法
     public void setCurrentUserId(int userId) {
         this.currentUserId = userId;
     }
@@ -59,14 +58,13 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         holder.tvTime.setText(DateUtils.getRelativeTime(comment.createTime));
         holder.tvName.setText(comment.userName);
 
-        // 默认加载 lan.jpg
         Glide.with(context)
                 .load(comment.userAvatar)
                 .placeholder(R.drawable.lan)
                 .error(R.drawable.lan)
                 .into(holder.ivAvatar);
 
-        // 同步用户信息逻辑
+        // 加载最新用户信息
         new Thread(() -> {
             User latestUser = AppDatabase.getInstance(context).userDao().getUserById(comment.userId);
             if (latestUser != null && context instanceof Activity) {
@@ -81,7 +79,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             }
         }).start();
 
-        // 【新增】设置回复按钮点击事件
+        // 设置回复按钮点击事件
+        // 此时布局中已有 tv_reply，不会再报错
         if (holder.tvReply != null) {
             holder.tvReply.setOnClickListener(v -> {
                 if (onReplyClickListener != null) {
@@ -119,8 +118,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvContent, tvTime;
-        // 【新增】声明回复按钮
-        TextView tvReply;
+        TextView tvReply; // 回复按钮
         CircleImageView ivAvatar;
 
         public ViewHolder(@NonNull View itemView) {
@@ -130,8 +128,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             tvTime = itemView.findViewById(R.id.tv_time);
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
 
-            // 【新增】绑定回复按钮，请确保 item_comment.xml 中有 id 为 tv_reply 的控件
-            // 如果你的 xml 中该控件 id 不叫 tv_reply，请改为实际的 id
+            // 绑定布局中的 tv_reply
             tvReply = itemView.findViewById(R.id.tv_reply);
         }
     }
