@@ -1,11 +1,13 @@
 package com.gxuwz.ccsa.ui.resident;
 
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -29,7 +31,6 @@ import com.gxuwz.ccsa.model.Comment;
 import com.gxuwz.ccsa.model.Post;
 import com.gxuwz.ccsa.model.PostMedia;
 import com.gxuwz.ccsa.model.User;
-// 【新增】引入历史记录模型
 import com.gxuwz.ccsa.model.HistoryRecord;
 
 import java.util.ArrayList;
@@ -191,13 +192,12 @@ public class PostDetailActivity extends AppCompatActivity {
             indicatorContainer.setVisibility(View.GONE);
         }
 
-        // 【新增】保存浏览历史
+        // 保存浏览历史
         if (currentUser != null) {
             saveHistory();
         }
     }
 
-    // 【新增】保存历史记录逻辑
     private void saveHistory() {
         new Thread(() -> {
             AppDatabase db = AppDatabase.getInstance(this);
@@ -254,6 +254,29 @@ public class PostDetailActivity extends AppCompatActivity {
 
     private void setupComments() {
         adapter = new CommentAdapter(this, commentList);
+
+        // 【新增】设置当前用户的ID，以便Adapter中判断是否可以删除评论
+        if (currentUser != null) {
+            adapter.setCurrentUserId(currentUser.getId());
+        }
+
+        // 【新增】实现点击回复的回调逻辑
+        adapter.setOnReplyListener(comment -> {
+            // 1. 设置输入框内容为 "回复 xxx: "
+            String replyPrefix = "回复 " + comment.userName + ": ";
+            etComment.setText(replyPrefix);
+
+            // 2. 将光标移到文本末尾
+            etComment.setSelection(etComment.getText().length());
+
+            // 3. 获取焦点并弹出软键盘
+            etComment.requestFocus();
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.showSoftInput(etComment, InputMethodManager.SHOW_IMPLICIT);
+            }
+        });
+
         rvComments.setLayoutManager(new LinearLayoutManager(this));
         rvComments.setAdapter(adapter);
         loadComments();
@@ -294,6 +317,11 @@ public class PostDetailActivity extends AppCompatActivity {
             AppDatabase.getInstance(this).postDao().insertComment(comment);
             runOnUiThread(() -> {
                 etComment.setText("");
+                // 发送完成后关闭键盘
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.hideSoftInputFromWindow(etComment.getWindowToken(), 0);
+                }
                 Toast.makeText(this, "评论成功", Toast.LENGTH_SHORT).show();
                 loadComments();
             });

@@ -21,11 +21,27 @@ import java.util.List;
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHolder> {
     private Context context;
     private List<Comment> list;
-    private int currentUserId = 1; // 假定当前用户ID
+    private int currentUserId = 1; // 假定当前用户ID，实际项目中建议从 SharedPreferences 或 User 对象获取
+
+    // 【新增】定义回复点击监听接口
+    private OnReplyClickListener onReplyClickListener;
+
+    public interface OnReplyClickListener {
+        void onReply(Comment comment);
+    }
+
+    public void setOnReplyListener(OnReplyClickListener listener) {
+        this.onReplyClickListener = listener;
+    }
 
     public CommentAdapter(Context context, List<Comment> list) {
         this.context = context;
         this.list = list;
+    }
+
+    // 如果你有传入当前用户ID的需求，可以加这个方法
+    public void setCurrentUserId(int userId) {
+        this.currentUserId = userId;
     }
 
     @NonNull
@@ -43,29 +59,36 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
         holder.tvTime.setText(DateUtils.getRelativeTime(comment.createTime));
         holder.tvName.setText(comment.userName);
 
-        // ============ 修改点 1：默认头像改为 lan (lan.jpg) ============
-        // 解决评论显示“黑人头像”的问题，默认加载 lan.jpg
+        // 默认加载 lan.jpg
         Glide.with(context)
                 .load(comment.userAvatar)
-                .placeholder(R.drawable.lan) // 修改这里
-                .error(R.drawable.lan)       // 修改这里
+                .placeholder(R.drawable.lan)
+                .error(R.drawable.lan)
                 .into(holder.ivAvatar);
 
-        // 实时同步用户信息
+        // 同步用户信息逻辑
         new Thread(() -> {
             User latestUser = AppDatabase.getInstance(context).userDao().getUserById(comment.userId);
             if (latestUser != null && context instanceof Activity) {
                 ((Activity) context).runOnUiThread(() -> {
                     holder.tvName.setText(latestUser.getName());
-                    // 同步加载最新头像，同样使用 lan 作为占位
                     Glide.with(context)
                             .load(latestUser.getAvatar())
-                            .placeholder(R.drawable.lan) // 修改这里
-                            .error(R.drawable.lan)       // 修改这里
+                            .placeholder(R.drawable.lan)
+                            .error(R.drawable.lan)
                             .into(holder.ivAvatar);
                 });
             }
         }).start();
+
+        // 【新增】设置回复按钮点击事件
+        if (holder.tvReply != null) {
+            holder.tvReply.setOnClickListener(v -> {
+                if (onReplyClickListener != null) {
+                    onReplyClickListener.onReply(comment);
+                }
+            });
+        }
 
         // 长按删除
         holder.itemView.setOnLongClickListener(v -> {
@@ -96,6 +119,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvName, tvContent, tvTime;
+        // 【新增】声明回复按钮
+        TextView tvReply;
         CircleImageView ivAvatar;
 
         public ViewHolder(@NonNull View itemView) {
@@ -104,6 +129,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.ViewHold
             tvContent = itemView.findViewById(R.id.tv_content);
             tvTime = itemView.findViewById(R.id.tv_time);
             ivAvatar = itemView.findViewById(R.id.iv_avatar);
+
+            // 【新增】绑定回复按钮，请确保 item_comment.xml 中有 id 为 tv_reply 的控件
+            // 如果你的 xml 中该控件 id 不叫 tv_reply，请改为实际的 id
+            tvReply = itemView.findViewById(R.id.tv_reply);
         }
     }
 }
