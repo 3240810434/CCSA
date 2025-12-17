@@ -2,13 +2,10 @@ package com.gxuwz.ccsa.ui.resident;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
-import android.widget.TableLayout;
-import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -43,8 +40,7 @@ import java.util.Map;
 public class PaymentDashboardActivity extends AppCompatActivity {
 
     private PieChart pieChart;
-    // private BarChart barChart; // 删除 BarChart
-    private TableLayout tableReport; // 新增 TableLayout
+    // 删除了 TableLayout tableReport
     private RecyclerView recyclerView;
     private TextView tvTotalYearly;
     private TextView tvMonthFilter;
@@ -81,8 +77,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
 
     private void initViews() {
         pieChart = findViewById(R.id.chart_pie);
-        // barChart = findViewById(R.id.chart_bar); // 删除
-        tableReport = findViewById(R.id.table_report); // 绑定 TableLayout
+        // 删除了 tableReport 绑定
 
         recyclerView = findViewById(R.id.recycler_view_records);
         tvTotalYearly = findViewById(R.id.tv_total_yearly);
@@ -101,8 +96,6 @@ public class PaymentDashboardActivity extends AppCompatActivity {
 
         // 初始化年份选择器
         setupYearSpinner();
-
-        // 移除 initBarChartSettings();
     }
 
     private void setupYearSpinner() {
@@ -192,7 +185,6 @@ public class PaymentDashboardActivity extends AppCompatActivity {
      */
     private void updateUI() {
         // 1. 准备数据容器
-        List<PaymentRecord> yearRecordsForReport = new ArrayList<>(); // 用于报表（当年所有数据）
         List<PaymentRecord> filteredListForList = new ArrayList<>(); // 用于列表和总计（受月份筛选影响）
 
         double totalAmount = 0;
@@ -205,9 +197,6 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             int recordMonth = cal.get(Calendar.MONTH); // 0-11
 
             if (recordYear == currentSelectedYear) {
-                // 报表使用当前选中年份的所有数据，展示完整趋势
-                yearRecordsForReport.add(record);
-
                 // 列表和总金额计算受月份筛选限制
                 if (recordMonth >= 0 && recordMonth < 12 && selectedMonthsState[recordMonth]) {
                     filteredListForList.add(record);
@@ -228,88 +217,10 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             updatePieChart(filteredListForList);
         }
 
-        // 更新报表 (基于当年数据，替代 BarChart)
-        updateReportTable(yearRecordsForReport);
+        // 删除了 updateReportTable 调用
     }
 
-    /**
-     * 生成月度/年度费用明细报表表格
-     */
-    private void updateReportTable(List<PaymentRecord> records) {
-        tableReport.removeAllViews(); // 清除旧数据
-
-        // 1. 统计每个月的数据
-        double[] monthlyAmounts = new double[12];
-        int[] monthlyCounts = new int[12];
-        Arrays.fill(monthlyAmounts, 0);
-        Arrays.fill(monthlyCounts, 0);
-
-        Calendar cal = Calendar.getInstance();
-        boolean hasData = false;
-
-        for (PaymentRecord record : records) {
-            cal.setTimeInMillis(record.getPayTime());
-            int month = cal.get(Calendar.MONTH);
-            if (month >= 0 && month < 12) {
-                monthlyAmounts[month] += record.getAmount();
-                monthlyCounts[month]++;
-                hasData = true;
-            }
-        }
-
-        if (!hasData) {
-            TableRow emptyRow = new TableRow(this);
-            TextView tvEmpty = new TextView(this);
-            tvEmpty.setText("该年度暂无缴费记录");
-            tvEmpty.setGravity(Gravity.CENTER);
-            tvEmpty.setPadding(0, 40, 0, 40);
-            emptyRow.addView(tvEmpty);
-            // 合并列需要 LayoutParams
-            TableRow.LayoutParams params = new TableRow.LayoutParams();
-            params.span = 3;
-            tvEmpty.setLayoutParams(params);
-            tableReport.addView(emptyRow);
-            return;
-        }
-
-        // 2. 动态添加行
-        // 倒序显示，最近的月份在上面
-        for (int i = 11; i >= 0; i--) {
-            // 只显示有数据的月份，或者您可以选择显示所有月份
-            if (monthlyCounts[i] > 0) {
-                TableRow row = new TableRow(this);
-                row.setPadding(0, 15, 0, 15);
-                row.setBackgroundResource(R.drawable.bg_edittext_underline); // 使用下划线背景或自定义背景
-
-                // 月份列
-                TextView tvMonth = new TextView(this);
-                tvMonth.setText(monthLabels[i]);
-                tvMonth.setGravity(Gravity.CENTER);
-                tvMonth.setTextColor(Color.parseColor("#333333"));
-
-                // 笔数列
-                TextView tvCount = new TextView(this);
-                tvCount.setText(String.valueOf(monthlyCounts[i]));
-                tvCount.setGravity(Gravity.CENTER);
-                tvCount.setTextColor(Color.parseColor("#666666"));
-
-                // 金额列
-                TextView tvAmount = new TextView(this);
-                tvAmount.setText(String.format("¥ %.2f", monthlyAmounts[i]));
-                tvAmount.setGravity(Gravity.CENTER);
-                tvAmount.setTextColor(Color.parseColor("#FF5722")); // 醒目颜色
-                tvAmount.setTypeface(null, android.graphics.Typeface.BOLD);
-
-                // 添加到行，使用 layout_weight 效果需要配合 TableLayout 的 stretchColumns
-                // 这里简单添加，由 TableLayout 自动分配
-                row.addView(tvMonth);
-                row.addView(tvCount);
-                row.addView(tvAmount);
-
-                tableReport.addView(row);
-            }
-        }
-    }
+    // 删除了 updateReportTable 方法
 
     private void updatePieChart(List<PaymentRecord> records) {
         Map<String, Double> typeMap = new LinkedHashMap<>();
