@@ -110,7 +110,6 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
 
     // ViewHolder 类
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        // 注意：这里已经删除了 tv_method 变量
         TextView tvPeriod, tvAmount, tvTime;
         LinearLayout layoutDetails;
         TextView tvDetailProp, tvDetailMaint, tvDetailUtil, tvDetailElev, tvDetailGarb, tvReceipt;
@@ -129,7 +128,7 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
             tvDetailGarb = itemView.findViewById(R.id.tv_detail_garb);
             tvReceipt = itemView.findViewById(R.id.tv_receipt);
 
-            // 注意：这里绝对不能有 itemView.findViewById(R.id.tv_method)
+            // 已确保此处没有 tv_method 相关的代码
         }
     }
 }
