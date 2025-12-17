@@ -65,60 +65,12 @@
             android:visibility="gone"
             android:background="@drawable/bg_edittext_underline">
 
-            <TextView
-                android:id="@+id/tv_detail_prop"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="物业费: --"
-                android:textSize="13sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="2dp"/>
-
-            <TextView
-                android:id="@+id/tv_detail_maint"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="维修金: --"
-                android:textSize="13sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="2dp"/>
-
-            <TextView
-                android:id="@+id/tv_detail_util"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="水电公摊: --"
-                android:textSize="13sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="2dp"/>
-
-            <TextView
-                android:id="@+id/tv_detail_elev"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="电梯/加压: --"
-                android:textSize="13sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="2dp"/>
-
-            <TextView
-                android:id="@+id/tv_detail_garb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="垃圾费: --"
-                android:textSize="13sp"
-                android:textColor="#666666"
-                android:layout_marginBottom="2dp"/>
-
-            <TextView
-                android:id="@+id/tv_receipt"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="单号: --"
-                android:textSize="10sp"
-                android:textColor="#AAAAAA"
-                android:layout_marginTop="8dp"
-                android:gravity="end"/>
+            <TextView android:id="@+id/tv_detail_prop" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="物业费: --" android:textSize="13sp" android:textColor="#666" android:layout_marginBottom="2dp"/>
+            <TextView android:id="@+id/tv_detail_maint" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="维修金: --" android:textSize="13sp" android:textColor="#666" android:layout_marginBottom="2dp"/>
+            <TextView android:id="@+id/tv_detail_util" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="水电公摊: --" android:textSize="13sp" android:textColor="#666" android:layout_marginBottom="2dp"/>
+            <TextView android:id="@+id/tv_detail_elev" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="电梯/加压: --" android:textSize="13sp" android:textColor="#666" android:layout_marginBottom="2dp"/>
+            <TextView android:id="@+id/tv_detail_garb" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="垃圾费: --" android:textSize="13sp" android:textColor="#666" android:layout_marginBottom="2dp"/>
+            <TextView android:id="@+id/tv_receipt" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="单号: --" android:textSize="10sp" android:textColor="#AAA" android:layout_marginTop="8dp" android:gravity="end"/>
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

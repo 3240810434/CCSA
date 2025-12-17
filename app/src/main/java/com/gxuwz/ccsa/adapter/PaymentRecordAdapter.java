@@ -21,7 +21,9 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
     private Context context;
     private List<PaymentRecord> recordList;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-    private int expandedPosition = -1; // 记录当前展开的 Item 位置
+
+    // 记录当前展开的 Item 位置，-1表示没有展开的项
+    private int expandedPosition = -1;
 
     public PaymentRecordAdapter(Context context, List<PaymentRecord> recordList) {
         this.context = context;
@@ -31,38 +33,44 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // 加载 item_payment_record 布局
         View view = LayoutInflater.from(context).inflate(R.layout.item_payment_record, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        // 获取当前位置的记录
-        PaymentRecord record = recordList.get(position);
-        final int currentPos = position;
+        // 使用 holder.getAdapterPosition() 获取位置更安全
+        int currentPos = holder.getAdapterPosition();
+        if (currentPos == RecyclerView.NO_POSITION) return;
 
-        // 1. 设置基础信息
+        PaymentRecord record = recordList.get(currentPos);
+
+        // 1. 设置基础显示信息
         holder.tvPeriod.setText(record.getPeriod());
         holder.tvAmount.setText(String.format("-%.2f", record.getAmount()));
         holder.tvTime.setText(sdf.format(new Date(record.getPayTime())));
 
         // 2. 处理展开/折叠逻辑
-        boolean isExpanded = (position == expandedPosition);
+        boolean isExpanded = (currentPos == expandedPosition);
         holder.layoutDetails.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
 
-        // 点击整个卡片切换展开状态
+        // 设置点击监听器
         holder.itemView.setOnClickListener(v -> {
-            expandedPosition = isExpanded ? -1 : currentPos; // 如果已展开则收起，否则展开当前
-            notifyDataSetChanged(); // 刷新列表以更新视图
+            int previousExpanded = expandedPosition;
+            // 如果点击的是当前已展开的项，则折叠(-1)，否则展开当前项
+            expandedPosition = isExpanded ? -1 : currentPos;
+
+            // 刷新动画：刷新旧的和新的位置
+            if (previousExpanded != -1) {
+                notifyItemChanged(previousExpanded);
+            }
+            notifyItemChanged(currentPos);
         });
 
-        // 3. 设置详情数据 (仅当展开时处理，或者预先设置)
+        // 3. 只有当展开时，才去解析和设置详细数据（优化性能）
         if (isExpanded) {
-            // 设置收据编号
             holder.tvReceipt.setText("电子收据号: " + (record.getReceiptNumber() != null ? record.getReceiptNumber() : "无"));
 
-            // 解析费用明细 JSON
             if (record.getFeeDetailsSnapshot() != null) {
                 try {
                     JSONObject json = new JSONObject(record.getFeeDetailsSnapshot());
@@ -80,7 +88,7 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
                 }
             } else {
                 holder.tvDetailProp.setText("无详细费用数据");
-                // 清空其他项
+                // 清空其他
                 holder.tvDetailMaint.setText("");
                 holder.tvDetailUtil.setText("");
                 holder.tvDetailElev.setText("");
@@ -94,15 +102,15 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
         return recordList.size();
     }
 
-    // 更新列表数据的方法
     public void updateData(List<PaymentRecord> newRecords) {
         this.recordList.clear();
         this.recordList.addAll(newRecords);
         notifyDataSetChanged();
     }
 
-    // ViewHolder 类：持有视图引用
+    // ViewHolder 类
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        // 注意：这里已经删除了 tv_method 变量
         TextView tvPeriod, tvAmount, tvTime;
         LinearLayout layoutDetails;
         TextView tvDetailProp, tvDetailMaint, tvDetailUtil, tvDetailElev, tvDetailGarb, tvReceipt;
@@ -121,7 +129,7 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
             tvDetailGarb = itemView.findViewById(R.id.tv_detail_garb);
             tvReceipt = itemView.findViewById(R.id.tv_receipt);
 
-            // 注意：这里删除了 R.id.tv_method 的引用，因为新布局中已经移除了它
+            // 注意：这里绝对不能有 itemView.findViewById(R.id.tv_method)
         }
     }
 }
