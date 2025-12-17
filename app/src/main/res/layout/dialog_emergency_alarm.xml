@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#CC000000"> <View
+    android:id="@+id/view_ripple_1"
+    android:layout_width="200dp"
+    android:layout_height="200dp"
+    android:layout_gravity="center"
+    android:background="@drawable/bg_red_circle"
+    android:alpha="0.3"
+    android:visibility="invisible"/>
+
+    <View
+        android:id="@+id/view_ripple_2"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_red_circle"
+        android:alpha="0.1"
+        android:visibility="invisible"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/tv_alarm_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="紧急报警系统"
+            android:textColor="#FFFFFF"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="40dp"/>
+
+        <FrameLayout
+            android:id="@+id/btn_emergency_action"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:background="@drawable/bg_red_circle"
+            android:clickable="true"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/tv_btn_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:text="@string/alarm_confirm_hint"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"/>
+        </FrameLayout>
+
+        <Button
+            android:id="@+id/btn_cancel_alarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取消"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#888888"
+            android:layout_marginTop="60dp"/>
+    </LinearLayout>
+</FrameLayout>

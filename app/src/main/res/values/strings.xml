@@ -18,4 +18,11 @@
     <string name="date_hint">yyyy-MM</string>
     <string name="confirm">确认</string>
     <string name="cancel">取消</string>
+    <string name="alarm_confirm_hint">双击 确认报警</string>
+    <string name="alarm_connecting">正在联通物业值班室...</string>
+    <string name="alarm_success">报警成功！值班人员已收到通知。</string>
+    <string name="alarm_title">【紧急报警】</string>
+    <string name="alarm_content">居民 %1$s 发起了一键报警！请立即处理！</string>
+    <string name="property_reply_title">物业值班室</string>
+    <string name="property_reply_content">【系统消息】您的报警求助已收到，保安队王队长（工号001）正在前往您的住址，请注意安全。</string>
 </resources>
