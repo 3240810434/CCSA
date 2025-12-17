@@ -12,7 +12,6 @@ import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
@@ -25,7 +24,7 @@ public class EmergencyAlarmDialog extends Dialog {
     private TextView tvStatusTitle, tvCountdown, tvSosHint;
     private Button btnCancel;
 
-    // 双击逻辑
+    // 双击逻辑变量
     private long lastClickTime = 0;
     private static final long DOUBLE_CLICK_INTERVAL = 500; // 500ms内算双击
 
@@ -39,7 +38,8 @@ public class EmergencyAlarmDialog extends Dialog {
     }
 
     public EmergencyAlarmDialog(@NonNull Context context, OnAlarmConfirmedListener listener) {
-        super(context, R.style.Theme_AppCompat_Light_NoActionBar); // 全屏主题
+        // 修改点1：使用系统自带的全屏透明主题，解决 Cannot resolve symbol 错误
+        super(context, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
         this.listener = listener;
         this.vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     }
@@ -49,9 +49,11 @@ public class EmergencyAlarmDialog extends Dialog {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.dialog_emergency_alarm);
 
-        // 设置全屏
-        getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
-        getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        // 再次确保全屏属性
+        if (getWindow() != null) {
+            getWindow().setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+            getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
 
         initViews();
         startRippleAnimation();
@@ -66,8 +68,19 @@ public class EmergencyAlarmDialog extends Dialog {
         tvSosHint = findViewById(R.id.tv_sos_hint);
         btnCancel = findViewById(R.id.btn_cancel_alarm);
 
-        btnSosMain.setOnClickListener(v -> handleSosClick());
-        btnCancel.setOnClickListener(v -> dismiss());
+        btnSosMain.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                handleSosClick();
+            }
+        });
+
+        btnCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dismiss();
+            }
+        });
     }
 
     private void handleSosClick() {
@@ -79,7 +92,7 @@ public class EmergencyAlarmDialog extends Dialog {
             triggerAlarmProcess();
         } else {
             lastClickTime = currentTime;
-            // 可以在这里加个简单的单次点击震动反馈
+            // 单次点击震动反馈
             if (vibrator != null) vibrator.vibrate(50);
         }
     }
@@ -87,13 +100,16 @@ public class EmergencyAlarmDialog extends Dialog {
     private void triggerAlarmProcess() {
         isAlarmTriggered = true;
         tvSosHint.setVisibility(View.GONE);
-        btnCancel.setVisibility(View.GONE); // 禁止取消（或者保留取决于需求）
-        tvStatusTitle.text = "正在联通物业...";
+        btnCancel.setVisibility(View.GONE);
+
+        // 修改点2：修复 Cannot resolve symbol 'text'，Java中使用 setText
+        tvStatusTitle.setText("正在联通物业...");
 
         // 模拟倒计时连接
         new CountDownTimer(3000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
+                // 修改点2：Java中使用 setText
                 tvCountdown.setText("正在呼叫值班室 " + (millisUntilFinished / 1000 + 1));
                 // 每次倒计时震动一下
                 if (vibrator != null) vibrator.vibrate(200);
@@ -101,15 +117,20 @@ public class EmergencyAlarmDialog extends Dialog {
 
             @Override
             public void onFinish() {
+                // 修改点2：Java中使用 setText
                 tvCountdown.setText("报警成功！已通知保安队");
                 tvStatusTitle.setText("连接成功");
+
                 // 成功长震动
                 if (vibrator != null) vibrator.vibrate(1000);
 
-                // 延迟一秒关闭，并回调主界面处理后续逻辑
-                new Handler().postDelayed(() -> {
-                    dismiss();
-                    if (listener != null) listener.onAlarmConfirmed();
+                // 延迟关闭，并回调主界面处理后续逻辑
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        dismiss();
+                        if (listener != null) listener.onAlarmConfirmed();
+                    }
                 }, 1500);
             }
         }.start();
