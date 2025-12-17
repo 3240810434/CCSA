@@ -54,7 +54,7 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
         boolean isExpanded = (currentPos == expandedPosition);
         holder.layoutDetails.setVisibility(isExpanded ? View.VISIBLE : View.GONE);
 
-        // 设置点击监听器
+        // 设置点击监听器，点击卡片任何位置都可以展开/折叠
         holder.itemView.setOnClickListener(v -> {
             int previousExpanded = expandedPosition;
             // 如果点击的是当前已展开的项，则折叠(-1)，否则展开当前项
@@ -110,6 +110,7 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
 
     // ViewHolder 类
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        // 定义控件变量
         TextView tvPeriod, tvAmount, tvTime;
         LinearLayout layoutDetails;
         TextView tvDetailProp, tvDetailMaint, tvDetailUtil, tvDetailElev, tvDetailGarb, tvReceipt;
@@ -128,7 +129,7 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
             tvDetailGarb = itemView.findViewById(R.id.tv_detail_garb);
             tvReceipt = itemView.findViewById(R.id.tv_receipt);
 
-            // 已确保此处没有 tv_method 相关的代码
+            // 注意：不要在这里添加 tv_method，因为 XML 里没有这个 ID 了！
         }
     }
 }

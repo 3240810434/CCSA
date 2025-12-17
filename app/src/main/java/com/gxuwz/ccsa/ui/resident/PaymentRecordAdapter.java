@@ -81,7 +81,6 @@ public class PaymentRecordAdapter extends RecyclerView.Adapter<PaymentRecordAdap
             tvPeriod = itemView.findViewById(R.id.tv_period);
             tvAmount = itemView.findViewById(R.id.tv_amount);
             tvStatus = itemView.findViewById(R.id.tv_status);
-            tvMethod = itemView.findViewById(R.id.tv_method);
             tvTime = itemView.findViewById(R.id.tv_time);
             tvReceipt = itemView.findViewById(R.id.tv_receipt);
         }
