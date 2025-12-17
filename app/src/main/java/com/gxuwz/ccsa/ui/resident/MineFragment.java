@@ -24,9 +24,7 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.util.SharedPreferencesUtil;
-import com.gxuwz.ccsa.ui.resident.ResidentHistoryActivity;
-import com.gxuwz.ccsa.ui.resident.ResidentChangePasswordActivity;
-// 【关键修改】引入包含图表的仪表盘Activity
+// 确保引入了正确的 Activity
 import com.gxuwz.ccsa.ui.resident.PaymentDashboardActivity;
 
 import java.util.concurrent.Executors;
@@ -64,6 +62,7 @@ public class MineFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        // 加载布局文件
         View view = inflater.inflate(R.layout.fragment_mine, container, false);
 
         currentUser = SharedPreferencesUtil.getUser(getContext());
@@ -129,7 +128,8 @@ public class MineFragment extends Fragment {
             }
         });
 
-        // 【关键修改】添加“我的缴费”按钮监听，跳转到 PaymentDashboardActivity (带图表的页面)
+        // 【关键修复】这里引用的 R.id.btn_my_payment 必须在 XML 中存在
+        // 点击跳转到 PaymentDashboardActivity (包含图表)
         View btnMyPayment = view.findViewById(R.id.btn_my_payment);
         if (btnMyPayment != null) {
             btnMyPayment.setOnClickListener(v -> {

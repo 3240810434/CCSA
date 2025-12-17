@@ -155,10 +155,17 @@
                         android:text="我的互助"/>
                 </LinearLayout>
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1"/>
+                <LinearLayout
+                    android:id="@+id/btn_my_payment"
+                    style="@style/MineMenuItemStyle">
+                    <ImageView
+                        style="@style/MineMenuIconStyle"
+                        android:src="@drawable/ic_my_payment"/>
+                    <TextView
+                        style="@style/MineMenuTextStyle"
+                        android:text="我的缴费"/>
+                </LinearLayout>
+
                 <View
                     android:layout_width="0dp"
                     android:layout_height="1dp"
@@ -166,6 +173,5 @@
 
             </LinearLayout>
         </LinearLayout>
-
     </LinearLayout>
 </ScrollView>
