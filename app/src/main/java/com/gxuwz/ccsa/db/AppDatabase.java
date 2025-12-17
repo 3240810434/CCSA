@@ -30,7 +30,7 @@ import com.gxuwz.ccsa.model.Product;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.model.AfterSalesRecord;
 import com.gxuwz.ccsa.model.AdminNotice;
-import com.gxuwz.ccsa.model.HistoryRecord; // 【新增】
+import com.gxuwz.ccsa.model.HistoryRecord;
 
 @Database(
         entities = {
@@ -57,9 +57,9 @@ import com.gxuwz.ccsa.model.HistoryRecord; // 【新增】
                 Order.class,
                 AfterSalesRecord.class,
                 AdminNotice.class,
-                HistoryRecord.class // 【新增】注册 HistoryRecord
+                HistoryRecord.class
         },
-        version = 16, // 【修改】数据库版本号 +1
+        version = 17, // 【修复 4】版本号 +1，从 16 升级到 17 (需与您的项目实际版本匹配)
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)
@@ -87,8 +87,6 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract OrderDao orderDao();
     public abstract AfterSalesRecordDao afterSalesRecordDao();
     public abstract AdminNoticeDao adminNoticeDao();
-
-    // 【新增】注册 HistoryDao
     public abstract HistoryDao historyDao();
 
     public static AppDatabase getInstance(Context context) {
@@ -101,7 +99,7 @@ public abstract class AppDatabase extends RoomDatabase {
                                     "ccsa_database"
                             )
                             .allowMainThreadQueries()
-                            .fallbackToDestructiveMigration()
+                            .fallbackToDestructiveMigration() // 开发阶段允许重建数据库，生产环境请使用 addMigrations
                             .build();
                 }
             }

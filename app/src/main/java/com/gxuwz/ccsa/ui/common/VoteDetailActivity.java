@@ -84,11 +84,13 @@ public class VoteDetailActivity extends AppCompatActivity {
             boolean hasVoted = false;
             VoteRecord record = null;
             if (!isAdmin) {
-                record = db.voteDao().getVoteRecord(vote.getId(), userId);
+                // 【修复 2】这里应该使用 voteRecordDao() 而不是 voteDao()
+                record = db.voteRecordDao().getVoteRecord(vote.getId(), userId);
                 hasVoted = (record != null);
             }
 
-            List<VoteRecord> allRecords = db.voteDao().getAllRecordsForVote(vote.getId());
+            // 【修复 2】同上，修正 DAO 调用
+            List<VoteRecord> allRecords = db.voteRecordDao().getAllRecordsForVote(vote.getId());
             // 注意：countResidents 方法如果数据量大可能会慢，放在子线程是正确的
             int totalResidents = db.userDao().countResidents(vote.getCommunity());
 
@@ -217,13 +219,32 @@ public class VoteDetailActivity extends AppCompatActivity {
 
         VoteRecord record = new VoteRecord(vote.getId(), userId, sb.toString());
         Executors.newSingleThreadExecutor().execute(() -> {
-            db.voteDao().insertRecord(record);
-            runOnUiThread(() -> {
-                Toast.makeText(this, "投票成功", Toast.LENGTH_SHORT).show();
-                loadData();
-                // 如果需要，可以在这里恢复按钮（虽然loadData会隐藏按钮）
-                btnSubmit.setEnabled(true);
-            });
+            try {
+                // 【修复 3】在提交前，再次检查是否已投票（防止并发或UI未及时刷新）
+                VoteRecord existing = db.voteRecordDao().getVoteRecord(vote.getId(), userId);
+                if (existing != null) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "您已经投过票了，请勿重复投票", Toast.LENGTH_SHORT).show();
+                        loadData(); // 刷新界面进入结果页
+                    });
+                    return;
+                }
+
+                // 修正 DAO 调用为 voteRecordDao()
+                db.voteRecordDao().insertRecord(record);
+
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "投票成功", Toast.LENGTH_SHORT).show();
+                    loadData();
+                    // 投票成功后不需要恢复按钮，loadData 会隐藏按钮
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "投票失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    btnSubmit.setEnabled(true); // 失败时恢复按钮
+                });
+            }
         });
     }
 }

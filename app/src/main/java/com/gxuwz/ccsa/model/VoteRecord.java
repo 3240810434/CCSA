@@ -1,9 +1,12 @@
 package com.gxuwz.ccsa.model;
 
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "vote_records")
+// 【修复 1】添加 indices 参数，建立 voteId 和 userId 的联合唯一索引 (unique = true)
+// 这样数据库会拒绝插入重复的 (voteId, userId) 组合
+@Entity(tableName = "vote_records", indices = {@Index(value = {"voteId", "userId"}, unique = true)})
 public class VoteRecord {
     @PrimaryKey(autoGenerate = true)
     private long id;
