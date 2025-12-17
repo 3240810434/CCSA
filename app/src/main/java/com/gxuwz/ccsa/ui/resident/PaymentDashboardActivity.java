@@ -22,6 +22,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.PaymentRecordAdapter;
@@ -34,7 +35,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +80,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
 
     private void setupYearSpinner() {
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+        // 提供最近3年的选项
         String[] years = {String.valueOf(currentYear), String.valueOf(currentYear - 1), String.valueOf(currentYear - 2)};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, years);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -98,12 +100,14 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             // 获取用户所有支付记录
             allRecords = AppDatabase.getInstance(this)
                     .paymentRecordDao()
-                    .getByPhone(currentUser.getPhone()); // 需确保DAO方法按时间倒序
+                    .getByPhone(currentUser.getPhone());
 
             runOnUiThread(() -> {
-                // 默认加载当前年份
-                String selectedYear = spYear.getSelectedItem().toString();
-                updateChartsAndList(Integer.parseInt(selectedYear));
+                // 默认加载当前年份数据
+                if (spYear.getSelectedItem() != null) {
+                    String selectedYear = spYear.getSelectedItem().toString();
+                    updateChartsAndList(Integer.parseInt(selectedYear));
+                }
             });
         }).start();
     }
@@ -112,7 +116,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
         List<PaymentRecord> yearRecords = new ArrayList<>();
         double totalAmount = 0;
 
-        // 1. 筛选年份数据
+        // 1. 筛选选中年份的数据
         Calendar cal = Calendar.getInstance();
         for (PaymentRecord record : allRecords) {
             cal.setTimeInMillis(record.getPayTime());
@@ -122,58 +126,95 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             }
         }
 
-        // 2. 更新列表
+        // 2. 更新列表和总金额
         adapter.updateData(yearRecords);
         tvTotalYearly.setText(String.format("¥ %.2f", totalAmount));
 
         // 3. 更新图表
-        updatePieChart(yearRecords);
-        updateBarChart(yearRecords);
+        if (yearRecords.isEmpty()) {
+            pieChart.clear();
+            barChart.clear();
+        } else {
+            updatePieChart(yearRecords);
+            updateBarChart(yearRecords);
+        }
     }
 
     private void updatePieChart(List<PaymentRecord> records) {
-        Map<String, Double> costMap = new HashMap<>();
-        // 初始化
+        // 使用 LinkedHashMap 保持插入顺序，确保图例顺序一致
+        Map<String, Double> costMap = new LinkedHashMap<>();
         costMap.put("物业费", 0.0);
         costMap.put("维修金", 0.0);
         costMap.put("水电公摊", 0.0);
         costMap.put("电梯费", 0.0);
         costMap.put("加压费", 0.0);
         costMap.put("垃圾费", 0.0);
+        costMap.put("其他/历史", 0.0); // 新增：用于处理没有明细的记录
 
         for (PaymentRecord record : records) {
-            try {
-                if (record.getFeeDetailsSnapshot() != null) {
+            boolean hasDetail = false;
+            // 尝试解析费用明细快照
+            if (record.getFeeDetailsSnapshot() != null && !record.getFeeDetailsSnapshot().isEmpty()) {
+                try {
                     JSONObject json = new JSONObject(record.getFeeDetailsSnapshot());
+                    // 累加各项费用，注意这里使用英文key对应JSON中的字段
                     costMap.put("物业费", costMap.get("物业费") + json.optDouble("property", 0));
                     costMap.put("维修金", costMap.get("维修金") + json.optDouble("maintenance", 0));
                     costMap.put("水电公摊", costMap.get("水电公摊") + json.optDouble("utility", 0));
                     costMap.put("电梯费", costMap.get("电梯费") + json.optDouble("elevator", 0));
                     costMap.put("加压费", costMap.get("加压费") + json.optDouble("pressure", 0));
                     costMap.put("垃圾费", costMap.get("垃圾费") + json.optDouble("garbage", 0));
+                    hasDetail = true;
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) { e.printStackTrace(); }
+            }
+
+            // 如果没有明细（旧数据）或解析失败，将整笔金额归入“其他”
+            if (!hasDetail) {
+                costMap.put("其他/历史", costMap.get("其他/历史") + record.getAmount());
+            }
         }
 
         List<PieEntry> entries = new ArrayList<>();
         for (Map.Entry<String, Double> entry : costMap.entrySet()) {
-            if (entry.getValue() > 0) {
+            // 只有金额大于0的项才显示在图中
+            if (entry.getValue() > 0.01) {
                 entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
             }
         }
 
         PieDataSet dataSet = new PieDataSet(entries, "");
-        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        // 设置丰富的颜色
+        ArrayList<Integer> colors = new ArrayList<>();
+        for (int c : ColorTemplate.MATERIAL_COLORS) colors.add(c);
+        for (int c : ColorTemplate.JOYFUL_COLORS) colors.add(c);
+        for (int c : ColorTemplate.COLORFUL_COLORS) colors.add(c);
+        dataSet.setColors(colors);
+
         dataSet.setValueTextSize(12f);
         dataSet.setValueTextColor(Color.WHITE);
+        dataSet.setValueFormatter(new PercentFormatter(pieChart)); // 显示百分比
 
         PieData data = new PieData(dataSet);
         pieChart.setData(data);
+
+        // 样式设置
         pieChart.setUsePercentValues(true);
-        pieChart.setCenterText("费用构成");
         pieChart.getDescription().setEnabled(false);
-        pieChart.getLegend().setOrientation(Legend.LegendOrientation.HORIZONTAL);
-        pieChart.getLegend().setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setHoleColor(Color.WHITE);
+        pieChart.setTransparentCircleRadius(61f);
+        pieChart.setCenterText("支出构成");
+
+        // 图例设置
+        Legend l = pieChart.getLegend();
+        l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
+        l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);
+        l.setOrientation(Legend.LegendOrientation.HORIZONTAL);
+        l.setDrawInside(false);
+        l.setWordWrapEnabled(true);
+
         pieChart.animateY(1000);
         pieChart.invalidate();
     }
@@ -182,6 +223,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
         float[] monthlyTotals = new float[12];
         Calendar cal = Calendar.getInstance();
 
+        // 统计每月总支出
         for (PaymentRecord record : records) {
             cal.setTimeInMillis(record.getPayTime());
             int month = cal.get(Calendar.MONTH); // 0-11
@@ -193,17 +235,29 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             entries.add(new BarEntry(i, monthlyTotals[i]));
         }
 
-        BarDataSet dataSet = new BarDataSet(entries, "月度支出");
+        BarDataSet dataSet = new BarDataSet(entries, "月度支出 (元)");
         dataSet.setColor(getResources().getColor(R.color.teal_200));
+        dataSet.setValueTextSize(10f);
 
         BarData data = new BarData(dataSet);
-        data.setBarWidth(0.5f);
+        data.setBarWidth(0.6f);
 
         barChart.setData(data);
         barChart.getDescription().setEnabled(false);
+
+        // X轴设置
         XAxis xAxis = barChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(new String[]{"1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"}));
+        xAxis.setDrawGridLines(false);
+        xAxis.setGranularity(1f);
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(new String[]{
+                "1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"
+        }));
+
+        // 确保Y轴从0开始
+        barChart.getAxisLeft().setAxisMinimum(0f);
+        barChart.getAxisRight().setEnabled(false); // 隐藏右侧Y轴
+
         barChart.animateY(1000);
         barChart.invalidate();
     }
