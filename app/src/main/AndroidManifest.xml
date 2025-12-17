@@ -80,6 +80,7 @@
         <activity android:name=".ui.admin.AdminNeighborHelpActivity" android:exported="false"/>
 
         <activity android:name=".ui.resident.PayPropertyFeeActivity" android:exported="false"/>
+        <activity android:name=".ui.resident.PaymentDashboardActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PaymentDetailActivity" android:exported="false"/>
         <activity android:name=".ui.resident.PaymentAppealActivity" android:exported="false"/>
         <activity android:name=".ui.resident.ResidentListActivity" android:exported="false"/>
