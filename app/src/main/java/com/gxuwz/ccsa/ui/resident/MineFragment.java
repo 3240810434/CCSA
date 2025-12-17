@@ -24,9 +24,10 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.util.SharedPreferencesUtil;
-// 【新增】引入目标Activity
 import com.gxuwz.ccsa.ui.resident.ResidentHistoryActivity;
 import com.gxuwz.ccsa.ui.resident.ResidentChangePasswordActivity;
+// 【关键修改】引入包含图表的仪表盘Activity
+import com.gxuwz.ccsa.ui.resident.PaymentDashboardActivity;
 
 import java.util.concurrent.Executors;
 
@@ -65,10 +66,7 @@ public class MineFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_mine, container, false);
 
-        // 优先从 SharedPreferencesUtil 获取最新用户信息，确保与 MyDynamicsActivity 读取源一致
         currentUser = SharedPreferencesUtil.getUser(getContext());
-
-        // 如果 SP 中为空（极端情况），尝试从 Activity 获取
         if (currentUser == null && getActivity() instanceof ResidentMainActivity) {
             currentUser = ((ResidentMainActivity) getActivity()).getUser();
         }
@@ -91,7 +89,7 @@ public class MineFragment extends Fragment {
         view.findViewById(R.id.cv_avatar).setOnClickListener(editProfileListener);
         view.findViewById(R.id.btn_edit_profile).setOnClickListener(editProfileListener);
 
-        // 跳转到我的订单页面
+        // 我的订单
         view.findViewById(R.id.btn_my_orders).setOnClickListener(v -> {
             if (checkLoginStatus()) {
                 Intent intent = new Intent(getContext(), ResidentOrdersActivity.class);
@@ -99,7 +97,7 @@ public class MineFragment extends Fragment {
             }
         });
 
-        // 跳转到我的动态页面
+        // 我的动态
         view.findViewById(R.id.btn_my_dynamics).setOnClickListener(v -> {
             if (checkLoginStatus()) {
                 Intent intent = new Intent(getContext(), MyDynamicsActivity.class);
@@ -107,7 +105,7 @@ public class MineFragment extends Fragment {
             }
         });
 
-        // 跳转到我的互助页面
+        // 我的互助
         view.findViewById(R.id.btn_my_help).setOnClickListener(v -> {
             if (checkLoginStatus()) {
                 Intent intent = new Intent(getContext(), MyHelpActivity.class);
@@ -115,7 +113,7 @@ public class MineFragment extends Fragment {
             }
         });
 
-        // 【修改】跳转到观看历史
+        // 观看历史
         view.findViewById(R.id.btn_watch_history).setOnClickListener(v -> {
             if (checkLoginStatus()) {
                 Intent intent = new Intent(getContext(), ResidentHistoryActivity.class);
@@ -123,21 +121,29 @@ public class MineFragment extends Fragment {
             }
         });
 
-        // 【修改】跳转到修改密码
+        // 修改密码
         view.findViewById(R.id.btn_change_password).setOnClickListener(v -> {
             if (checkLoginStatus()) {
                 Intent intent = new Intent(getContext(), ResidentChangePasswordActivity.class);
                 startActivity(intent);
             }
         });
+
+        // 【关键修改】添加“我的缴费”按钮监听，跳转到 PaymentDashboardActivity (带图表的页面)
+        View btnMyPayment = view.findViewById(R.id.btn_my_payment);
+        if (btnMyPayment != null) {
+            btnMyPayment.setOnClickListener(v -> {
+                if (checkLoginStatus()) {
+                    Intent intent = new Intent(getContext(), PaymentDashboardActivity.class);
+                    startActivity(intent);
+                }
+            });
+        }
     }
 
-    // 辅助方法：检查登录状态，防止空指针或无效跳转
     private boolean checkLoginStatus() {
         if (currentUser == null) {
             Toast.makeText(getContext(), "请先登录", Toast.LENGTH_SHORT).show();
-            // 如果需要，可以在这里跳转回登录页
-            // startActivity(new Intent(getContext(), ResidentLoginActivity.class));
             return false;
         }
         return true;
@@ -155,7 +161,6 @@ public class MineFragment extends Fragment {
                 ivAvatar.setImageResource(R.drawable.lan);
             }
         } else {
-            // 未登录时的默认显示
             tvUsername.setText("未登录");
             tvAddress.setText("点击头像登录");
         }
@@ -224,9 +229,7 @@ public class MineFragment extends Fragment {
 
     private void saveUserToDb() {
         Executors.newSingleThreadExecutor().execute(() -> {
-            // 更新数据库
             AppDatabase.getInstance(getContext()).userDao().update(currentUser);
-            // 同时更新 SP，保证页面跳转后数据最新
             SharedPreferencesUtil.saveUser(getContext(), currentUser);
 
             if (getActivity() != null) {
