@@ -46,12 +46,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:text="全部月份"
+                android:text="全部月份 ▼"
                 android:textColor="#2196F3"
                 android:textSize="14sp"
                 android:paddingHorizontal="8dp"
                 android:layout_toStartOf="@id/sp_year"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground"/>
 
         </RelativeLayout>
 
