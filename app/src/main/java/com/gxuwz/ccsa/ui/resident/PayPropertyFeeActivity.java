@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,7 +13,6 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.content.Intent;
 
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.FeeBillAdapter;
@@ -22,6 +22,9 @@ import com.gxuwz.ccsa.model.PropertyFeeBill;
 import com.gxuwz.ccsa.model.PropertyFeeStandard;
 import com.gxuwz.ccsa.model.RoomArea;
 import com.gxuwz.ccsa.model.User;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -106,9 +109,6 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                 // 筛选未缴账单（状态0）
                 List<PropertyFeeBill> unpaidBills = new ArrayList<>();
                 for (PropertyFeeBill bill : allBills) {
-                    Log.d(TAG, "账单详情：周期=" + bill.getPeriodStart() + "至" + bill.getPeriodEnd() +
-                            "，金额=" + bill.getTotalAmount() + "元，状态=" + (bill.getStatus() == 0 ? "未缴" : "已缴"));
-
                     if (bill.getStatus() == 0) {
                         unpaidBills.add(bill);
                     }
@@ -206,17 +206,12 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
         ExecutorService executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
             try {
-                Log.d(TAG, "开始查询账单详情，standardId=" + bill.getStandardId());
-                Log.d(TAG, "房屋信息：" + bill.getCommunity() + "-" + bill.getBuilding() + "-" + bill.getRoomNumber());
-
                 // 查询账单对应的收费标准
                 PropertyFeeStandard tempStandard = AppDatabase.getInstance(this)
                         .propertyFeeStandardDao()
                         .getById(bill.getStandardId());
 
-                // 尝试根据小区名查最新的标准（如果ID查询失败）
                 if (tempStandard == null && bill.getCommunity() != null) {
-                    Log.w(TAG, "根据ID=" + bill.getStandardId() + "未查到收费标准，尝试根据小区名[" + bill.getCommunity() + "]查询最新标准");
                     tempStandard = AppDatabase.getInstance(this)
                             .propertyFeeStandardDao()
                             .getLatestByCommunity(bill.getCommunity());
@@ -229,33 +224,19 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                         .getByCommunityBuildingAndRoom(
                                 bill.getCommunity(), bill.getBuilding(), bill.getRoomNumber());
 
-                Log.d(TAG, "收费标准查询结果：" + (standard != null ? "成功" : "失败"));
-                Log.d(TAG, "房屋信息查询结果：" + (roomArea != null ? "成功" : "失败"));
-
-                if (standard == null) {
+                if (standard == null || roomArea == null) {
                     runOnUiThread(() -> {
-                        Toast.makeText(PayPropertyFeeActivity.this, "获取收费标准失败，请联系物业", Toast.LENGTH_SHORT).show();
-                        finalTvPropertyServiceFee.setText("物业服务费：获取数据失败");
-                        finalTvMaintenanceFund.setText("日常维修资金：获取数据失败");
-                        finalTvUtilityFee.setText("水电公摊费：获取数据失败");
-                    });
-                    return;
-                }
-                if (roomArea == null) {
-                    runOnUiThread(() -> {
-                        Toast.makeText(PayPropertyFeeActivity.this, "获取房屋信息失败，请联系物业", Toast.LENGTH_SHORT).show();
-                        finalTvPropertyServiceFee.setText("物业服务费：房屋信息缺失");
-                        finalTvMaintenanceFund.setText("日常维修资金：房屋信息缺失");
-                        finalTvUtilityFee.setText("水电公摊费：房屋信息缺失");
+                        Toast.makeText(PayPropertyFeeActivity.this, "获取详细信息失败", Toast.LENGTH_SHORT).show();
+                        finalTvPropertyServiceFee.setText("数据加载失败");
                     });
                     return;
                 }
 
-                // 获取房屋面积和楼层（声明为final）
+                // 获取房屋面积和楼层
                 final double area = roomArea.getArea();
                 final int floor = roomArea.getFloor();
 
-                // 计算各项费用（声明为final）
+                // 计算各项费用
                 final double propertyServiceFee = standard.getPropertyServiceFeePerSquare() * area;
                 final double maintenanceFund = standard.getDailyMaintenanceFund();
                 final double utilityFee = standard.getUtilityShareFeePerSquare() * area;
@@ -264,7 +245,6 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                 // 计算电梯费
                 final String elevatorFeeText;
                 final double elevatorFeeValue;
-
                 if (standard.getElevatorFee() > 0) {
                     if (standard.getElevatorFloorAbove() > 0 && floor >= standard.getElevatorFloorAbove()) {
                         elevatorFeeValue = standard.getElevatorFeeAbove();
@@ -286,7 +266,6 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                 // 计算加压费
                 final String pressureFeeText;
                 final double pressureFeeValue;
-
                 if (standard.getPressureFee() > 0) {
                     if (standard.getPressureFloorAbove() > 0 && floor >= standard.getPressureFloorAbove()) {
                         pressureFeeValue = standard.getPressureFeeAbove();
@@ -306,11 +285,6 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                     pressureFeeText = "加压费：不收取";
                 }
 
-                // 计算总额验证
-                double calculatedTotal = propertyServiceFee + maintenanceFund + utilityFee
-                        + elevatorFeeValue + pressureFeeValue + garbageFee;
-                Log.d(TAG, "计算总额：" + calculatedTotal + ", 账单总额：" + bill.getTotalAmount());
-
                 // 更新UI
                 runOnUiThread(() -> {
                     finalTvPropertyServiceFee.setText(String.format("物业服务费：%.2f元 (%.2f元/㎡ × %.2f㎡)",
@@ -318,29 +292,15 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                     finalTvMaintenanceFund.setText(String.format("日常维修资金：%.2f元", maintenanceFund));
                     finalTvUtilityFee.setText(String.format("水电公摊费：%.2f元 (%.2f元/㎡ × %.2f㎡)",
                             utilityFee, standard.getUtilityShareFeePerSquare(), area));
-
                     finalTvElevatorFee.setText(elevatorFeeText);
                     finalTvElevatorFeeAbove.setVisibility(View.GONE);
-
                     finalTvPressureFee.setText(pressureFeeText);
                     finalTvPressureFeeAbove.setVisibility(View.GONE);
-
                     finalTvGarbageFee.setText(String.format("生活垃圾处理费：%.2f元", garbageFee));
-
-                    Toast.makeText(PayPropertyFeeActivity.this, "费用详情加载完成", Toast.LENGTH_SHORT).show();
                 });
 
             } catch (Exception e) {
                 Log.e(TAG, "加载费用详情时发生异常", e);
-                runOnUiThread(() -> {
-                    Toast.makeText(PayPropertyFeeActivity.this, "加载费用详情失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
-                    finalTvPropertyServiceFee.setText("物业服务费：加载失败");
-                    finalTvMaintenanceFund.setText("日常维修资金：加载失败");
-                    finalTvUtilityFee.setText("水电公摊费：加载失败");
-                    finalTvElevatorFee.setText("电梯费：加载失败");
-                    finalTvPressureFee.setText("加压费：加载失败");
-                    finalTvGarbageFee.setText("生活垃圾处理费：加载失败");
-                });
             } finally {
                 executor.shutdown();
             }
@@ -364,19 +324,41 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
         builder.show();
     }
 
+    /**
+     * 处理支付逻辑：计算快照、生成记录、更新账单、跳转页面
+     */
     private void processPayment(List<PropertyFeeBill> bills, String paymentMethod) {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         final List<PropertyFeeBill> finalBills = bills;
-        final String finalPaymentMethod = paymentMethod;
 
         executor.execute(() -> {
             try {
                 AppDatabase db = AppDatabase.getInstance(this);
                 String receiptNumber = generateReceiptNumber();
 
-                // 保存支付记录+更新账单状态
                 for (PropertyFeeBill bill : finalBills) {
+                    // 1. 获取计算所需的标准和房屋信息
+                    PropertyFeeStandard standard = db.propertyFeeStandardDao().getById(bill.getStandardId());
+                    // 容错处理：如果ID查不到，尝试按小区名查最新
+                    if (standard == null && bill.getCommunity() != null) {
+                        standard = db.propertyFeeStandardDao().getLatestByCommunity(bill.getCommunity());
+                    }
+
+                    RoomArea roomArea = db.roomAreaDao().getByCommunityBuildingAndRoom(
+                            bill.getCommunity(), bill.getBuilding(), bill.getRoomNumber());
+
+                    // 2. 计算各项费用并生成JSON快照
+                    String snapshotJson = "{}";
+                    if (standard != null && roomArea != null) {
+                        snapshotJson = calculateFeeDetailsJson(standard, roomArea);
+                        Log.d(TAG, "生成费用快照成功: " + snapshotJson);
+                    } else {
+                        Log.w(TAG, "无法生成费用快照，缺失标准或房屋信息");
+                    }
+
+                    // 3. 创建记录（包含快照）
+                    // 注意：此处假设 PaymentRecord 构造函数已更新以接受 snapshotJson 参数
                     PaymentRecord record = new PaymentRecord(
                             bill.getCommunity() != null ? bill.getCommunity() : "未知小区",
                             bill.getBuilding() != null ? bill.getBuilding() : "未知楼栋",
@@ -386,14 +368,14 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                             bill.getPeriodStart() + "至" + bill.getPeriodEnd(),
                             1, // 状态：1-已缴
                             System.currentTimeMillis(), // 支付时间
-                            receiptNumber // 收据编号
+                            receiptNumber, // 收据编号
+                            snapshotJson   // 【新增】传入快照 JSON 字符串
                     );
 
-                    long recordId = db.paymentRecordDao().insert(record);
-                    Log.d(TAG, "支付记录保存成功，ID: " + recordId + "，收据编号: " + receiptNumber);
+                    db.paymentRecordDao().insert(record);
                 }
 
-                // 批量更新账单状态为已缴
+                // 4. 批量更新账单状态为已缴
                 List<Long> billIds = new ArrayList<>();
                 for (PropertyFeeBill bill : finalBills) {
                     billIds.add(bill.getId());
@@ -403,7 +385,13 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
 
                 runOnUiThread(() -> {
                     Toast.makeText(this, "支付成功！收据编号：" + receiptNumber, Toast.LENGTH_SHORT).show();
-                    loadBills(); // 刷新账单列表
+                    loadBills(); // 刷新当前列表
+                    // 【新增】支付完成后跳转到新的仪表盘页面
+                    Intent intent = new Intent(this, PaymentDashboardActivity.class);
+                    // 也可以传递一些数据到 Dashboard，如收据号等
+                    intent.putExtra("receipt_number", receiptNumber);
+                    startActivity(intent);
+                    finish(); // 结束当前支付页面
                 });
             } catch (Exception e) {
                 Log.e(TAG, "支付处理失败", e);
@@ -414,6 +402,61 @@ public class PayPropertyFeeActivity extends AppCompatActivity implements FeeBill
                 executor.shutdown();
             }
         });
+    }
+
+    /**
+     * 【新增】计算费用并返回JSON的方法
+     * 根据收费标准和房屋面积，计算各项细分费用，用于存入数据库快照
+     */
+    private String calculateFeeDetailsJson(PropertyFeeStandard standard, RoomArea roomArea) {
+        double area = roomArea.getArea();
+        int floor = roomArea.getFloor();
+
+        double propertyFee = standard.getPropertyServiceFeePerSquare() * area;
+        double maintenanceFee = standard.getDailyMaintenanceFund();
+        double utilityFee = standard.getUtilityShareFeePerSquare() * area;
+        double garbageFee = standard.getGarbageFee();
+
+        // 计算电梯费
+        double elevatorFee = 0;
+        if (standard.getElevatorFee() > 0) {
+            if (standard.getElevatorFloorAbove() > 0 && floor >= standard.getElevatorFloorAbove()) {
+                elevatorFee = standard.getElevatorFeeAbove();
+            } else if (standard.getElevatorFloorEnd() > 0 && floor <= standard.getElevatorFloorEnd()) {
+                elevatorFee = standard.getElevatorFee();
+            } else {
+                elevatorFee = standard.getElevatorFee();
+            }
+        }
+
+        // 计算加压费
+        double pressureFee = 0;
+        if (standard.getPressureFee() > 0) {
+            if (standard.getPressureFloorAbove() > 0 && floor >= standard.getPressureFloorAbove()) {
+                pressureFee = standard.getPressureFeeAbove();
+            } else if (standard.getPressureFloorStart() > 0 && floor >= standard.getPressureFloorStart() && floor <= standard.getPressureFloorEnd()) {
+                pressureFee = standard.getPressureFee();
+            } else {
+                pressureFee = standard.getPressureFee();
+            }
+        }
+
+        JSONObject json = new JSONObject();
+        try {
+            json.put("property", propertyFee);
+            json.put("maintenance", maintenanceFee);
+            json.put("utility", utilityFee);
+            json.put("elevator", elevatorFee);
+            json.put("pressure", pressureFee);
+            json.put("garbage", garbageFee);
+            // 还可以存入总计，方便核对
+            double total = propertyFee + maintenanceFee + utilityFee + elevatorFee + pressureFee + garbageFee;
+            json.put("calculated_total", total);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return "{}"; // 发生异常返回空JSON
+        }
+        return json.toString();
     }
 
     // 生成收据编号

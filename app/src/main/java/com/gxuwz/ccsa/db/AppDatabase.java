@@ -59,7 +59,7 @@ import com.gxuwz.ccsa.model.HistoryRecord;
                 AdminNotice.class,
                 HistoryRecord.class
         },
-        version = 17, // 【修复 4】版本号 +1，从 16 升级到 17 (需与您的项目实际版本匹配)
+        version = 18,
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)

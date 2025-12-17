@@ -19,9 +19,13 @@ public class PaymentRecord implements Serializable {
     private long payTime;
     private String receiptNumber;
 
+    // 【新增】费用明细快照 (JSON格式: {"service":100, "elevator":20...})
+    private String feeDetailsSnapshot;
+
     // 构造方法
     public PaymentRecord(String community, String building, String roomNumber, String phone,
-                         double amount, String period, int status, long payTime, String receiptNumber) {
+                         double amount, String period, int status, long payTime,
+                         String receiptNumber, String feeDetailsSnapshot) {
         this.community = community;
         this.building = building;
         this.roomNumber = roomNumber;
@@ -31,6 +35,7 @@ public class PaymentRecord implements Serializable {
         this.status = status;
         this.payTime = payTime;
         this.receiptNumber = receiptNumber;
+        this.feeDetailsSnapshot = feeDetailsSnapshot;
     }
 
     // Getters and Setters
@@ -54,4 +59,8 @@ public class PaymentRecord implements Serializable {
     public void setPayTime(long payTime) { this.payTime = payTime; }
     public String getReceiptNumber() { return receiptNumber; }
     public void setReceiptNumber(String receiptNumber) { this.receiptNumber = receiptNumber; }
+
+    // 【新增】Getter/Setter
+    public String getFeeDetailsSnapshot() { return feeDetailsSnapshot; }
+    public void setFeeDetailsSnapshot(String feeDetailsSnapshot) { this.feeDetailsSnapshot = feeDetailsSnapshot; }
 }
