@@ -2,10 +2,13 @@ package com.gxuwz.ccsa.ui.resident;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TableLayout;
+import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,20 +17,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.PercentFormatter;
-import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.adapter.PaymentRecordAdapter;
@@ -48,7 +43,8 @@ import java.util.Map;
 public class PaymentDashboardActivity extends AppCompatActivity {
 
     private PieChart pieChart;
-    private BarChart barChart;
+    // private BarChart barChart; // 删除 BarChart
+    private TableLayout tableReport; // 新增 TableLayout
     private RecyclerView recyclerView;
     private TextView tvTotalYearly;
     private TextView tvMonthFilter;
@@ -64,7 +60,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
     // 记录12个月的选中状态，默认全选 (true)
     private boolean[] selectedMonthsState = new boolean[12];
 
-    // X轴标签，对应索引 0-11
+    // 标签，对应索引 0-11
     private final String[] monthLabels = new String[]{
             "1月", "2月", "3月", "4月", "5月", "6月",
             "7月", "8月", "9月", "10月", "11月", "12月"
@@ -85,7 +81,9 @@ public class PaymentDashboardActivity extends AppCompatActivity {
 
     private void initViews() {
         pieChart = findViewById(R.id.chart_pie);
-        barChart = findViewById(R.id.chart_bar);
+        // barChart = findViewById(R.id.chart_bar); // 删除
+        tableReport = findViewById(R.id.table_report); // 绑定 TableLayout
+
         recyclerView = findViewById(R.id.recycler_view_records);
         tvTotalYearly = findViewById(R.id.tv_total_yearly);
         spYear = findViewById(R.id.sp_year);
@@ -104,8 +102,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
         // 初始化年份选择器
         setupYearSpinner();
 
-        // 预设图表样式
-        initBarChartSettings();
+        // 移除 initBarChartSettings();
     }
 
     private void setupYearSpinner() {
@@ -119,7 +116,6 @@ public class PaymentDashboardActivity extends AppCompatActivity {
                 String.valueOf(currentYear - 3),
                 String.valueOf(currentYear - 4)
         };
-        // 修复：使用系统自带的 dropdown_item 布局
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, years);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
@@ -145,7 +141,6 @@ public class PaymentDashboardActivity extends AppCompatActivity {
         });
 
         builder.setPositiveButton("确定", (dialog, which) -> {
-            // 检查是否至少选择了一个
             boolean hasSelection = false;
             for (boolean b : tempState) {
                 if (b) {
@@ -157,7 +152,6 @@ public class PaymentDashboardActivity extends AppCompatActivity {
                 Toast.makeText(this, "请至少选择一个月", Toast.LENGTH_SHORT).show();
                 return;
             }
-            // 应用选择
             System.arraycopy(tempState, 0, selectedMonthsState, 0, tempState.length);
             updateMonthFilterText();
             updateUI();
@@ -198,8 +192,8 @@ public class PaymentDashboardActivity extends AppCompatActivity {
      */
     private void updateUI() {
         // 1. 准备数据容器
-        List<PaymentRecord> yearRecordsForChart = new ArrayList<>(); // 用于柱状图
-        List<PaymentRecord> filteredListForList = new ArrayList<>(); // 用于列表和总计
+        List<PaymentRecord> yearRecordsForReport = new ArrayList<>(); // 用于报表（当年所有数据）
+        List<PaymentRecord> filteredListForList = new ArrayList<>(); // 用于列表和总计（受月份筛选影响）
 
         double totalAmount = 0;
         Calendar cal = Calendar.getInstance();
@@ -211,10 +205,10 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             int recordMonth = cal.get(Calendar.MONTH); // 0-11
 
             if (recordYear == currentSelectedYear) {
-                // 只要是这一年的，都算进图表数据源，保证图表显示全年趋势
-                yearRecordsForChart.add(record);
+                // 报表使用当前选中年份的所有数据，展示完整趋势
+                yearRecordsForReport.add(record);
 
-                // 只有被勾选的月份，才算进列表和总金额
+                // 列表和总金额计算受月份筛选限制
                 if (recordMonth >= 0 && recordMonth < 12 && selectedMonthsState[recordMonth]) {
                     filteredListForList.add(record);
                     totalAmount += record.getAmount();
@@ -222,7 +216,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             }
         }
 
-        // 3. 更新各个视图
+        // 3. 更新视图
         adapter.updateData(filteredListForList);
         tvTotalYearly.setText(String.format("¥ %.2f", totalAmount));
 
@@ -234,91 +228,91 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             updatePieChart(filteredListForList);
         }
 
-        // 更新柱状图 (基于当年所有数据)
-        updateBarChart(yearRecordsForChart);
+        // 更新报表 (基于当年数据，替代 BarChart)
+        updateReportTable(yearRecordsForReport);
     }
 
-    // --- 图表相关方法 ---
+    /**
+     * 生成月度/年度费用明细报表表格
+     */
+    private void updateReportTable(List<PaymentRecord> records) {
+        tableReport.removeAllViews(); // 清除旧数据
 
-    private void initBarChartSettings() {
-        barChart.getDescription().setEnabled(false);
-        barChart.setDrawGridBackground(false);
-        barChart.setTouchEnabled(true);
-        barChart.setDragEnabled(true);
-        barChart.setScaleEnabled(false);
-        barChart.setPinchZoom(false);
-
-        XAxis xAxis = barChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setDrawGridLines(false);
-        xAxis.setGranularity(1f); // 间隔为1
-        xAxis.setLabelCount(12);  // 强制12个标签
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(monthLabels));
-
-        YAxis leftAxis = barChart.getAxisLeft();
-        leftAxis.setAxisMinimum(0f); // Y轴从0开始
-
-        barChart.getAxisRight().setEnabled(false); // 隐藏右侧Y轴
-        barChart.setExtraBottomOffset(10f); // 底部留白
-    }
-
-    private void updateBarChart(List<PaymentRecord> records) {
-        // 1. 初始化12个桶
-        float[] monthlyAmounts = new float[12];
-        Arrays.fill(monthlyAmounts, 0f);
+        // 1. 统计每个月的数据
+        double[] monthlyAmounts = new double[12];
+        int[] monthlyCounts = new int[12];
+        Arrays.fill(monthlyAmounts, 0);
+        Arrays.fill(monthlyCounts, 0);
 
         Calendar cal = Calendar.getInstance();
+        boolean hasData = false;
+
         for (PaymentRecord record : records) {
             cal.setTimeInMillis(record.getPayTime());
-            int month = cal.get(Calendar.MONTH); // 0-11
+            int month = cal.get(Calendar.MONTH);
             if (month >= 0 && month < 12) {
-                monthlyAmounts[month] += (float) record.getAmount();
+                monthlyAmounts[month] += record.getAmount();
+                monthlyCounts[month]++;
+                hasData = true;
             }
         }
 
-        // 2. 构建 BarEntry
-        List<BarEntry> entries = new ArrayList<>();
-        for (int i = 0; i < 12; i++) {
-            entries.add(new BarEntry(i, monthlyAmounts[i]));
+        if (!hasData) {
+            TableRow emptyRow = new TableRow(this);
+            TextView tvEmpty = new TextView(this);
+            tvEmpty.setText("该年度暂无缴费记录");
+            tvEmpty.setGravity(Gravity.CENTER);
+            tvEmpty.setPadding(0, 40, 0, 40);
+            emptyRow.addView(tvEmpty);
+            // 合并列需要 LayoutParams
+            TableRow.LayoutParams params = new TableRow.LayoutParams();
+            params.span = 3;
+            tvEmpty.setLayoutParams(params);
+            tableReport.addView(emptyRow);
+            return;
         }
 
-        // 3. 设置数据
-        BarDataSet dataSet;
-        if (barChart.getData() != null && barChart.getData().getDataSetCount() > 0) {
-            dataSet = (BarDataSet) barChart.getData().getDataSetByIndex(0);
-            dataSet.setValues(entries);
-            barChart.getData().notifyDataChanged();
-            barChart.notifyDataSetChanged();
-        } else {
-            dataSet = new BarDataSet(entries, "月度费用");
-            dataSet.setColor(Color.rgb(33, 150, 243)); // Android Blue
-            dataSet.setDrawValues(true);
-            dataSet.setValueTextSize(10f);
+        // 2. 动态添加行
+        // 倒序显示，最近的月份在上面
+        for (int i = 11; i >= 0; i--) {
+            // 只显示有数据的月份，或者您可以选择显示所有月份
+            if (monthlyCounts[i] > 0) {
+                TableRow row = new TableRow(this);
+                row.setPadding(0, 15, 0, 15);
+                row.setBackgroundResource(R.drawable.bg_edittext_underline); // 使用下划线背景或自定义背景
 
-            dataSet.setValueFormatter(new ValueFormatter() {
-                @Override
-                public String getFormattedValue(float value) {
-                    return value > 0 ? String.format("%.0f", value) : "";
-                }
-            });
+                // 月份列
+                TextView tvMonth = new TextView(this);
+                tvMonth.setText(monthLabels[i]);
+                tvMonth.setGravity(Gravity.CENTER);
+                tvMonth.setTextColor(Color.parseColor("#333333"));
 
-            BarData data = new BarData(dataSet);
-            data.setBarWidth(0.5f);
-            barChart.setData(data);
+                // 笔数列
+                TextView tvCount = new TextView(this);
+                tvCount.setText(String.valueOf(monthlyCounts[i]));
+                tvCount.setGravity(Gravity.CENTER);
+                tvCount.setTextColor(Color.parseColor("#666666"));
+
+                // 金额列
+                TextView tvAmount = new TextView(this);
+                tvAmount.setText(String.format("¥ %.2f", monthlyAmounts[i]));
+                tvAmount.setGravity(Gravity.CENTER);
+                tvAmount.setTextColor(Color.parseColor("#FF5722")); // 醒目颜色
+                tvAmount.setTypeface(null, android.graphics.Typeface.BOLD);
+
+                // 添加到行，使用 layout_weight 效果需要配合 TableLayout 的 stretchColumns
+                // 这里简单添加，由 TableLayout 自动分配
+                row.addView(tvMonth);
+                row.addView(tvCount);
+                row.addView(tvAmount);
+
+                tableReport.addView(row);
+            }
         }
-
-        // 4. 强制刷新X轴范围，确保显示完整12个月
-        barChart.getXAxis().setAxisMinimum(-0.5f);
-        barChart.getXAxis().setAxisMaximum(11.5f);
-
-        barChart.animateY(800);
-        barChart.invalidate();
     }
 
     private void updatePieChart(List<PaymentRecord> records) {
-        // 修复：不使用不存在的 getTitle()，改用 JSON 解析
         Map<String, Double> typeMap = new LinkedHashMap<>();
-        // 定义常见 Key，保持顺序
         String[] keys = {"物业费", "维修金", "公摊水电", "电梯费", "其他"};
         for(String k : keys) typeMap.put(k, 0.0);
 
@@ -326,10 +320,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
             boolean parsed = false;
             if (r.getFeeDetailsSnapshot() != null && !r.getFeeDetailsSnapshot().isEmpty()) {
                 try {
-                    // 假设数据库中存储的 JSON key 为: property, maintenance, utility, elevator 等
-                    // 如果您的实际 JSON key 不同，请在此处修改字符串
                     JSONObject json = new JSONObject(r.getFeeDetailsSnapshot());
-
                     double property = json.optDouble("property", 0);
                     double maintenance = json.optDouble("maintenance", 0);
                     double utility = json.optDouble("utility", 0);
@@ -340,9 +331,8 @@ public class PaymentDashboardActivity extends AppCompatActivity {
                     if (utility > 0) typeMap.put("公摊水电", typeMap.get("公摊水电") + utility);
                     if (elevator > 0) typeMap.put("电梯费", typeMap.get("电梯费") + elevator);
 
-                    // 计算剩余部分归为其他 (可选)
                     double subTotal = property + maintenance + utility + elevator;
-                    if (r.getAmount() > subTotal + 0.01) { // 加一点容差
+                    if (r.getAmount() > subTotal + 0.01) {
                         typeMap.put("其他", typeMap.get("其他") + (r.getAmount() - subTotal));
                     }
                     parsed = true;
@@ -351,7 +341,6 @@ public class PaymentDashboardActivity extends AppCompatActivity {
                 }
             }
 
-            // 如果没有详情，整个账单归为“其他”
             if (!parsed) {
                 typeMap.put("其他", typeMap.get("其他") + r.getAmount());
             }
@@ -359,13 +348,13 @@ public class PaymentDashboardActivity extends AppCompatActivity {
 
         List<PieEntry> entries = new ArrayList<>();
         for (Map.Entry<String, Double> entry : typeMap.entrySet()) {
-            if (entry.getValue() > 0.01) { // 只显示金额 > 0 的部分
+            if (entry.getValue() > 0.01) {
                 entries.add(new PieEntry(entry.getValue().floatValue(), entry.getKey()));
             }
         }
 
         PieDataSet set = new PieDataSet(entries, "");
-        set.setColors(ColorTemplate.MATERIAL_COLORS); // 使用多彩颜色
+        set.setColors(ColorTemplate.MATERIAL_COLORS);
         set.setValueTextSize(12f);
         set.setValueTextColor(Color.WHITE);
         set.setValueFormatter(new PercentFormatter(pieChart));
@@ -376,7 +365,7 @@ public class PaymentDashboardActivity extends AppCompatActivity {
         pieChart.getDescription().setEnabled(false);
         pieChart.setCenterText("费用构成");
 
-        // 设置图例位置
+        // 设置图例
         Legend l = pieChart.getLegend();
         l.setVerticalAlignment(Legend.LegendVerticalAlignment.BOTTOM);
         l.setHorizontalAlignment(Legend.LegendHorizontalAlignment.CENTER);

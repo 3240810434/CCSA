@@ -128,35 +128,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="月度缴费趋势 (1-12月)"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        android:textColor="#333333"
-                        android:layout_marginBottom="10dp"/>
-
-                    <com.github.mikephil.charting.charts.BarChart
-                        android:id="@+id/chart_bar"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"/>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="2dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
                         android:text="费用构成分析"
                         android:textSize="15sp"
                         android:textStyle="bold"
@@ -167,6 +138,69 @@
                         android:id="@+id/chart_pie"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="年度费用明细报表"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="#333333"
+                        android:layout_marginBottom="10dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="#E0E0E0"
+                        android:paddingVertical="8dp"
+                        android:orientation="horizontal">
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="月份"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="#333333"/>
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="笔数"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="#333333"/>
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1.5"
+                            android:text="总金额"
+                            android:gravity="center"
+                            android:textStyle="bold"
+                            android:textColor="#333333"/>
+                    </LinearLayout>
+
+                    <TableLayout
+                        android:id="@+id/table_report"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:stretchColumns="*"/>
+
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
 
