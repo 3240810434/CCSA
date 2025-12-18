@@ -14,7 +14,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat; // 必须导入这个类
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.gxuwz.ccsa.R;
@@ -39,7 +39,7 @@ public class MerchantStoreFragment extends Fragment {
 
     // 统计数据显示控件
     private TextView tvPendingCount;
-    private TextView tvProcessingCount;
+    private TextView tvProcessingCount; // 接单中数量控件
     private TextView tvAfterSalesCount;
     private TextView tvProductCount;
 
@@ -105,7 +105,7 @@ public class MerchantStoreFragment extends Fragment {
 
         // 统计数据
         tvPendingCount = view.findViewById(R.id.tv_pending_count);
-        tvProcessingCount = view.findViewById(R.id.tv_processing_count);
+        tvProcessingCount = view.findViewById(R.id.tv_processing_count); // 绑定接单中 TextView
         tvAfterSalesCount = view.findViewById(R.id.tv_after_sales_count);
         tvProductCount = view.findViewById(R.id.tv_product_count);
 
@@ -129,7 +129,6 @@ public class MerchantStoreFragment extends Fragment {
     }
 
     private void setupListeners() {
-        // 点击整个状态容器触发开关店逻辑
         if (llStatusContainer != null) {
             llStatusContainer.setOnClickListener(v -> {
                 if (checkQualification()) {
@@ -137,8 +136,6 @@ public class MerchantStoreFragment extends Fragment {
                 }
             });
         }
-
-        // 兼容旧代码，如果只点击图标也能触发
         if (ivStoreStatus != null) {
             ivStoreStatus.setOnClickListener(v -> {
                 if (checkQualification()) {
@@ -194,17 +191,14 @@ public class MerchantStoreFragment extends Fragment {
 
         tvStoreName.setText(currentMerchant.getMerchantName());
 
-        // 更新营业状态 UI
-        if (getContext() != null) { // 确保 Context 不为空
+        if (getContext() != null) {
             if (currentMerchant.isOpen()) {
                 ivStoreStatus.setImageResource(R.drawable.open);
                 tvStatusText.setText("营业中");
-                // 修复：使用 ContextCompat.getColor 替代 getResources().getColor
                 tvStatusText.setTextColor(ContextCompat.getColor(getContext(), android.R.color.holo_green_dark));
             } else {
                 ivStoreStatus.setImageResource(R.drawable.close);
                 tvStatusText.setText("休息中");
-                // 修复：使用 ContextCompat.getColor 替代 getResources().getColor
                 tvStatusText.setTextColor(ContextCompat.getColor(getContext(), android.R.color.darker_gray));
             }
         }
@@ -222,6 +216,8 @@ public class MerchantStoreFragment extends Fragment {
 
                 int productCount = productDao.getProductsByMerchantId(currentMerchant.getId()).size();
                 int pendingOrderCount = orderDao.getPendingOrdersByMerchant(merchantIdStr).size();
+
+                // 关键点：统计“接单中”状态的订单数量
                 int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "接单中").size();
 
                 List<Order> afterSalesOrders = orderDao.getMerchantAfterSalesOrders(merchantIdStr);
@@ -241,6 +237,7 @@ public class MerchantStoreFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         if (tvProductCount != null) tvProductCount.setText(String.valueOf(finalProductCount));
                         if (tvPendingCount != null) tvPendingCount.setText(String.valueOf(finalPendingOrderCount));
+                        // 更新接单中数量
                         if (tvProcessingCount != null) tvProcessingCount.setText(String.valueOf(finalProcessingOrderCount));
                         if (tvAfterSalesCount != null) tvAfterSalesCount.setText(String.valueOf(finalPendingAfterSalesCount));
                     });
@@ -271,19 +268,16 @@ public class MerchantStoreFragment extends Fragment {
 
     private void toggleStoreStatus(boolean newStatus) {
         currentMerchant.setOpen(newStatus);
-        updateUI(); // 立即更新 UI，提升响应速度
+        updateUI();
 
         Executors.newSingleThreadExecutor().execute(() -> {
             if (getContext() != null) {
-                // 1. 更新数据库中的商家状态
                 AppDatabase.getInstance(getContext()).merchantDao().update(currentMerchant);
 
-                // 2. 同步 Activity 中的缓存
                 if (getActivity() instanceof MerchantMainActivity) {
                     ((MerchantMainActivity) getActivity()).setCurrentMerchant(currentMerchant);
                 }
 
-                // 3. UI 提示
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         String statusMsg = newStatus ? "店铺已开启，祝您生意兴隆！" : "店铺已关闭，注意休息！";
