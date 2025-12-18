@@ -116,6 +116,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="30dp"
                 android:background="@drawable/button_blue"
+                android:backgroundTint="#32CD32"
                 android:text="提交审核"
                 android:textColor="#FFFFFF" />
 

@@ -2,6 +2,8 @@ package com.gxuwz.ccsa.ui.merchant;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.ColorStateList; // 新增导入
+import android.graphics.Color; // 新增导入
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -177,23 +179,23 @@ public class MerchantQualificationActivity extends AppCompatActivity {
                 setInputsEnabled(true);
                 break;
             case 1: // 审核中
-                tvStatusText.setText("审核中"); // 修改文案更明确
-                ivStatusIcon.setImageResource(R.drawable.hourglass); // 建议换个图标，如果没有就用warn
-                layoutOverlay.setVisibility(View.VISIBLE); // 显示遮罩层
-                setInputsEnabled(false); // 禁用输入
+                tvStatusText.setText("审核中");
+                ivStatusIcon.setImageResource(R.drawable.hourglass);
+                layoutOverlay.setVisibility(View.VISIBLE);
+                setInputsEnabled(false);
                 break;
             case 2: // 已认证
                 tvStatusText.setText("已认证资质");
                 ivStatusIcon.setImageResource(R.drawable.shield);
                 layoutOverlay.setVisibility(View.GONE);
-                setInputsEnabled(false); // 已认证通常不允许随意修改，或者允许修改但需重新审核
-                btnSubmit.setVisibility(View.GONE); // 隐藏提交按钮
+                setInputsEnabled(false);
+                btnSubmit.setVisibility(View.GONE);
                 break;
             case 3: // 未通过
                 tvStatusText.setText("未通过审核");
                 ivStatusIcon.setImageResource(R.drawable.warn);
                 layoutOverlay.setVisibility(View.GONE);
-                setInputsEnabled(true); // 允许修改重新提交
+                setInputsEnabled(true);
                 break;
         }
     }
@@ -203,11 +205,17 @@ public class MerchantQualificationActivity extends AppCompatActivity {
         ivIdBack.setEnabled(enabled);
         ivLicense.setEnabled(enabled);
         btnSubmit.setEnabled(enabled);
+
+        // 无论启用还是禁用，首先重置背景资源以保留圆角形状
+        btnSubmit.setBackgroundResource(R.drawable.button_blue);
+
         if (!enabled) {
-            btnSubmit.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+            // 禁用状态：设置灰色滤镜 (保留圆角)
+            btnSubmit.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
             btnSubmit.setText("审核中 / 已锁定");
         } else {
-            btnSubmit.setBackgroundResource(R.drawable.button_blue);
+            // 启用状态：设置绿色滤镜 #32CD32
+            btnSubmit.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#32CD32")));
             btnSubmit.setText("提交审核");
         }
     }
