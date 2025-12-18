@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button; // 新增引入
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -17,6 +18,7 @@ import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.ui.resident.ResidentApplyAfterSalesActivity;
+import com.gxuwz.ccsa.ui.resident.PublishReviewActivity; // 新增引入
 
 import java.util.List;
 
@@ -49,7 +51,7 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
         holder.tvMerchantName.setText(order.merchantName != null ? order.merchantName : "未知商家");
         holder.tvStatus.setText(order.status);
 
-        // 状态颜色处理
+        // 状态颜色处理及底部按钮容器的显隐
         if ("待接单".equals(order.status)) {
             holder.tvStatus.setTextColor(Color.parseColor("#FF9800")); // Orange
             holder.layoutActionButtons.setVisibility(View.GONE);
@@ -108,7 +110,6 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
                     holder.btnApply.setText("售后协商中");
                     holder.btnApply.setTextColor(Color.RED);
                     holder.btnApply.setOnClickListener(v -> {
-                        // 可以跳转到聊天页面，这里简单提示
                         Toast.makeText(context, "请查看消息并与商家沟通", Toast.LENGTH_SHORT).show();
                     });
                     break;
@@ -125,9 +126,26 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
             }
         }
 
-        holder.btnEvaluate.setOnClickListener(v -> {
-            Toast.makeText(v.getContext(), "评价功能开发中", Toast.LENGTH_SHORT).show();
-        });
+        // --- 新增：评价按钮逻辑 ---
+        if ("已完成".equals(order.status)) {
+            holder.btnReview.setVisibility(View.VISIBLE);
+            holder.btnEvaluate.setVisibility(View.GONE); // 隐藏旧的评价 Textview，使用新的 Button
+
+            holder.btnReview.setOnClickListener(v -> {
+                Intent intent = new Intent(context, PublishReviewActivity.class);
+                try {
+                    // 将String类型的productId转换为Long (如果PublishReviewActivity接收Long)
+                    long pId = Long.parseLong(order.productId);
+                    intent.putExtra("product_id", pId);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                    Toast.makeText(context, "商品数据异常", Toast.LENGTH_SHORT).show();
+                }
+                context.startActivity(intent);
+            });
+        } else {
+            holder.btnReview.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -141,6 +159,7 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
         ImageView ivProductImg;
         LinearLayout layoutActionButtons;
         TextView btnEvaluate, btnApply;
+        Button btnReview; // 新增 Button 引用
 
         public OrderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -154,8 +173,13 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
             tvOrderNo = itemView.findViewById(R.id.tv_order_no);
             ivProductImg = itemView.findViewById(R.id.iv_product_img);
             layoutActionButtons = itemView.findViewById(R.id.layout_action_buttons);
+
+            // 原有的 TextView 样式按钮
             btnEvaluate = itemView.findViewById(R.id.btn_evaluate);
             btnApply = itemView.findViewById(R.id.btn_apply);
+
+            // 新增的 Button 样式按钮
+            btnReview = itemView.findViewById(R.id.btn_review);
         }
     }
 }

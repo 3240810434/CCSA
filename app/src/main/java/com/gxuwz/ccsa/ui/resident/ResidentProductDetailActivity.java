@@ -12,6 +12,7 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Intent;
@@ -27,6 +28,7 @@ import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.model.Product;
+import com.gxuwz.ccsa.model.ProductReview; // 新增引入
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.util.DateUtils;
 
@@ -61,8 +63,13 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
     private String selectedSpecStr = "";
     private String productUnit = "";
 
-    // 【新增】客服按钮引用
+    // 客服按钮引用
     private View btnContactService;
+
+    // 【新增】评价相关控件
+    private LinearLayout layoutReviewContainer;
+    private TextView tvNoReviews;
+    private TextView btnMoreReviews;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +89,13 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         loadData();
     }
 
+    // 【新增】每次页面显示时刷新评价（例如从评价列表页或发表评价页返回时）
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadReviewsPreview();
+    }
+
     private void initView() {
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
         bannerViewPager = findViewById(R.id.banner_view_pager);
@@ -96,18 +110,74 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
 
         findViewById(R.id.btn_buy).setOnClickListener(v -> showPurchaseDialog());
 
-        // 【核心修复】绑定客服按钮事件
-        // 此时 XML 中已经有了 android:id="@+id/ll_contact_service"
+        // 绑定客服按钮事件
         btnContactService = findViewById(R.id.ll_contact_service);
         if (btnContactService != null) {
             btnContactService.setOnClickListener(v -> openChat());
         }
+
+        // 【新增】评价模块初始化
+        layoutReviewContainer = findViewById(R.id.layout_review_container);
+        tvNoReviews = findViewById(R.id.tv_no_reviews);
+        btnMoreReviews = findViewById(R.id.btn_more_reviews);
+
+        // 点击更多评价跳转
+        btnMoreReviews.setOnClickListener(v -> {
+            if (product != null) {
+                Intent intent = new Intent(this, ReviewListActivity.class);
+                intent.putExtra("product_id", product.getId());
+                startActivity(intent);
+            }
+        });
     }
 
-    // 【新增】跳转到聊天页面的方法
+    // 【新增】加载最新的两条评价
+    private void loadReviewsPreview() {
+        if (product == null) return;
+        long productId = product.getId();
+
+        new Thread(() -> {
+            // 获取最新的2条评论 (需要在 DAO 中实现 getTop2Reviews)
+            List<ProductReview> reviews = db.productReviewDao().getTop2Reviews(productId);
+
+            runOnUiThread(() -> {
+                if (layoutReviewContainer == null) return;
+                layoutReviewContainer.removeAllViews();
+
+                if (reviews == null || reviews.isEmpty()) {
+                    tvNoReviews.setVisibility(View.VISIBLE);
+                    layoutReviewContainer.addView(tvNoReviews);
+                } else {
+                    tvNoReviews.setVisibility(View.GONE);
+                    // 动态添加 View，复用 item_product_review.xml
+                    for (ProductReview review : reviews) {
+                        View view = LayoutInflater.from(this).inflate(R.layout.item_product_review, layoutReviewContainer, false);
+
+                        ImageView ivAvatar = view.findViewById(R.id.img_avatar);
+                        TextView tvName = view.findViewById(R.id.tv_username);
+                        TextView tvContent = view.findViewById(R.id.tv_content);
+                        TextView tvTime = view.findViewById(R.id.tv_time);
+                        RatingBar rb = view.findViewById(R.id.item_rating);
+
+                        tvName.setText(review.userName);
+                        tvContent.setText(review.content);
+                        // 注意：这里需要确保 DateUtils 有 formatDateTime 方法，或者自行处理日期格式化
+                        tvTime.setText(DateUtils.formatDateTime(review.createTime));
+                        rb.setRating(review.score / 2.0f); // 假设 score 是 1-10分，RatingBar 是 5 星
+
+                        Glide.with(this).load(review.userAvatar)
+                                .placeholder(R.drawable.ic_avatar) // 确保有默认头像资源
+                                .into(ivAvatar);
+
+                        layoutReviewContainer.addView(view);
+                    }
+                }
+            });
+        }).start();
+    }
+
     private void openChat() {
         if (currentUser == null) {
-            // 尝试重新加载或提示
             loadData();
             if (currentUser == null) {
                 Toast.makeText(this, "正在获取用户信息，请稍后点击...", Toast.LENGTH_SHORT).show();
@@ -118,15 +188,11 @@ public class ResidentProductDetailActivity extends AppCompatActivity {
         if (product == null) return;
 
         Intent intent = new Intent(this, ChatActivity.class);
-        // 我是居民
         intent.putExtra("myId", currentUser.getId());
         intent.putExtra("myRole", "RESIDENT");
-
-        // 对方是商家
         intent.putExtra("targetId", product.getMerchantId());
         intent.putExtra("targetRole", "MERCHANT");
 
-        // 传递对方展示信息（名字和头像）
         if (productMerchant != null) {
             intent.putExtra("targetName", productMerchant.getMerchantName());
             intent.putExtra("targetAvatar", productMerchant.getAvatar());

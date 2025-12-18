@@ -123,6 +123,8 @@
         <activity android:name=".ui.resident.HelpPostDetailActivity" android:exported="false"/>
         <activity android:name=".login.ResidentForgotPasswordActivity" />
         <activity android:name=".login.MerchantForgotPasswordActivity" />
+        <activity android:name=".ui.resident.PublishReviewActivity" />
+        <activity android:name=".ui.resident.ReviewListActivity" />
 
     </application>
 </manifest>

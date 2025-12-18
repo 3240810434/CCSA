@@ -31,6 +31,7 @@ import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.model.AfterSalesRecord;
 import com.gxuwz.ccsa.model.AdminNotice;
 import com.gxuwz.ccsa.model.HistoryRecord;
+import com.gxuwz.ccsa.model.ProductReview;
 
 @Database(
         entities = {
@@ -57,9 +58,10 @@ import com.gxuwz.ccsa.model.HistoryRecord;
                 Order.class,
                 AfterSalesRecord.class,
                 AdminNotice.class,
-                HistoryRecord.class
+                HistoryRecord.class,
+                ProductReview.class // 新增实体
         },
-        version = 18,
+        version = 19, // 版本号升级 (原为18)
         exportSchema = false
 )
 @TypeConverters(DateConverter.class)
@@ -88,6 +90,9 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract AfterSalesRecordDao afterSalesRecordDao();
     public abstract AdminNoticeDao adminNoticeDao();
     public abstract HistoryDao historyDao();
+
+    // 新增 DAO 方法
+    public abstract ProductReviewDao productReviewDao();
 
     public static AppDatabase getInstance(Context context) {
         if (INSTANCE == null) {
