@@ -138,7 +138,7 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@drawable/ic_dynamic"/>
+                        android:src="@drawable/d_t"/>
                     <TextView
                         style="@style/MineMenuTextStyle"
                         android:text="我的动态"/>
@@ -149,22 +149,16 @@
                     style="@style/MineMenuItemStyle">
                     <ImageView
                         style="@style/MineMenuIconStyle"
-                        android:src="@drawable/handshake"/>
+                        android:src="@drawable/hu_zhu"/>
                     <TextView
                         style="@style/MineMenuTextStyle"
                         android:text="我的互助"/>
                 </LinearLayout>
 
-                <LinearLayout
-                    android:id="@+id/btn_my_payment"
-                    style="@style/MineMenuItemStyle">
-                    <ImageView
-                        style="@style/MineMenuIconStyle"
-                        android:src="@drawable/ic_my_payment"/>
-                    <TextView
-                        style="@style/MineMenuTextStyle"
-                        android:text="我的缴费"/>
-                </LinearLayout>
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"/>
 
                 <View
                     android:layout_width="0dp"

@@ -25,7 +25,7 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
     public ImageGridAdapter(Context context, OnItemClickListener listener) {
         this.context = context;
         this.listener = listener;
-        // 初始添加一个"添加"按钮占位符
+        // 初始添加一个"add"占位符，代表添加按钮
         imagePaths.add("add");
     }
 
@@ -40,19 +40,31 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String path = imagePaths.get(position);
+
+        // 判断是否为"添加"按钮
         if ("add".equals(path)) {
-            // 显示添加图标
-            holder.ivImage.setImageResource(R.drawable.ic_add_photo);
+            // 1. 设置为您指定的 photo_album 图标
+            holder.ivImage.setImageResource(R.drawable.photo_album);
+
+            // 2. 隐藏删除按钮 (去掉右上角的 x)
             holder.ivDelete.setVisibility(View.GONE);
+
+            // 点击事件：触发添加图片操作
             holder.itemView.setOnClickListener(v -> listener.onAddClick());
         } else {
-            // 使用Glide加载图片
+            // 加载用户选择的实际图片
             Glide.with(context)
                     .load(path)
                     .into(holder.ivImage);
+
+            // 显示删除按钮
             holder.ivDelete.setVisibility(View.VISIBLE);
+
+            // 点击删除按钮：触发删除操作
             holder.ivDelete.setOnClickListener(v ->
                     listener.onDeleteClick(position));
+
+            // 图片本身不响应点击（或者您可以添加预览图片的逻辑）
             holder.itemView.setOnClickListener(null);
         }
     }
@@ -63,7 +75,7 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
     }
 
     public void addImage(String path) {
-        // 在添加按钮前插入新图片
+        // 在"add"占位符之前插入新图片
         imagePaths.add(imagePaths.size() - 1, path);
         notifyDataSetChanged();
     }
@@ -73,10 +85,9 @@ public class ImageGridAdapter extends RecyclerView.Adapter<ImageGridAdapter.View
         notifyDataSetChanged();
     }
 
-    // 新增：获取实际图片路径列表（排除最后一个"add"占位符）
+    // 获取实际上传的图片路径列表（不包含末尾的"add"）
     public List<String> getImagePaths() {
         List<String> actualImages = new ArrayList<>();
-        // 遍历所有路径，排除最后一个"add"占位符
         for (int i = 0; i < imagePaths.size() - 1; i++) {
             actualImages.add(imagePaths.get(i));
         }

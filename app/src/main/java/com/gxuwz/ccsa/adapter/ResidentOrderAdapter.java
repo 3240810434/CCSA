@@ -176,7 +176,8 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
         ImageView ivProductImg;
         LinearLayout layoutActionButtons;
         TextView btnEvaluate, btnApply;
-        Button btnReview;
+        // 修改处：将 Button 改为 TextView
+        TextView btnReview;
 
         public OrderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -193,6 +194,7 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
 
             btnEvaluate = itemView.findViewById(R.id.btn_evaluate);
             btnApply = itemView.findViewById(R.id.btn_apply);
+            // 这里 ID 不变，但类型是 TextView
             btnReview = itemView.findViewById(R.id.btn_review);
         }
     }

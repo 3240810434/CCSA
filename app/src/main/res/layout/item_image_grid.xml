@@ -18,6 +18,4 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
         android:src="@android:drawable/ic_menu_delete"
-        android:visibility="gone"/>
-
-</RelativeLayout>
+        android:visibility="gone"/> </RelativeLayout>

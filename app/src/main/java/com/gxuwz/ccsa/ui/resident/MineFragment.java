@@ -24,8 +24,8 @@ import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.util.SharedPreferencesUtil;
-// 确保引入了正确的 Activity
-import com.gxuwz.ccsa.ui.resident.PaymentDashboardActivity;
+// 可以移除 PaymentDashboardActivity 的引用，因为按钮已删除
+// import com.gxuwz.ccsa.ui.resident.PaymentDashboardActivity;
 
 import java.util.concurrent.Executors;
 
@@ -128,17 +128,7 @@ public class MineFragment extends Fragment {
             }
         });
 
-        // 【关键修复】这里引用的 R.id.btn_my_payment 必须在 XML 中存在
-        // 点击跳转到 PaymentDashboardActivity (包含图表)
-        View btnMyPayment = view.findViewById(R.id.btn_my_payment);
-        if (btnMyPayment != null) {
-            btnMyPayment.setOnClickListener(v -> {
-                if (checkLoginStatus()) {
-                    Intent intent = new Intent(getContext(), PaymentDashboardActivity.class);
-                    startActivity(intent);
-                }
-            });
-        }
+        // 已删除：我的缴费 (btn_my_payment) 的点击事件
     }
 
     private boolean checkLoginStatus() {
