@@ -50,7 +50,7 @@ public class PublishReviewActivity extends AppCompatActivity {
     private ImageAdapter imageAdapter;
     private List<Uri> selectedImages = new ArrayList<>();
     private int productId;
-    private long orderId; // 增加订单ID
+    private long orderId;
     private int score = 0; // 0-10
 
     @Override
@@ -59,7 +59,7 @@ public class PublishReviewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_publish_review);
 
         productId = getIntent().getIntExtra("product_id", -1);
-        orderId = getIntent().getLongExtra("order_id", -1); // 获取订单ID
+        orderId = getIntent().getLongExtra("order_id", -1);
 
         if (productId == -1) {
             Toast.makeText(this, "商品信息错误", Toast.LENGTH_SHORT).show();
@@ -146,7 +146,7 @@ public class PublishReviewActivity extends AppCompatActivity {
 
             runOnUiThread(() -> {
                 Toast.makeText(this, "评价发表成功！", Toast.LENGTH_SHORT).show();
-                finish(); // 关闭页面，返回订单列表后 onResume 会自动刷新列表，显示“已评价”
+                finish();
             });
         }).start();
     }
@@ -167,7 +167,7 @@ public class PublishReviewActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             ImageHolder imageHolder = (ImageHolder) holder;
             if (getItemViewType(position) == TYPE_ADD) {
-                // 修改此处：使用 photo_album 图片
+                // 设置为相册图标
                 imageHolder.img.setImageResource(R.drawable.photo_album);
                 imageHolder.itemView.setOnClickListener(v -> checkPermissionAndSelectImage());
             } else {
@@ -190,9 +190,17 @@ public class PublishReviewActivity extends AppCompatActivity {
 
         class ImageHolder extends RecyclerView.ViewHolder {
             ImageView img;
+            ImageView btnDelete; // 声明删除按钮
+
             ImageHolder(View itemView) {
                 super(itemView);
                 img = itemView.findViewById(R.id.iv_image);
+                btnDelete = itemView.findViewById(R.id.btn_delete);
+
+                // 核心修改：在发布页面也强制隐藏删除按钮（X），满足您的要求
+                if (btnDelete != null) {
+                    btnDelete.setVisibility(View.GONE);
+                }
             }
         }
     }

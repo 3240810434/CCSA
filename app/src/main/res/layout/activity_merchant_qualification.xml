@@ -106,8 +106,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
                 android:background="#E0E0E0"
-                android:scaleType="centerCrop"
-                android:src="@drawable/s_f"
+                android:scaleType="fitCenter"
+                android:src="@drawable/y_z"
                 android:padding="50dp"/>
 
             <Button

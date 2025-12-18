@@ -17,5 +17,6 @@
         android:layout_height="20dp"
         android:src="@drawable/fork"
         android:background="#80000000"
+        android:visibility="gone"
         android:layout_alignParentEnd="true"/>
 </RelativeLayout>

@@ -47,7 +47,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         // 分数转星星 (10分=5星)
         holder.ratingBar.setRating(review.score / 2.0f);
 
-        // 格式化时间，如果DateUtils不可用，可以换成简单的 new SimpleDateFormat().format(...)
+        // 格式化时间
         holder.tvTime.setText(DateUtils.formatDateTime(review.createTime));
 
         // 加载用户头像
@@ -113,8 +113,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         @NonNull
         @Override
         public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            // 复用现有的 item_image_preview_small 布局
-            // 如果你没有这个布局，可以使用 item_image_grid 或新建一个只包含 ImageView 的布局
             View view = LayoutInflater.from(mContext).inflate(R.layout.item_image_preview_small, parent, false);
             return new ImageViewHolder(view);
         }
@@ -124,15 +122,8 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
             String path = mPaths.get(position);
             Glide.with(mContext)
                     .load(path)
-                    .placeholder(R.drawable.ic_add_photo) // 占位图
+                    .placeholder(R.drawable.ic_add_photo)
                     .into(holder.imageView);
-
-            // 可选：点击图片查看大图逻辑
-            /*
-            holder.itemView.setOnClickListener(v -> {
-                // 跳转到查看大图页面
-            });
-            */
         }
 
         @Override
@@ -142,12 +133,16 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
 
         class ImageViewHolder extends RecyclerView.ViewHolder {
             ImageView imageView;
+            ImageView btnDelete; // 声明删除按钮
 
             public ImageViewHolder(@NonNull View itemView) {
                 super(itemView);
-                // 注意：这里ID要与 item_image_preview_small.xml 中的 ImageView ID 一致
-                // 根据你提供的 PublishReviewActivity 代码，ID 应该是 R.id.iv_image
                 imageView = itemView.findViewById(R.id.iv_image);
+                // 绑定并隐藏删除按钮，确保查看评论时没有叉号
+                btnDelete = itemView.findViewById(R.id.btn_delete);
+                if (btnDelete != null) {
+                    btnDelete.setVisibility(View.GONE);
+                }
             }
         }
     }
