@@ -39,16 +39,8 @@
                 android:text="正在获取物业信息..."
                 android:textColor="#333333"
                 android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tv_community_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="所属小区"
-                android:textColor="#666666"
-                android:textSize="14sp" />
+                android:textStyle="bold"
+                android:gravity="center"/>
 
             <View
                 android:layout_width="match_parent"
@@ -61,9 +53,10 @@
                 android:id="@+id/btn_contact_chat"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:background="@drawable/button_blue"
+                android:background="@drawable/btn_rounded_green"
                 android:text="在线沟通"
                 android:textColor="@android:color/white"
+                android:textStyle="bold"
                 android:textSize="16sp" />
 
             <TextView

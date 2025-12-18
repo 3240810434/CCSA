@@ -67,7 +67,6 @@ public class AdminMessageFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        // 初始时 Admin 可能还没加载完，先不设置 Adapter 或设置空列表
         adapter = new AdminMessageAdapter(getContext(), conversationList, null);
         recyclerView.setAdapter(adapter);
     }
@@ -80,41 +79,59 @@ public class AdminMessageFragment extends Fragment {
 
     private void loadData() {
         new Thread(() -> {
-            // 1. 获取管理员信息
+            // 1. 获取当前登录的管理员信息
             if (currentAdmin == null) {
                 currentAdmin = db.adminDao().findByAccount(adminAccount);
             }
 
             if (currentAdmin == null) return;
 
-            // 2. 查询所有和管理员(ADMIN)有关的消息
+            // 2. 查询所有和该管理员(ADMIN)有关的消息
+            // 这里实现了隔离：因为 ChatDao 查的是 senderId/receiverId 为 currentAdmin.getId() 的数据
+            // 而只有本小区的居民才会持有这个 Admin ID 并发消息过来
             List<ChatMessage> allMsgs = db.chatDao().getAllMyMessages(currentAdmin.getId(), "ADMIN");
+
+            // 使用 Map 进行消息去重，只保留每个会话的最新一条
             Map<String, ChatMessage> latestMsgMap = new HashMap<>();
 
             for (ChatMessage msg : allMsgs) {
-                // 确定对方是谁
+                // 确定对方是谁 (Who is the other party?)
                 int otherId;
                 String otherRole;
 
                 if (msg.senderId == currentAdmin.getId() && "ADMIN".equals(msg.senderRole)) {
-                    // 我发的，对方是 Receiver
+                    // 我(管理员)发的，对方是接收者
                     otherId = msg.receiverId;
                     otherRole = msg.receiverRole;
                 } else {
-                    // 别人发的，对方是 Sender
+                    // 别人发的，对方是发送者
                     otherId = msg.senderId;
                     otherRole = msg.senderRole;
                 }
 
-                // 组合 Key 避免不同 Role 的 ID 冲突 (例如 User id=1 和 Merchant id=1)
+                // 组合 Key 避免不同 Role 的 ID 冲突
                 String key = otherRole + "_" + otherId;
 
                 if (!latestMsgMap.containsKey(key)) {
-                    // 查询对方详细信息 (头像、名称)
+                    // 3. 查询对方详细信息 (头像、名称)
                     if ("RESIDENT".equals(otherRole)) {
                         User u = db.userDao().findById(otherId);
-                        msg.targetName = (u != null) ? u.getName() : "居民(已注销)";
-                        msg.targetAvatar = (u != null) ? u.getAvatar() : "";
+                        if (u != null) {
+                            // 可以在名字前加楼号，方便管理员识别
+                            // 格式：张三 (1栋101)
+                            String displayName = u.getName();
+                            if (u.getBuilding() != null && u.getRoom() != null) {
+                                displayName += " (" + u.getBuilding() + "-" + u.getRoom() + ")";
+                            }
+                            msg.targetName = displayName;
+                            msg.targetAvatar = u.getAvatar();
+
+                            // 额外的安全校验（可选）：确保居民小区和管理员一致
+                            // if (!currentAdmin.getCommunity().equals(u.getCommunity())) continue;
+                        } else {
+                            msg.targetName = "居民(已注销)";
+                            msg.targetAvatar = "";
+                        }
                     } else if ("MERCHANT".equals(otherRole)) {
                         Merchant m = db.merchantDao().findById(otherId);
                         msg.targetName = (m != null) ? m.getMerchantName() : "商家(已注销)";
@@ -128,7 +145,9 @@ public class AdminMessageFragment extends Fragment {
 
             getActivity().runOnUiThread(() -> {
                 conversationList.clear();
+                // 将 Map 的值转为 List
                 conversationList.addAll(latestMsgMap.values());
+
                 // 更新 Adapter 的 Admin 对象和数据
                 adapter = new AdminMessageAdapter(getContext(), conversationList, currentAdmin);
                 recyclerView.setAdapter(adapter);
