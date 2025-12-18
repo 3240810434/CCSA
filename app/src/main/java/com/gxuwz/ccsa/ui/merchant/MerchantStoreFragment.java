@@ -219,9 +219,9 @@ public class MerchantStoreFragment extends Fragment {
                 // 2. 待接单数量
                 int pendingOrderCount = orderDao.getPendingOrdersByMerchant(merchantIdStr).size();
 
-                // 3. 修复点：统计“接单中”状态的订单数量
-                // 确保这里的状态字符串 "接单中" 与您数据库中 Order 表的 status 字段值完全一致
-                int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "接单中").size();
+                // 3. 修复点：统计“配送中”状态的订单数量（对应页面上的“接单中”按钮）
+                // 这里的状态字符串必须与 Order.java 中定义的 "配送中" 一致
+                int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "配送中").size();
 
                 // 4. 售后数量
                 List<Order> afterSalesOrders = orderDao.getMerchantAfterSalesOrders(merchantIdStr);
