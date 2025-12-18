@@ -50,6 +50,7 @@ public class PublishReviewActivity extends AppCompatActivity {
     private ImageAdapter imageAdapter;
     private List<Uri> selectedImages = new ArrayList<>();
     private int productId;
+    private long orderId; // 增加订单ID
     private int score = 0; // 0-10
 
     @Override
@@ -58,6 +59,8 @@ public class PublishReviewActivity extends AppCompatActivity {
         setContentView(R.layout.activity_publish_review);
 
         productId = getIntent().getIntExtra("product_id", -1);
+        orderId = getIntent().getLongExtra("order_id", -1); // 获取订单ID
+
         if (productId == -1) {
             Toast.makeText(this, "商品信息错误", Toast.LENGTH_SHORT).show();
             finish();
@@ -112,7 +115,7 @@ public class PublishReviewActivity extends AppCompatActivity {
             AppDatabase db = AppDatabase.getInstance(this);
             User user = db.userDao().getUserById(userId);
 
-            // 处理图片路径，将Uri转换为String拼接
+            // 处理图片路径
             StringBuilder sb = new StringBuilder();
             for (Uri uri : selectedImages) {
                 sb.append(uri.toString()).append(",");
@@ -133,16 +136,22 @@ public class PublishReviewActivity extends AppCompatActivity {
                     System.currentTimeMillis()
             );
 
+            // 1. 插入评价
             db.productReviewDao().insert(review);
+
+            // 2. 更新订单状态为已评价 (状态 1)
+            if (orderId != -1) {
+                db.orderDao().updateReviewStatus(orderId, 1);
+            }
 
             runOnUiThread(() -> {
                 Toast.makeText(this, "评价发表成功！", Toast.LENGTH_SHORT).show();
-                finish();
+                finish(); // 关闭页面，返回订单列表后 onResume 会自动刷新列表，显示“已评价”
             });
         }).start();
     }
 
-    // 图片选择适配器（含添加按钮）
+    // 图片选择适配器
     private class ImageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private static final int TYPE_ADD = 0;
         private static final int TYPE_ITEM = 1;
@@ -158,7 +167,8 @@ public class PublishReviewActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
             ImageHolder imageHolder = (ImageHolder) holder;
             if (getItemViewType(position) == TYPE_ADD) {
-                imageHolder.img.setImageResource(R.drawable.ic_add_photo); // 请确保有此图标
+                // 修改此处：使用 photo_album 图片
+                imageHolder.img.setImageResource(R.drawable.photo_album);
                 imageHolder.itemView.setOnClickListener(v -> checkPermissionAndSelectImage());
             } else {
                 Uri uri = selectedImages.get(position);
@@ -182,7 +192,7 @@ public class PublishReviewActivity extends AppCompatActivity {
             ImageView img;
             ImageHolder(View itemView) {
                 super(itemView);
-                img = itemView.findViewById(R.id.iv_image); // 对应 item_image_preview_small.xml 中的 ID
+                img = itemView.findViewById(R.id.iv_image);
             }
         }
     }

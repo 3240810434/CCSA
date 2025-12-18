@@ -184,12 +184,15 @@
                 android:textColor="#4CAF50"
                 android:paddingHorizontal="15dp"
                 android:paddingVertical="5dp"
-                android:background="@drawable/box_bg"/>
+                android:background="@drawable/box_bg"
+                android:visibility="gone"/>
 
             <Button
                 android:id="@+id/btn_review"
-                android:layout_width="70dp"
-                android:layout_height="30dp"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:minWidth="70dp"
+                android:paddingHorizontal="10dp"
                 android:background="@drawable/blue_rounded_btn"
                 android:text="评价"
                 android:textColor="#FFFFFF"

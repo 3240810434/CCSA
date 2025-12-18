@@ -2,6 +2,7 @@ package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -126,25 +127,39 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
             }
         }
 
-        // --- 新增：评价按钮逻辑 ---
+        // --- 修改：评价按钮逻辑 ---
         if ("已完成".equals(order.status)) {
             holder.btnReview.setVisibility(View.VISIBLE);
-            holder.btnEvaluate.setVisibility(View.GONE); // 隐藏旧的评价 Textview，使用新的 Button
+            holder.btnEvaluate.setVisibility(View.GONE);
 
-            holder.btnReview.setOnClickListener(v -> {
-                Intent intent = new Intent(context, PublishReviewActivity.class);
-                try {
-                    // [修复]：将 Long.parseLong 修改为 Integer.parseInt
-                    // 之前的代码: long pId = Long.parseLong(order.productId);
-                    // 修复后的代码:
-                    int pId = Integer.parseInt(order.productId);
-                    intent.putExtra("product_id", pId);
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
-                    Toast.makeText(context, "商品数据异常", Toast.LENGTH_SHORT).show();
-                }
-                context.startActivity(intent);
-            });
+            if (order.isReviewed == 1) {
+                // 已评价状态
+                holder.btnReview.setText("已评价");
+                // 按钮变黄 (Gold #FFD700)
+                holder.btnReview.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFD700")));
+                holder.btnReview.setEnabled(false); // 不可点击
+                holder.btnReview.setOnClickListener(null);
+            } else {
+                // 未评价状态
+                holder.btnReview.setText("评价");
+                // 按钮变绿色 (#32CD32)
+                holder.btnReview.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#32CD32")));
+                holder.btnReview.setEnabled(true);
+
+                holder.btnReview.setOnClickListener(v -> {
+                    Intent intent = new Intent(context, PublishReviewActivity.class);
+                    try {
+                        int pId = Integer.parseInt(order.productId);
+                        intent.putExtra("product_id", pId);
+                        // 传递订单ID，以便在评价成功后更新订单状态
+                        intent.putExtra("order_id", order.id);
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        Toast.makeText(context, "商品数据异常", Toast.LENGTH_SHORT).show();
+                    }
+                    context.startActivity(intent);
+                });
+            }
         } else {
             holder.btnReview.setVisibility(View.GONE);
         }
@@ -161,7 +176,7 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
         ImageView ivProductImg;
         LinearLayout layoutActionButtons;
         TextView btnEvaluate, btnApply;
-        Button btnReview; // 新增 Button 引用
+        Button btnReview;
 
         public OrderViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -176,11 +191,8 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
             ivProductImg = itemView.findViewById(R.id.iv_product_img);
             layoutActionButtons = itemView.findViewById(R.id.layout_action_buttons);
 
-            // 原有的 TextView 样式按钮
             btnEvaluate = itemView.findViewById(R.id.btn_evaluate);
             btnApply = itemView.findViewById(R.id.btn_apply);
-
-            // 新增的 Button 样式按钮
             btnReview = itemView.findViewById(R.id.btn_review);
         }
     }

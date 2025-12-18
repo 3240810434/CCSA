@@ -43,7 +43,11 @@ public class Order implements Serializable {
     public String payAmount;     // 总支付金额
     public String paymentMethod; // 支付方式 (微信/支付宝)
 
-    // --- 新增：售后状态 ---
+    // --- 售后状态 ---
     // 0:无售后, 1:售后待处理, 2:售后协商中, 3:售后成功, 4:售后关闭
     public int afterSalesStatus = 0;
+
+    // --- 新增：评价状态 ---
+    // 0:未评价, 1:已评价
+    public int isReviewed = 0;
 }
