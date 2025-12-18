@@ -16,6 +16,14 @@ public class DateUtils {
     }
 
     /**
+     * 格式化日期时间（新增方法，兼容调用）
+     * 格式：yyyy-MM-dd HH:mm
+     */
+    public static String formatDateTime(long timeMillis) {
+        return formatTime(timeMillis);
+    }
+
+    /**
      * 格式化日期，只显示年月日
      * 格式：yyyy-MM-dd
      */
@@ -25,7 +33,7 @@ public class DateUtils {
     }
 
     /**
-     * 将Date对象转换为字符串 (修复报错的核心方法)
+     * 将Date对象转换为字符串
      */
     public static String dateToString(Date date) {
         if (date == null) return "";

@@ -34,7 +34,17 @@ public class SharedPreferencesUtil {
         return instance;
     }
 
-    // ================== 1. 商家相关 (原有实例方法) ==================
+    // ================== 新增缺失的方法 ==================
+
+    /**
+     * 获取当前登录用户的ID
+     */
+    public static int getUserId(Context context) {
+        User user = getUser(context);
+        return user != null ? user.getId() : -1;
+    }
+
+    // ================== 1. 商家相关 ==================
 
     public String getMerchantId() {
         return sharedPreferences.getString(KEY_MERCHANT_ID, "1");
@@ -44,7 +54,7 @@ public class SharedPreferencesUtil {
         sharedPreferences.edit().putString(KEY_MERCHANT_ID, id).apply();
     }
 
-    // ================== 2. 用户对象相关 (原有静态方法) ==================
+    // ================== 2. 用户对象相关 ==================
 
     /**
      * 保存用户信息 (对象序列化)
@@ -98,14 +108,9 @@ public class SharedPreferencesUtil {
         sp.edit().remove(KEY_USER).apply();
     }
 
-    // ================== 3. 通用数据存取 (新增通用方法) ==================
+    // ================== 3. 通用数据存取 ==================
 
-    /**
-     * 通用数据保存方法
-     * 支持 Integer, Boolean, String, Float, Long
-     */
     public static void saveData(Context context, String key, Object data) {
-        // 统一使用 PREF_NAME
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sp.edit();
 
@@ -123,18 +128,11 @@ public class SharedPreferencesUtil {
         editor.apply();
     }
 
-    /**
-     * 通用数据获取方法 (默认返回 String)
-     */
     public static String getData(Context context, String key, String defValue) {
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         return sp.getString(key, defValue);
     }
 
-    /**
-     * 通用数据获取方法 (根据默认值类型返回对应数据)
-     * 支持 String, Integer, Boolean
-     */
     public static Object getData(Context context, String key, Object defValue) {
         SharedPreferences sp = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
 
@@ -145,10 +143,8 @@ public class SharedPreferencesUtil {
         } else if (defValue instanceof Boolean) {
             return sp.getBoolean(key, (Boolean) defValue);
         } else if (defValue instanceof Float) {
-            // 补充：既然 saveData 支持 Float，这里最好也支持
             return sp.getFloat(key, (Float) defValue);
         } else if (defValue instanceof Long) {
-            // 补充：既然 saveData 支持 Long，这里最好也支持
             return sp.getLong(key, (Long) defValue);
         }
 

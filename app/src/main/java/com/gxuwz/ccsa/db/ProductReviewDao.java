@@ -11,11 +11,11 @@ public interface ProductReviewDao {
     @Insert
     void insert(ProductReview review);
 
-    // 获取某商品的最新2条评价（用于详情页展示）
+    // 修改参数类型为 long
     @Query("SELECT * FROM product_reviews WHERE productId = :productId ORDER BY createTime DESC LIMIT 2")
-    List<ProductReview> getTop2Reviews(int productId);
+    List<ProductReview> getTop2Reviews(long productId);
 
-    // 获取某商品的所有评价
+    // 修改参数类型为 long
     @Query("SELECT * FROM product_reviews WHERE productId = :productId ORDER BY createTime DESC")
-    List<ProductReview> getAllReviews(int productId);
+    List<ProductReview> getAllReviews(long productId);
 }

@@ -12,7 +12,7 @@ public class User implements Serializable {
     private String name;
     private String gender;
     private String phone;
-    private String password;  // 之前报错缺少 getter/setter
+    private String password;
     private String community;
     private String building;
     private String room;
@@ -39,13 +39,14 @@ public class User implements Serializable {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    // --- 补全缺失的方法 ---
+    // 新增 getUsername 兼容方法
+    public String getUsername() { return name; }
+
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-    // -----------------------
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
@@ -62,7 +63,6 @@ public class User implements Serializable {
     public String getAvatar() { return avatar; }
     public void setAvatar(String avatar) { this.avatar = avatar; }
 
-    // Getter 别名
     public String getCommunityName() { return community; }
     public String getRoomNumber() { return room; }
 }
