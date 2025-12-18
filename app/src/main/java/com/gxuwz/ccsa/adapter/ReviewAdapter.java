@@ -1,18 +1,25 @@
 package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.ProductReview;
-import com.gxuwz.ccsa.util.DateUtils; // 假设有日期工具类，否则用简单format
+import com.gxuwz.ccsa.util.DateUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder> {
@@ -39,14 +46,36 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         holder.tvContent.setText(review.content);
         // 分数转星星 (10分=5星)
         holder.ratingBar.setRating(review.score / 2.0f);
-        holder.tvTime.setText(DateUtils.formatDateTime(review.createTime)); // 需确保DateUtils可用，或自行格式化
 
+        // 格式化时间，如果DateUtils不可用，可以换成简单的 new SimpleDateFormat().format(...)
+        holder.tvTime.setText(DateUtils.formatDateTime(review.createTime));
+
+        // 加载用户头像
         Glide.with(context)
                 .load(review.userAvatar)
                 .placeholder(R.drawable.ic_avatar)
                 .into(holder.ivAvatar);
 
-        // TODO: 如果需要显示评价图片，可以在这里处理 holder.recyclerImages
+        // --- 处理评价图片显示逻辑 ---
+        if (!TextUtils.isEmpty(review.imagePaths)) {
+            holder.recyclerImages.setVisibility(View.VISIBLE);
+
+            // 将逗号分隔的字符串转为List
+            String[] paths = review.imagePaths.split(",");
+            List<String> imageList = new ArrayList<>(Arrays.asList(paths));
+
+            // 设置网格布局，例如每行显示3张图
+            GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
+            holder.recyclerImages.setLayoutManager(gridLayoutManager);
+
+            // 设置图片适配器
+            ReviewImageAdapter imageAdapter = new ReviewImageAdapter(context, imageList);
+            holder.recyclerImages.setAdapter(imageAdapter);
+
+        } else {
+            // 没有图片时隐藏RecyclerView
+            holder.recyclerImages.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -68,6 +97,58 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
             tvTime = itemView.findViewById(R.id.tv_time);
             ratingBar = itemView.findViewById(R.id.item_rating);
             recyclerImages = itemView.findViewById(R.id.item_recycler_images);
+        }
+    }
+
+    // --- 内部类：用于显示评价中的图片列表 ---
+    class ReviewImageAdapter extends RecyclerView.Adapter<ReviewImageAdapter.ImageViewHolder> {
+        private Context mContext;
+        private List<String> mPaths;
+
+        public ReviewImageAdapter(Context context, List<String> paths) {
+            this.mContext = context;
+            this.mPaths = paths;
+        }
+
+        @NonNull
+        @Override
+        public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            // 复用现有的 item_image_preview_small 布局
+            // 如果你没有这个布局，可以使用 item_image_grid 或新建一个只包含 ImageView 的布局
+            View view = LayoutInflater.from(mContext).inflate(R.layout.item_image_preview_small, parent, false);
+            return new ImageViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
+            String path = mPaths.get(position);
+            Glide.with(mContext)
+                    .load(path)
+                    .placeholder(R.drawable.ic_add_photo) // 占位图
+                    .into(holder.imageView);
+
+            // 可选：点击图片查看大图逻辑
+            /*
+            holder.itemView.setOnClickListener(v -> {
+                // 跳转到查看大图页面
+            });
+            */
+        }
+
+        @Override
+        public int getItemCount() {
+            return mPaths == null ? 0 : mPaths.size();
+        }
+
+        class ImageViewHolder extends RecyclerView.ViewHolder {
+            ImageView imageView;
+
+            public ImageViewHolder(@NonNull View itemView) {
+                super(itemView);
+                // 注意：这里ID要与 item_image_preview_small.xml 中的 ImageView ID 一致
+                // 根据你提供的 PublishReviewActivity 代码，ID 应该是 R.id.iv_image
+                imageView = itemView.findViewById(R.id.iv_image);
+            }
         }
     }
 }
