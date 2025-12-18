@@ -114,6 +114,18 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         @Override
         public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(mContext).inflate(R.layout.item_image_preview_small, parent, false);
+
+            // 【关键修改】在此处动态修改布局参数
+            // 1. 去除 item_image_preview_small.xml 中定义的右侧 margin (8dp)
+            // 2. 将宽度设为 MATCH_PARENT，让图片自动填满 GridLayout 的格子，从而消除所有间隔
+            // 这样做只影响此处的评论列表显示，不会影响其他复用该 item 的页面
+            ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+            if (layoutParams != null) {
+                layoutParams.setMarginEnd(0);
+                layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                view.setLayoutParams(layoutParams);
+            }
+
             return new ImageViewHolder(view);
         }
 

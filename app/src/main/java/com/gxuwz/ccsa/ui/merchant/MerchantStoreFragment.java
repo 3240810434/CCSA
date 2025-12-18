@@ -39,7 +39,7 @@ public class MerchantStoreFragment extends Fragment {
 
     // 统计数据显示控件
     private TextView tvPendingCount;
-    private TextView tvProcessingCount; // 接单中数量控件
+    private TextView tvProcessingCount; // 关键：接单中数量控件
     private TextView tvAfterSalesCount;
     private TextView tvProductCount;
 
@@ -63,7 +63,7 @@ public class MerchantStoreFragment extends Fragment {
         initViews(view);
         setupListeners();
         updateUI();
-        refreshDashboardCounts();
+        refreshDashboardCounts(); // 初始化时刷新数据
 
         return view;
     }
@@ -72,7 +72,7 @@ public class MerchantStoreFragment extends Fragment {
     public void onResume() {
         super.onResume();
         syncDataFromActivity();
-        refreshDashboardCounts();
+        refreshDashboardCounts(); // 页面可见时刷新数据
     }
 
     @Override
@@ -103,9 +103,9 @@ public class MerchantStoreFragment extends Fragment {
         tvStatusText = view.findViewById(R.id.tv_status_text);
         llStatusContainer = view.findViewById(R.id.ll_status_container);
 
-        // 统计数据
+        // 统计数据控件绑定
         tvPendingCount = view.findViewById(R.id.tv_pending_count);
-        tvProcessingCount = view.findViewById(R.id.tv_processing_count); // 绑定接单中 TextView
+        tvProcessingCount = view.findViewById(R.id.tv_processing_count); // 绑定到 XML 中的 tv_processing_count
         tvAfterSalesCount = view.findViewById(R.id.tv_after_sales_count);
         tvProductCount = view.findViewById(R.id.tv_product_count);
 
@@ -117,10 +117,8 @@ public class MerchantStoreFragment extends Fragment {
         llProductManagement = view.findViewById(R.id.ll_product_management);
     }
 
-    // 检查资质认证状态
     private boolean checkQualification() {
         if (currentMerchant == null) return false;
-        // qualificationStatus: 0=未认证, 1=审核中, 2=已通过, 3=未通过
         if (currentMerchant.getQualificationStatus() != 2) {
             Toast.makeText(getContext(), "您尚未通过商家资质认证，暂时无法使用此功能。请前往【我的-商家资质】进行认证。", Toast.LENGTH_LONG).show();
             return false;
@@ -204,6 +202,7 @@ public class MerchantStoreFragment extends Fragment {
         }
     }
 
+    // 关键方法：查询数据库并更新UI上的数字
     private void refreshDashboardCounts() {
         if (currentMerchant == null || getContext() == null) return;
 
@@ -214,16 +213,21 @@ public class MerchantStoreFragment extends Fragment {
                 ProductDao productDao = db.productDao();
                 String merchantIdStr = String.valueOf(currentMerchant.getId());
 
+                // 1. 商品数量
                 int productCount = productDao.getProductsByMerchantId(currentMerchant.getId()).size();
+
+                // 2. 待接单数量
                 int pendingOrderCount = orderDao.getPendingOrdersByMerchant(merchantIdStr).size();
 
-                // 关键点：统计“接单中”状态的订单数量
+                // 3. 修复点：统计“接单中”状态的订单数量
+                // 确保这里的状态字符串 "接单中" 与您数据库中 Order 表的 status 字段值完全一致
                 int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "接单中").size();
 
+                // 4. 售后数量
                 List<Order> afterSalesOrders = orderDao.getMerchantAfterSalesOrders(merchantIdStr);
                 int pendingAfterSalesCount = 0;
                 for (Order order : afterSalesOrders) {
-                    if (order.afterSalesStatus == 1) {
+                    if (order.afterSalesStatus == 1) { // 1 代表申请中
                         pendingAfterSalesCount++;
                     }
                 }
@@ -237,7 +241,7 @@ public class MerchantStoreFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         if (tvProductCount != null) tvProductCount.setText(String.valueOf(finalProductCount));
                         if (tvPendingCount != null) tvPendingCount.setText(String.valueOf(finalPendingOrderCount));
-                        // 更新接单中数量
+                        // 更新 UI 显示
                         if (tvProcessingCount != null) tvProcessingCount.setText(String.valueOf(finalProcessingOrderCount));
                         if (tvAfterSalesCount != null) tvAfterSalesCount.setText(String.valueOf(finalPendingAfterSalesCount));
                     });
