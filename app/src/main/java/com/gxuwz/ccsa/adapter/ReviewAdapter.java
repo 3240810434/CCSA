@@ -1,7 +1,9 @@
 package com.gxuwz.ccsa.adapter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +16,11 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
+import com.bumptech.glide.request.RequestOptions;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.ProductReview;
+import com.gxuwz.ccsa.ui.resident.ImagePreviewActivity; // 引入预览页面
 import com.gxuwz.ccsa.util.DateUtils;
 
 import java.util.ArrayList;
@@ -44,7 +49,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         ProductReview review = list.get(position);
         holder.tvName.setText(review.userName);
         holder.tvContent.setText(review.content);
-        // 分数转星星 (10分=5星)
+        // 分数转星星 (假设后台数据是10分制，如果是5分制请直接用review.score)
         holder.ratingBar.setRating(review.score / 2.0f);
 
         // 格式化时间
@@ -64,7 +69,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
             String[] paths = review.imagePaths.split(",");
             List<String> imageList = new ArrayList<>(Arrays.asList(paths));
 
-            // 优化要求：当带有多张图片的评论，每行只显示3张
+            // 网格布局，3列
             GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
             holder.recyclerImages.setLayoutManager(gridLayoutManager);
 
@@ -113,18 +118,29 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         @NonNull
         @Override
         public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(mContext).inflate(R.layout.item_image_preview_small, parent, false);
+            // 注意：这里请确保 item_image_preview_small 或 item_image_grid 存在
+            // 如果你的文件名是 item_image_grid.xml，请改为 R.layout.item_image_grid
+            View view = LayoutInflater.from(mContext).inflate(R.layout.item_image_grid, parent, false);
 
-            // 优化布局：修改宽度为 MatchParent，并移除 marginEnd，适配 Grid 3列显示
+            // 动态计算每个格子的宽度，使其成为正方形
             ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
             if (layoutParams != null) {
-                layoutParams.setMarginEnd(0);
-                // 增加一点底部间距
-                layoutParams.setMargins(0, 0, 0, 10);
-                layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                // 设置固定高度，防止图片高度不一导致乱对其，例如100dp
-                layoutParams.height = 300; // 这里的单位是px，建议在dimens中定义或动态计算，示例暂定固定值或保持 xml 定义
-                // 如果 xml 中 height 是 wrap_content，建议设为固定高度或正方形
+                // 1. 获取屏幕宽度
+                DisplayMetrics displayMetrics = mContext.getResources().getDisplayMetrics();
+                int screenWidth = displayMetrics.widthPixels;
+
+                // 2. 减去父布局的 padding (根据 item_product_review.xml，左右各 16dp，共 32dp)
+                //    再加上一些估算的 Grid 间距冗余，这里取 40dp 比较稳妥
+                int totalPadding = (int) (40 * displayMetrics.density);
+
+                // 3. 计算单个 Item 大小 (屏幕宽 - 间距) / 3列
+                int itemSize = (screenWidth - totalPadding) / 3;
+
+                layoutParams.width = itemSize;
+                layoutParams.height = itemSize; // 高度等于宽度，设为正方形
+
+                // 设置 Grid 间距
+                layoutParams.setMargins(0, 0, (int)(4 * displayMetrics.density), (int)(8 * displayMetrics.density));
 
                 view.setLayoutParams(layoutParams);
             }
@@ -135,11 +151,24 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         @Override
         public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
             String path = mPaths.get(position);
+
+            // 解决问题1：使用 fitCenter 完整显示图片，而不是 centerCrop
             Glide.with(mContext)
                     .load(path)
-                    .centerCrop() // 裁剪以填满方格
+                    .fitCenter() // 重点：完整显示，不裁剪
+                    // .apply(RequestOptions.bitmapTransform(new RoundedCorners(10))) // 如果需要圆角可以取消注释
                     .placeholder(R.drawable.ic_add_photo)
                     .into(holder.imageView);
+
+            // 解决问题2：添加点击事件，跳转到预览大图页面
+            holder.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(mContext, ImagePreviewActivity.class);
+                // 传递当前图片列表
+                intent.putStringArrayListExtra("images", (ArrayList<String>) mPaths);
+                // 传递当前点击的位置
+                intent.putExtra("position", position);
+                mContext.startActivity(intent);
+            });
         }
 
         @Override
@@ -153,9 +182,11 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
 
             public ImageViewHolder(@NonNull View itemView) {
                 super(itemView);
+                // 确保你的 XML id 匹配，此处根据你提供的 xml 使用 iv_image
                 imageView = itemView.findViewById(R.id.iv_image);
-                // 评论列表中不需要显示删除按钮
-                btnDelete = itemView.findViewById(R.id.btn_delete);
+                btnDelete = itemView.findViewById(R.id.iv_delete); // 或者是 iv_delete
+
+                // 浏览模式下隐藏删除按钮
                 if (btnDelete != null) {
                     btnDelete.setVisibility(View.GONE);
                 }
