@@ -23,8 +23,10 @@ public interface MerchantDao {
     @Query("SELECT * FROM merchant")
     List<Merchant> getAllMerchants();
 
-    // 根据小区查找商家
-    @Query("SELECT * FROM merchant WHERE community = :community")
+    // 核心修改：将原本的 = :community 改为 LIKE 模糊查询
+    // 使用 '%' || :community || '%' 来匹配包含该小区名称的字符串
+    // 例如：当 community 为 "A小区" 时，它可以匹配 "A小区,B小区" 或 "B小区,A小区"
+    @Query("SELECT * FROM merchant WHERE community LIKE '%' || :community || '%'")
     List<Merchant> findByCommunity(String community);
 
     @Query("SELECT * FROM merchant WHERE phone = :phone AND password = :password LIMIT 1")
@@ -39,6 +41,7 @@ public interface MerchantDao {
     @Query("SELECT * FROM merchant WHERE qualificationStatus = 1")
     List<Merchant> findPendingAudits();
 
+    // 此处原本已经是正确的 LIKE 写法，findByCommunity 应与此处保持一致逻辑
     @Query("SELECT * FROM merchant WHERE qualificationStatus = 1 AND community LIKE '%' || :adminCommunity || '%'")
     List<Merchant> findPendingAuditsByCommunity(String adminCommunity);
 }

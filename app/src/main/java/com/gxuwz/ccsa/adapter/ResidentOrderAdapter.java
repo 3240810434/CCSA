@@ -6,7 +6,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button; // 新增引入
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -18,7 +18,7 @@ import com.bumptech.glide.Glide;
 import com.gxuwz.ccsa.R;
 import com.gxuwz.ccsa.model.Order;
 import com.gxuwz.ccsa.ui.resident.ResidentApplyAfterSalesActivity;
-import com.gxuwz.ccsa.ui.resident.PublishReviewActivity; // 新增引入
+import com.gxuwz.ccsa.ui.resident.PublishReviewActivity;
 
 import java.util.List;
 
@@ -134,8 +134,10 @@ public class ResidentOrderAdapter extends RecyclerView.Adapter<ResidentOrderAdap
             holder.btnReview.setOnClickListener(v -> {
                 Intent intent = new Intent(context, PublishReviewActivity.class);
                 try {
-                    // 将String类型的productId转换为Long (如果PublishReviewActivity接收Long)
-                    long pId = Long.parseLong(order.productId);
+                    // [修复]：将 Long.parseLong 修改为 Integer.parseInt
+                    // 之前的代码: long pId = Long.parseLong(order.productId);
+                    // 修复后的代码:
+                    int pId = Integer.parseInt(order.productId);
                     intent.putExtra("product_id", pId);
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
