@@ -64,7 +64,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
             String[] paths = review.imagePaths.split(",");
             List<String> imageList = new ArrayList<>(Arrays.asList(paths));
 
-            // 设置网格布局，例如每行显示3张图
+            // 优化要求：当带有多张图片的评论，每行只显示3张
             GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
             holder.recyclerImages.setLayoutManager(gridLayoutManager);
 
@@ -115,14 +115,17 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
         public ImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(mContext).inflate(R.layout.item_image_preview_small, parent, false);
 
-            // 【关键修改】在此处动态修改布局参数
-            // 1. 去除 item_image_preview_small.xml 中定义的右侧 margin (8dp)
-            // 2. 将宽度设为 MATCH_PARENT，让图片自动填满 GridLayout 的格子，从而消除所有间隔
-            // 这样做只影响此处的评论列表显示，不会影响其他复用该 item 的页面
+            // 优化布局：修改宽度为 MatchParent，并移除 marginEnd，适配 Grid 3列显示
             ViewGroup.MarginLayoutParams layoutParams = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
             if (layoutParams != null) {
                 layoutParams.setMarginEnd(0);
+                // 增加一点底部间距
+                layoutParams.setMargins(0, 0, 0, 10);
                 layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                // 设置固定高度，防止图片高度不一导致乱对其，例如100dp
+                layoutParams.height = 300; // 这里的单位是px，建议在dimens中定义或动态计算，示例暂定固定值或保持 xml 定义
+                // 如果 xml 中 height 是 wrap_content，建议设为固定高度或正方形
+
                 view.setLayoutParams(layoutParams);
             }
 
@@ -134,6 +137,7 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
             String path = mPaths.get(position);
             Glide.with(mContext)
                     .load(path)
+                    .centerCrop() // 裁剪以填满方格
                     .placeholder(R.drawable.ic_add_photo)
                     .into(holder.imageView);
         }
@@ -145,12 +149,12 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ViewHolder
 
         class ImageViewHolder extends RecyclerView.ViewHolder {
             ImageView imageView;
-            ImageView btnDelete; // 声明删除按钮
+            ImageView btnDelete;
 
             public ImageViewHolder(@NonNull View itemView) {
                 super(itemView);
                 imageView = itemView.findViewById(R.id.iv_image);
-                // 绑定并隐藏删除按钮，确保查看评论时没有叉号
+                // 评论列表中不需要显示删除按钮
                 btnDelete = itemView.findViewById(R.id.btn_delete);
                 if (btnDelete != null) {
                     btnDelete.setVisibility(View.GONE);
