@@ -102,7 +102,8 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
             if (currentProduct != null) {
                 // 复用居民端的评论列表页面，因为它只需要 product_id 即可查询
                 Intent intent = new Intent(this, ReviewListActivity.class);
-                intent.putExtra("product_id", (long) currentProduct.getId());
+                // 【修复】不要强制转换为 long，ReviewListActivity 接收的是 int
+                intent.putExtra("product_id", currentProduct.getId());
                 startActivity(intent);
             }
         });
