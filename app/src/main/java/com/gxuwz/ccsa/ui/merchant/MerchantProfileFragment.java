@@ -155,6 +155,26 @@ public class MerchantProfileFragment extends Fragment {
 
         view.findViewById(R.id.btn_change_password).setOnClickListener(v ->
                 Toast.makeText(getContext(), "功能暂未开放", Toast.LENGTH_SHORT).show());
+
+        // 【新增】我的营收点击事件
+        View btnRevenue = view.findViewById(R.id.btn_my_revenue);
+        if (btnRevenue != null) {
+            btnRevenue.setOnClickListener(v -> {
+                // 如果当前已有商家信息，直接跳转；或者如果SharedPreferences里有ID也可以跳转
+                long savedId = -1;
+                if (getContext() != null) {
+                    savedId = getContext().getSharedPreferences("user_prefs", Context.MODE_PRIVATE)
+                            .getLong("merchant_id", -1);
+                }
+
+                if (currentMerchant != null || savedId != -1) {
+                    Intent intent = new Intent(getContext(), MerchantRevenueActivity.class);
+                    startActivity(intent);
+                } else {
+                    Toast.makeText(getContext(), "请先登录或等待数据加载", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void loadMerchantData() {

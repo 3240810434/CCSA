@@ -125,6 +125,6 @@
         <activity android:name=".login.MerchantForgotPasswordActivity" />
         <activity android:name=".ui.resident.PublishReviewActivity" />
         <activity android:name=".ui.resident.ReviewListActivity" />
-
+        <activity android:name=".ui.merchant.MerchantRevenueActivity" android:screenOrientation="portrait" android:exported="false"/>
     </application>
 </manifest>
