@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F5F5">
@@ -144,7 +145,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="10dp"
+                android:layout_marginHorizontal="10dp"
+                android:layout_marginBottom="10dp"
                 android:background="@drawable/card_bg"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
@@ -155,7 +157,8 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:scaleType="centerCrop"
-                    android:src="@drawable/merchant_picture" />
+                    android:src="@drawable/merchant_picture"
+                    app:shapeAppearanceOverlay="@drawable/circle_avatar"/>
 
                 <TextView
                     android:id="@+id/tv_merchant_name"
@@ -165,6 +168,56 @@
                     android:text="商家名称"
                     android:textColor="#333333"
                     android:textSize="16sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:background="@drawable/card_bg"
+                android:orientation="vertical"
+                android:padding="15dp">
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="用户评价"
+                        android:textSize="16sp"
+                        android:textColor="#333"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btn_more_reviews"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:text="查看全部 >"
+                        android:textSize="13sp"
+                        android:textColor="#999" />
+                </RelativeLayout>
+
+                <LinearLayout
+                    android:id="@+id/layout_review_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_no_reviews"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="暂无评价"
+                        android:gravity="center"
+                        android:padding="20dp"
+                        android:textColor="#999"
+                        android:visibility="gone"/>
+
+                </LinearLayout>
             </LinearLayout>
 
         </LinearLayout>

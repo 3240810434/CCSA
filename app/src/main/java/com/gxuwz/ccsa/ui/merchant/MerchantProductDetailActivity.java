@@ -14,6 +14,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,6 +31,9 @@ import com.gxuwz.ccsa.adapter.BannerAdapter;
 import com.gxuwz.ccsa.db.AppDatabase;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.model.Product;
+import com.gxuwz.ccsa.model.ProductReview; // 引入评价模型
+import com.gxuwz.ccsa.ui.resident.ReviewListActivity; // 引入评论列表页
+import com.gxuwz.ccsa.util.DateUtils; // 引入日期工具
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -46,6 +51,11 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     private TextView tvName, tvMerchantName, tvDesc, tvPrice, tvDelivery, tvTag;
     private ImageView ivMerchantAvatar, btnBack, btnEdit;
 
+    // 【新增】评价相关控件
+    private LinearLayout layoutReviewContainer;
+    private TextView tvNoReviews;
+    private TextView btnMoreReviews;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,6 +69,7 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadData();
+        loadReviewsPreview(); // 【新增】刷新评价数据
     }
 
     private void initView() {
@@ -78,8 +89,77 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         ivMerchantAvatar = findViewById(R.id.iv_merchant_avatar);
         tvMerchantName = findViewById(R.id.tv_merchant_name);
 
+        // 【新增】绑定评价控件
+        layoutReviewContainer = findViewById(R.id.layout_review_container);
+        tvNoReviews = findViewById(R.id.tv_no_reviews);
+        btnMoreReviews = findViewById(R.id.btn_more_reviews);
+
         btnBack.setOnClickListener(v -> finish());
         btnEdit.setOnClickListener(v -> showEditDialog());
+
+        // 【新增】点击查看全部评价
+        btnMoreReviews.setOnClickListener(v -> {
+            if (currentProduct != null) {
+                // 复用居民端的评论列表页面，因为它只需要 product_id 即可查询
+                Intent intent = new Intent(this, ReviewListActivity.class);
+                intent.putExtra("product_id", (long) currentProduct.getId());
+                startActivity(intent);
+            }
+        });
+    }
+
+    // 【新增】加载最新的两条评价
+    private void loadReviewsPreview() {
+        if (productId == -1) return;
+
+        new Thread(() -> {
+            // 从数据库查询前2条评论
+            List<ProductReview> reviews = AppDatabase.getInstance(this)
+                    .productReviewDao().getTop2Reviews(productId);
+
+            runOnUiThread(() -> {
+                if (layoutReviewContainer == null) return;
+                layoutReviewContainer.removeAllViews();
+
+                if (reviews == null || reviews.isEmpty()) {
+                    tvNoReviews.setVisibility(View.VISIBLE);
+                    layoutReviewContainer.addView(tvNoReviews);
+                } else {
+                    tvNoReviews.setVisibility(View.GONE);
+                    // 动态添加 View，复用项目现有的 item_product_review.xml
+                    for (ProductReview review : reviews) {
+                        View view = LayoutInflater.from(this).inflate(R.layout.item_product_review, layoutReviewContainer, false);
+
+                        ImageView ivAvatar = view.findViewById(R.id.img_avatar);
+                        TextView tvName = view.findViewById(R.id.tv_username);
+                        TextView tvContent = view.findViewById(R.id.tv_content);
+                        TextView tvTime = view.findViewById(R.id.tv_time);
+                        RatingBar rb = view.findViewById(R.id.item_rating);
+
+                        // 注意：如果 item_product_review 中有 RecyclerView 用于显示图片，
+                        // 在预览模式下通常隐藏或忽略，除非你希望也在这里实现图片展示逻辑。
+                        // 这里我们隐藏图片列表以保持简洁，详情请点击“查看全部”
+                        View recyclerImages = view.findViewById(R.id.item_recycler_images);
+                        if (recyclerImages != null) {
+                            recyclerImages.setVisibility(View.GONE);
+                        }
+
+                        tvName.setText(review.userName);
+                        tvContent.setText(review.content);
+                        // 使用项目中的 DateUtils 格式化时间
+                        tvTime.setText(DateUtils.formatDateTime(review.createTime));
+                        rb.setRating(review.score / 2.0f); // 假设 score 是 10分制
+
+                        Glide.with(this).load(review.userAvatar)
+                                .placeholder(R.drawable.ic_avatar)
+                                .error(R.drawable.ic_avatar)
+                                .into(ivAvatar);
+
+                        layoutReviewContainer.addView(view);
+                    }
+                }
+            });
+        }).start();
     }
 
     private void loadData() {
@@ -120,14 +200,11 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
         // 4. 根据类型设置 价格、配送/服务方式、标签
         if ("SERVICE".equals(product.type)) {
             // === 服务商品逻辑 ===
-
-            // 价格
             String unit = (product.unit != null && !product.unit.isEmpty()) ? product.unit : "次";
             tvPrice.setText("¥ " + product.price + " / " + unit);
             tvPrice.setTextSize(18);
 
-            // 服务类型 (替代配送方式)
-            String serviceMode = "上门服务"; // 默认
+            String serviceMode = "上门服务";
             try {
                 if (product.priceTableJson != null) {
                     JSONArray ja = new JSONArray(product.priceTableJson);
@@ -139,20 +216,15 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
             if (tvDelivery != null) {
-                // 由于XML中删除了静态的“配送方式：”Label，这里直接设置完整字符串，显示效果为“服务类型：上门服务”
                 tvDelivery.setText("服务类型：" + serviceMode);
             }
 
-            // 服务标签
             if (tvTag != null) {
-                // 显示效果为“服务标签：xxx”
                 tvTag.setText("服务标签：" + (product.tag != null ? product.tag : "暂无标签"));
             }
 
         } else {
             // === 实物商品逻辑 ===
-
-            // 价格表
             try {
                 if (product.priceTableJson != null && !product.priceTableJson.isEmpty()) {
                     JSONArray jsonArray = new JSONArray(product.priceTableJson);
@@ -174,15 +246,11 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
                 tvPrice.setText("¥ " + product.price);
             }
 
-            // 配送方式
             if (tvDelivery != null) {
-                // 显示效果为“配送方式：xxx”
                 tvDelivery.setText("配送方式：" + (product.deliveryMethod == 0 ? "商家配送" : "用户自提"));
             }
 
-            // 商品标签
             if (tvTag != null) {
-                // 显示效果为“商品标签：xxx”
                 tvTag.setText("商品标签：" + (product.tag != null ? product.tag : "暂无标签"));
             }
         }
@@ -246,7 +314,6 @@ public class MerchantProductDetailActivity extends AppCompatActivity {
 
     private void goToEditPage() {
         Intent intent;
-        // 根据类型跳转不同的编辑页面
         if ("GOODS".equals(currentProduct.type)) {
             intent = new Intent(this, PhysicalProductEditActivity.class);
         } else {
