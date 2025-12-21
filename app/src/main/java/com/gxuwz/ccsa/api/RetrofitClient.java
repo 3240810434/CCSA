@@ -4,7 +4,7 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class RetrofitClient {
-    // 注意：这里必须以 / 结尾
+    // 修改为你的当前 IP
     private static final String BASE_URL = "http://192.168.115.251:8080/";
     private static RetrofitClient instance;
     private ApiService apiService;
