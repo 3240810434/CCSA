@@ -10,39 +10,30 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gxuwz.ccsa.R;
-import com.gxuwz.ccsa.db.AppDatabase;
+import com.gxuwz.ccsa.api.RetrofitClient;
+import com.gxuwz.ccsa.common.Result;
 import com.gxuwz.ccsa.model.User;
 import com.gxuwz.ccsa.ui.resident.ResidentMainActivity;
 import com.gxuwz.ccsa.util.SharedPreferencesUtil;
 
-/**
- * 居民登录页面 - 已修复登录状态同步问题
- */
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class ResidentLoginActivity extends AppCompatActivity {
 
-    private EditText etPhone; // 手机号输入框
-    private EditText etPassword; // 密码输入框
-    private Button btnLogin; // 登录按钮
-    private TextView tvForgotPassword; // 忘记密码
-    private TextView tvRegister; // 注册入口
-    private AppDatabase db; // 数据库实例
+    private EditText etPhone, etPassword;
+    private Button btnLogin;
+    private TextView tvForgotPassword, tvRegister;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_resident_login);
-
-        // 初始化数据库
-        db = AppDatabase.getInstance(this);
-        // 初始化控件
         initViews();
-        // 设置点击事件
         setupListeners();
     }
 
-    /**
-     * 初始化所有UI控件
-     */
     private void initViews() {
         etPhone = findViewById(R.id.et_phone);
         etPassword = findViewById(R.id.et_password);
@@ -51,69 +42,71 @@ public class ResidentLoginActivity extends AppCompatActivity {
         tvRegister = findViewById(R.id.tv_register);
     }
 
-    /**
-     * 设置所有控件的点击事件
-     */
     private void setupListeners() {
-        // 登录按钮点击事件
         btnLogin.setOnClickListener(v -> login());
 
-        // 忘记密码点击事件 - 修改为跳转到找回密码页面
         tvForgotPassword.setOnClickListener(v -> {
             Intent intent = new Intent(ResidentLoginActivity.this, ResidentForgotPasswordActivity.class);
             startActivity(intent);
         });
 
-        // 跳转到注册页面
         tvRegister.setOnClickListener(v -> {
             Intent intent = new Intent(ResidentLoginActivity.this, ResidentRegisterActivity.class);
             startActivity(intent);
         });
     }
 
-    /**
-     * 登录逻辑处理
-     */
     private void login() {
         String phone = etPhone.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 
-        // 输入校验
         if (phone.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "手机号和密码不能为空", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        new Thread(() -> {
-            // 数据库查询用户（验证账号密码）
-            User user = db.userDao().login(phone, password);
+        User requestUser = new User();
+        requestUser.setPhone(phone);
+        requestUser.setPassword(password);
 
-            runOnUiThread(() -> {
-                if (user != null) {
-                    // 1. 【保留原有逻辑】为了兼容 ResidentProductDetailActivity 等可能直接读取 "user_prefs" 的旧代码
-                    SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putLong("user_id", user.getId());
-                    editor.putString("user_name", user.getName());
-                    editor.apply();
+        RetrofitClient.getInstance().getApi().userLogin(requestUser)
+                .enqueue(new Callback<Result<User>>() {
+                    @Override
+                    public void onResponse(Call<Result<User>> call, Response<Result<User>> response) {
+                        if (response.isSuccessful() && response.body() != null) {
+                            Result<User> result = response.body();
+                            if (result.getCode() == 200) {
+                                User user = result.getData();
 
-                    // 2. 【核心修复】使用 SharedPreferencesUtil 保存完整的 User 对象
-                    // 这解决了 "MyDynamicsActivity" 和 "MyHelpActivity" 提示未登录的问题
-                    SharedPreferencesUtil.saveUser(ResidentLoginActivity.this, user);
+                                // 1. 兼容旧逻辑
+                                SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
+                                sharedPreferences.edit()
+                                        .putLong("user_id", user.getId())
+                                        .putString("user_name", user.getName())
+                                        .apply();
 
-                    // 3. 登录成功：跳转主页
-                    Intent intent = new Intent(ResidentLoginActivity.this, ResidentMainActivity.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putSerializable("user", user);
-                    intent.putExtras(bundle);
-                    startActivity(intent);
+                                // 2. 保存完整User对象
+                                SharedPreferencesUtil.saveUser(ResidentLoginActivity.this, user);
 
-                    Toast.makeText(ResidentLoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
-                    finish(); // 关闭登录页面
-                } else {
-                    Toast.makeText(this, "手机号或密码错误", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }).start();
+                                // 3. 跳转
+                                Intent intent = new Intent(ResidentLoginActivity.this, ResidentMainActivity.class);
+                                Bundle bundle = new Bundle();
+                                bundle.putSerializable("user", user);
+                                intent.putExtras(bundle);
+                                startActivity(intent);
+                                finish();
+                            } else {
+                                Toast.makeText(ResidentLoginActivity.this, result.getMsg(), Toast.LENGTH_SHORT).show();
+                            }
+                        } else {
+                            Toast.makeText(ResidentLoginActivity.this, "服务器错误", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Result<User>> call, Throwable t) {
+                        Toast.makeText(ResidentLoginActivity.this, "网络连接失败: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }
