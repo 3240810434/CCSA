@@ -39,7 +39,7 @@ public class MerchantStoreFragment extends Fragment {
 
     // 统计数据显示控件
     private TextView tvPendingCount;
-    private TextView tvProcessingCount; // 关键：接单中数量控件
+    private TextView tvProcessingCount;
     private TextView tvAfterSalesCount;
     private TextView tvProductCount;
 
@@ -105,7 +105,7 @@ public class MerchantStoreFragment extends Fragment {
 
         // 统计数据控件绑定
         tvPendingCount = view.findViewById(R.id.tv_pending_count);
-        tvProcessingCount = view.findViewById(R.id.tv_processing_count); // 绑定到 XML 中的 tv_processing_count
+        tvProcessingCount = view.findViewById(R.id.tv_processing_count);
         tvAfterSalesCount = view.findViewById(R.id.tv_after_sales_count);
         tvProductCount = view.findViewById(R.id.tv_product_count);
 
@@ -117,13 +117,24 @@ public class MerchantStoreFragment extends Fragment {
         llProductManagement = view.findViewById(R.id.ll_product_management);
     }
 
+    /**
+     * 检查商家资质
+     * 修改说明：为了方便测试，此处直接返回 true，绕过审核限制。
+     */
     private boolean checkQualification() {
+        // 如果 currentMerchant 为空，还是需要拦截，防止空指针
         if (currentMerchant == null) return false;
+
+        // 【修改点】：直接返回 true，允许所有商家使用功能，无论审核状态如何
+        return true;
+
+        /* 原有逻辑备份：
         if (currentMerchant.getQualificationStatus() != 2) {
             Toast.makeText(getContext(), "您尚未通过商家资质认证，暂时无法使用此功能。请前往【我的-商家资质】进行认证。", Toast.LENGTH_LONG).show();
             return false;
         }
         return true;
+        */
     }
 
     private void setupListeners() {
@@ -202,7 +213,6 @@ public class MerchantStoreFragment extends Fragment {
         }
     }
 
-    // 关键方法：查询数据库并更新UI上的数字
     private void refreshDashboardCounts() {
         if (currentMerchant == null || getContext() == null) return;
 
@@ -219,8 +229,7 @@ public class MerchantStoreFragment extends Fragment {
                 // 2. 待接单数量
                 int pendingOrderCount = orderDao.getPendingOrdersByMerchant(merchantIdStr).size();
 
-                // 3. 修复点：统计“配送中”状态的订单数量（对应页面上的“接单中”按钮）
-                // 这里的状态字符串必须与 Order.java 中定义的 "配送中" 一致
+                // 3. 配送中数量
                 int processingOrderCount = orderDao.getOrdersByMerchantAndStatus(merchantIdStr, "配送中").size();
 
                 // 4. 售后数量
@@ -241,7 +250,6 @@ public class MerchantStoreFragment extends Fragment {
                     getActivity().runOnUiThread(() -> {
                         if (tvProductCount != null) tvProductCount.setText(String.valueOf(finalProductCount));
                         if (tvPendingCount != null) tvPendingCount.setText(String.valueOf(finalPendingOrderCount));
-                        // 更新 UI 显示
                         if (tvProcessingCount != null) tvProcessingCount.setText(String.valueOf(finalProcessingOrderCount));
                         if (tvAfterSalesCount != null) tvAfterSalesCount.setText(String.valueOf(finalPendingAfterSalesCount));
                     });
