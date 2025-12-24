@@ -14,9 +14,14 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 import com.gxuwz.ccsa.R;
-import com.gxuwz.ccsa.db.AppDatabase;
+import com.gxuwz.ccsa.api.RetrofitClient; // 导入 RetrofitClient
+import com.gxuwz.ccsa.common.Result;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.ui.merchant.MerchantMainActivity;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MerchantRegisterActivity extends AppCompatActivity {
 
@@ -27,28 +32,21 @@ public class MerchantRegisterActivity extends AppCompatActivity {
     private EditText etPhone;
     private EditText etPassword;
     private Button btnRegister;
-
-    private AppDatabase db;
     private String gender = "男";
 
-    // 小区数据源
     private String[] communities = {
             "悦景小区", "梧桐小区", "阳光小区", "锦园小区", "幸福小区",
             "芳邻小区", "逸景小区", "康城小区", "沁园小区", "静安小区"
     };
-    // 用于记录多选框的选中状态
     private boolean[] checkedCommunities;
-    // 存储选中的小区名称
     private List<String> selectedCommunityList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_merchant_register);
-
-        db = AppDatabase.getInstance(this);
+        // db = AppDatabase.getInstance(this); // 移除
         checkedCommunities = new boolean[communities.length];
-
         initViews();
         setupListeners();
     }
@@ -61,12 +59,10 @@ public class MerchantRegisterActivity extends AppCompatActivity {
         etPhone = findViewById(R.id.et_phone);
         etPassword = findViewById(R.id.et_password);
         btnRegister = findViewById(R.id.btn_register);
-
         rgGender.check(R.id.rb_male);
     }
 
     private void setupListeners() {
-        // 点击选择小区，弹出多选对话框
         tvCommunitySelect.setOnClickListener(v -> showCommunityDialog());
 
         rgGender.setOnCheckedChangeListener((group, checkedId) -> {
@@ -95,11 +91,9 @@ public class MerchantRegisterActivity extends AppCompatActivity {
                 tvCommunitySelect.setText("");
                 tvCommunitySelect.setHint("点击选择服务小区 (可多选)");
             } else {
-                // 将选中的小区列表用逗号连接成字符串，例如 "A小区,B小区"
                 tvCommunitySelect.setText(TextUtils.join(",", selectedCommunityList));
             }
         });
-
         builder.setNegativeButton("取消", null);
         builder.show();
     }
@@ -120,12 +114,6 @@ public class MerchantRegisterActivity extends AppCompatActivity {
             return;
         }
 
-        if (db.merchantDao().findByPhone(phone) != null) {
-            Toast.makeText(this, "该手机号已注册", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // 创建商家对象，传入逗号分隔的小区字符串
         Merchant merchant = new Merchant(
                 communityStr,
                 merchantName,
@@ -135,23 +123,38 @@ public class MerchantRegisterActivity extends AppCompatActivity {
                 password
         );
 
-        new Thread(() -> {
-            long id = db.merchantDao().insert(merchant);
-            merchant.setId((int) id);
+        // 发起网络注册请求
+        RetrofitClient.getInstance().getApi().merchantRegister(merchant).enqueue(new Callback<Result<Merchant>>() {
+            @Override
+            public void onResponse(Call<Result<Merchant>> call, Response<Result<Merchant>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Result<Merchant> result = response.body();
+                    if (result.getCode() == 200) {
+                        Merchant registeredMerchant = result.getData();
 
-            // 保存登录状态
-            getSharedPreferences("user_prefs", MODE_PRIVATE)
-                    .edit()
-                    .putLong("merchant_id", id)
-                    .apply();
+                        // 保存登录状态
+                        getSharedPreferences("merchant_prefs", MODE_PRIVATE) // 注意这里统一 key 为 merchant_prefs
+                                .edit()
+                                .putInt("merchant_id", registeredMerchant.getId())
+                                .apply();
 
-            runOnUiThread(() -> {
-                Toast.makeText(this, "注册成功", Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(MerchantRegisterActivity.this, MerchantMainActivity.class);
-                intent.putExtra("merchant", merchant);
-                startActivity(intent);
-                finish();
-            });
-        }).start();
+                        Toast.makeText(MerchantRegisterActivity.this, "注册成功", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(MerchantRegisterActivity.this, MerchantMainActivity.class);
+                        intent.putExtra("merchant", registeredMerchant);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Toast.makeText(MerchantRegisterActivity.this, result.getMsg(), Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(MerchantRegisterActivity.this, "服务器响应错误", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Result<Merchant>> call, Throwable t) {
+                Toast.makeText(MerchantRegisterActivity.this, "网络连接失败: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

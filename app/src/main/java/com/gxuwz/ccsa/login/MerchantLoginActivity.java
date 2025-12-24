@@ -10,9 +10,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gxuwz.ccsa.R;
-import com.gxuwz.ccsa.db.AppDatabase;
+import com.gxuwz.ccsa.api.RetrofitClient; // 导入 RetrofitClient
+import com.gxuwz.ccsa.common.Result;
 import com.gxuwz.ccsa.model.Merchant;
 import com.gxuwz.ccsa.ui.merchant.MerchantMainActivity;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MerchantLoginActivity extends AppCompatActivity {
 
@@ -21,14 +26,13 @@ public class MerchantLoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private TextView tvRegister;
     private TextView tvForgotPassword;
-    private AppDatabase db;
+    // private AppDatabase db; // 不再需要本地数据库
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_merchant_login);
-
-        db = AppDatabase.getInstance(this);
+        // db = AppDatabase.getInstance(this); // 移除
         initViews();
         setupListeners();
     }
@@ -44,7 +48,6 @@ public class MerchantLoginActivity extends AppCompatActivity {
     private void setupListeners() {
         btnLogin.setOnClickListener(v -> login());
 
-        // 修改：跳转到忘记密码页面
         tvForgotPassword.setOnClickListener(v -> {
             Intent intent = new Intent(MerchantLoginActivity.this, MerchantForgotPasswordActivity.class);
             startActivity(intent);
@@ -65,26 +68,41 @@ public class MerchantLoginActivity extends AppCompatActivity {
             return;
         }
 
-        // 数据库查询
-        new Thread(() -> {
-            Merchant merchant = db.merchantDao().login(phone, password);
-            runOnUiThread(() -> {
-                if (merchant != null) {
-                    // 保存登录状态到 SharedPreferences
-                    SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putInt("merchant_id", merchant.getId());
-                    editor.apply();
+        // 构建登录请求对象 (仅需手机号和密码)
+        Merchant loginReq = new Merchant(null, null, null, null, phone, password);
 
-                    Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(MerchantLoginActivity.this, MerchantMainActivity.class);
-                    intent.putExtra("merchant", merchant);
-                    startActivity(intent);
-                    finish();
+        // 发起网络请求
+        RetrofitClient.getInstance().getApi().merchantLogin(loginReq).enqueue(new Callback<Result<Merchant>>() {
+            @Override
+            public void onResponse(Call<Result<Merchant>> call, Response<Result<Merchant>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Result<Merchant> result = response.body();
+                    if (result.getCode() == 200) { // 假设 200 为成功码
+                        Merchant merchant = result.getData();
+
+                        // 保存登录状态
+                        SharedPreferences sp = getSharedPreferences("merchant_prefs", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = sp.edit();
+                        editor.putInt("merchant_id", merchant.getId());
+                        editor.apply();
+
+                        Toast.makeText(MerchantLoginActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(MerchantLoginActivity.this, MerchantMainActivity.class);
+                        intent.putExtra("merchant", merchant);
+                        startActivity(intent);
+                        finish();
+                    } else {
+                        Toast.makeText(MerchantLoginActivity.this, result.getMsg(), Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Toast.makeText(this, "账号或密码错误", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MerchantLoginActivity.this, "服务器响应错误", Toast.LENGTH_SHORT).show();
                 }
-            });
-        }).start();
+            }
+
+            @Override
+            public void onFailure(Call<Result<Merchant>> call, Throwable t) {
+                Toast.makeText(MerchantLoginActivity.this, "网络连接失败: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
